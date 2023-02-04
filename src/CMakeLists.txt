@@ -13,7 +13,7 @@ juce_add_plugin(BerryPlugin
     # EDITOR_WANTS_KEYBOARD_FOCUS TRUE/FALSE    # Does the editor need keyboard focus?
     COPY_PLUGIN_AFTER_BUILD TRUE                # Should the plugin be installed to a default location after building?
     PLUGIN_MANUFACTURER_CODE JNJR               # A four-character manufacturer id with at least one upper-case character
-    PLUGIN_CODE HCMK                            # A unique four-character plugin id with exactly one upper-case character
+    PLUGIN_CODE Berr                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     FORMATS VST3                                # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
     VST3_CATEGORIES "Instrument"                # The name of the final executable, which can differ from the target name
