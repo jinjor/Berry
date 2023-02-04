@@ -183,11 +183,16 @@ void IncDecButton::sliderValueChanged(juce::Slider* _slider) {
 
 //==============================================================================
 VoiceComponent::VoiceComponent(AllParams& allParams)
-    : params(allParams.voiceParams), mainParamList(allParams.mainParamList), modeSelector("Mode") {
+    : params(allParams.voiceParams),
+      mainParamList(allParams.mainParamList),
+      modeSelector("Mode"),
+      pitchBendRangeButton() {
     initChoice(modeSelector, params.Mode, this, *this);
+    initIncDec(pitchBendRangeButton, params.PitchBendRange, this, *this);
     initChoice(targetNoteKindSelector, params.TargetNoteKind, this, drumTargetSelector);
     initChoice(targetNoteOctSelector, params.TargetNoteOct, this, drumTargetSelector);
     initLabel(modeLabel, "Mode", *this);
+    initLabel(pitchBendRangeLabel, "PB Range", *this);
     initLabel(targetNoteLabel, "Target Note", *this);
 
     addAndMakeVisible(drumTargetSelector);
