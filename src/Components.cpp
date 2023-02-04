@@ -183,20 +183,11 @@ void IncDecButton::sliderValueChanged(juce::Slider* _slider) {
 
 //==============================================================================
 VoiceComponent::VoiceComponent(AllParams& allParams)
-    : params(allParams.voiceParams),
-      mainParamList(allParams.mainParamList),
-      modeSelector("Mode"),
-      portamentoTimeSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                           juce::Slider::TextEntryBoxPosition::NoTextBox),
-      pitchBendRangeButton() {
+    : params(allParams.voiceParams), mainParamList(allParams.mainParamList), modeSelector("Mode") {
     initChoice(modeSelector, params.Mode, this, *this);
-    initLinear(portamentoTimeSlider, params.PortamentoTime, 0.001, " sec", nullptr, this, *this);
-    initIncDec(pitchBendRangeButton, params.PitchBendRange, this, *this);
     initChoice(targetNoteKindSelector, params.TargetNoteKind, this, drumTargetSelector);
     initChoice(targetNoteOctSelector, params.TargetNoteOct, this, drumTargetSelector);
     initLabel(modeLabel, "Mode", *this);
-    initLabel(portamentoTimeLabel, "Glide Time", *this);
-    initLabel(pitchBendRangeLabel, "PB Range", *this);
     initLabel(targetNoteLabel, "Target Note", *this);
 
     addAndMakeVisible(drumTargetSelector);
@@ -219,7 +210,6 @@ void VoiceComponent::resized() {
         targetNoteKindSelector.setBounds(selectorsArea.removeFromLeft(60));
         targetNoteOctSelector.setBounds(selectorsArea.removeFromLeft(60));
     }
-    consumeLabeledKnob(bounds, portamentoTimeLabel, portamentoTimeSlider);
     consumeLabeledIncDecButton(bounds, 60, pitchBendRangeLabel, pitchBendRangeButton);
 }
 void VoiceComponent::comboBoxChanged(juce::ComboBox* comboBox) {
@@ -231,11 +221,6 @@ void VoiceComponent::comboBoxChanged(juce::ComboBox* comboBox) {
         *params.TargetNoteOct = targetNoteOctSelector.getSelectedItemIndex();
     }
 }
-void VoiceComponent::sliderValueChanged(juce::Slider* slider) {
-    if (slider == &portamentoTimeSlider) {
-        *params.PortamentoTime = portamentoTimeSlider.getValue();
-    }
-}
 void VoiceComponent::incDecValueChanged(IncDecButton* button) {
     if (button == &pitchBendRangeButton) {
         *params.PitchBendRange = pitchBendRangeButton.getValue();
@@ -243,7 +228,6 @@ void VoiceComponent::incDecValueChanged(IncDecButton* button) {
 }
 void VoiceComponent::timerCallback() {
     modeSelector.setSelectedItemIndex(params.Mode->getIndex(), juce::dontSendNotification);
-    portamentoTimeSlider.setValue(params.PortamentoTime->get(), juce::dontSendNotification);
     pitchBendRangeButton.setValue(params.PitchBendRange->get(), juce::dontSendNotification);
     targetNoteKindSelector.setSelectedItemIndex(params.TargetNoteKind->getIndex(), juce::dontSendNotification);
     targetNoteOctSelector.setSelectedItemIndex(params.TargetNoteOct->getIndex(), juce::dontSendNotification);
@@ -267,20 +251,11 @@ void VoiceComponent::timerCallback() {
         octName = (isAnyNoteInOctEnabled ? "*" : " ") + octName;
         targetNoteOctSelector.changeItemText(octIndex + 1, octName);
     }
-
-    auto isMono = params.isMonoMode();
-    portamentoTimeLabel.setEnabled(isMono);
-    portamentoTimeSlider.setEnabled(isMono);
-
     auto isDrum = params.isDrumMode();
-    portamentoTimeLabel.setVisible(!isDrum);
-    portamentoTimeSlider.setVisible(!isDrum);
     pitchBendRangeLabel.setVisible(!isDrum);
     pitchBendRangeButton.setVisible(!isDrum);
     targetNoteLabel.setVisible(isDrum);
     drumTargetSelector.setVisible(isDrum);
-
-    portamentoTimeSlider.setLookAndFeel(&berryLookAndFeel);
 }
 
 //==============================================================================
@@ -1100,51 +1075,32 @@ void AnalyserToggleItem::mouseUp(const juce::MouseEvent& e) {
 }
 
 //==============================================================================
-AnalyserToggle::AnalyserToggle(ANALYSER_MODE* analyserMode)
-    : analyserMode(analyserMode), spectrumToggle("Spectrum"), envelopeToggle("Envelope"), filterToggle("Filter") {
+AnalyserToggle::AnalyserToggle(ANALYSER_MODE* analyserMode) : analyserMode(analyserMode), spectrumToggle("Spectrum") {
     spectrumToggle.addListener(this);
     addAndMakeVisible(spectrumToggle);
 
-    envelopeToggle.addListener(this);
-    addAndMakeVisible(envelopeToggle);
-
-    filterToggle.addListener(this);
-    addAndMakeVisible(filterToggle);
-
     spectrumToggle.setValue(*analyserMode == ANALYSER_MODE::Spectrum);
-    envelopeToggle.setValue(*analyserMode == ANALYSER_MODE::Envelope);
-    filterToggle.setValue(*analyserMode == ANALYSER_MODE::Filter);
 }
 AnalyserToggle::~AnalyserToggle() {}
 void AnalyserToggle::paint(juce::Graphics& g) {}
 void AnalyserToggle::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
     spectrumToggle.setBounds(bounds.removeFromTop(25));
-    envelopeToggle.setBounds(bounds.removeFromTop(25));
-    filterToggle.setBounds(bounds.removeFromTop(25));
 }
 void AnalyserToggle::toggleItemSelected(AnalyserToggleItem* toggleItem) {
     if (toggleItem == &spectrumToggle) {
         *analyserMode = ANALYSER_MODE::Spectrum;
-    } else if (toggleItem == &envelopeToggle) {
-        *analyserMode = ANALYSER_MODE::Envelope;
-    } else if (toggleItem == &filterToggle) {
-        *analyserMode = ANALYSER_MODE::Filter;
     }
     spectrumToggle.setValue(*analyserMode == ANALYSER_MODE::Spectrum);
-    envelopeToggle.setValue(*analyserMode == ANALYSER_MODE::Envelope);
-    filterToggle.setValue(*analyserMode == ANALYSER_MODE::Filter);
 }
 
 //==============================================================================
 AnalyserWindow::AnalyserWindow(ANALYSER_MODE* analyserMode,
                                LatestDataProvider* latestDataProvider,
-                               MonoStack* monoStack,
                                VoiceParams& voiceParams,
                                std::vector<MainParams>& mainParamList)
     : analyserMode(analyserMode),
       latestDataProvider(latestDataProvider),
-      monoStack(monoStack),
       voiceParams(voiceParams),
       mainParamList(mainParamList),
       forwardFFT(fftOrder),
@@ -1180,182 +1136,6 @@ void AnalyserWindow::timerCallback() {
                 levelConsumer.ready = false;
                 //        readyToDrawFrame = true;
                 shouldRepaint = shouldRepaint || hasData;
-            }
-            break;
-        }
-        case ANALYSER_MODE::Envelope: {
-            auto& mainParams = mainParamList[voiceParams.isDrumMode() ? voiceParams.getTargetNote() : 128];
-            auto& envelopeParams = mainParams.envelopeParams;
-            auto& modEnvParams = mainParams.modEnvParams;
-
-            if (lastAnalyserMode != ANALYSER_MODE::Envelope) {
-                shouldRepaint = true;
-            }
-            lastAnalyserMode = ANALYSER_MODE::Envelope;
-            auto changed = false;
-            for (int i = 0; i < NUM_ENVELOPE; i++) {
-                auto p = SimpleAmpEnvParams(envelopeParams[i]);
-                if (!lastAmpEnvParams[i].equals(p)) {
-                    changed = true;
-                }
-                lastAmpEnvParams[i] = p;
-            }
-            for (int i = 0; i < NUM_MODENV; i++) {
-                auto p = SimpleModEnvParams(modEnvParams[i]);
-                if (!lastModEnvParams[i].equals(p)) {
-                    changed = true;
-                }
-                lastModEnvParams[i] = p;
-            }
-            if (!changed) {
-                break;
-            }
-            auto maxAD = std::max(
-                {envelopeParams[0].Attack->get() + envelopeParams[0].Decay->get() * 4,
-                 envelopeParams[1].Attack->get() + envelopeParams[1].Decay->get() * 4,
-                 (modEnvParams[0].shouldUseHold() ? modEnvParams[0].Wait->get() : modEnvParams[0].Attack->get()) +
-                     modEnvParams[0].Decay->get() * 4,
-                 (modEnvParams[1].shouldUseHold() ? modEnvParams[1].Wait->get() : modEnvParams[1].Attack->get()) +
-                     modEnvParams[1].Decay->get() * 4,
-                 (modEnvParams[2].shouldUseHold() ? modEnvParams[2].Wait->get() : modEnvParams[2].Attack->get()) +
-                     modEnvParams[2].Decay->get() * 4});
-            auto maxR = std::max({envelopeParams[0].Release->get() * 4, envelopeParams[1].Release->get() * 4});
-            auto maxSec = maxAD + maxR;
-            auto sampleRate = (float)scopeSize / maxSec;
-            for (int i = 0; i < NUM_ENVELOPE; i++) {
-                ampEnvs[i].setParams(envelopeParams[i].AttackCurve->get(),
-                                     envelopeParams[i].Attack->get(),
-                                     0,
-                                     envelopeParams[i].Decay->get(),
-                                     envelopeParams[i].Sustain->get(),
-                                     envelopeParams[i].Release->get());
-            }
-            for (int i = 0; i < NUM_MODENV; i++) {
-                if (modEnvParams[i].shouldUseHold()) {
-                    modEnvs[i].setParams(0.5, 0.0, modEnvParams[i].Wait->get(), modEnvParams[i].Decay->get(), 0.0, 0.0);
-                } else {
-                    modEnvs[i].setParams(
-                        0.5, modEnvParams[i].Attack->get(), 0.0, modEnvParams[i].Decay->get(), 0.0, 0.0);
-                }
-            }
-            for (int i = 0; i < NUM_ENVELOPE; i++) {
-                ampEnvs[i].doAttack(sampleRate);
-            }
-            for (int i = 0; i < NUM_MODENV; i++) {
-                modEnvs[i].doAttack(sampleRate);
-            }
-            int releasePoint = sampleRate * maxAD;
-            for (int pos = 0; pos < scopeSize; pos++) {
-                if (pos == releasePoint) {
-                    for (int i = 0; i < NUM_ENVELOPE; i++) {
-                        ampEnvs[i].doRelease(sampleRate);
-                    }
-                }
-                for (int i = 0; i < NUM_ENVELOPE; i++) {
-                    scopeDataForAmpEnv[i][pos] = ampEnvs[i].getValue();
-                    ampEnvs[i].step(sampleRate);
-                }
-                for (int i = 0; i < NUM_MODENV; i++) {
-                    auto value = 0.0f;
-                    if (modEnvParams[i].Enabled->get()) {
-                        value = modEnvs[i].getValue();
-                        if (!modEnvParams[i].isTargetFreq() && modEnvParams[i].isFadeIn()) {
-                            value = 1 - value;
-                        }
-                    }
-                    scopeDataForModEnv[i][pos] = value;
-                    modEnvs[i].step(sampleRate);
-                }
-            }
-            for (int i = 0; i < NUM_ENVELOPE; i++) {
-                ampEnvs[i].forceStop();
-            }
-            for (int i = 0; i < NUM_MODENV; i++) {
-                modEnvs[i].forceStop();
-            }
-            readyToDrawFrame = true;
-            shouldRepaint = true;
-            break;
-        }
-        case ANALYSER_MODE::Filter: {
-            auto& mainParams = mainParamList[voiceParams.isDrumMode() ? voiceParams.getTargetNote() : 128];
-            auto& oscParams = mainParams.oscParams;
-            auto& filterParams = mainParams.filterParams;
-
-            if (lastAnalyserMode != ANALYSER_MODE::Filter) {
-                shouldRepaint = true;
-            }
-            lastAnalyserMode = ANALYSER_MODE::Filter;
-
-            bool noteChanged = false;
-            if (monoStack->latestNoteNumber != 0) {
-                auto newNoteNumber = monoStack->latestNoteNumber;
-                noteChanged = relNoteNumber != newNoteNumber;
-                relNoteNumber = newNoteNumber;
-            }
-            for (int i = 0; i < NUM_FILTER; ++i) {
-                auto filterType = filterParams[i].getType();
-                double freq;
-                bool isRel = false;
-                switch (filterParams[i].getFreqType()) {
-                    case FILTER_FREQ_TYPE::Absolute: {
-                        freq = filterParams[i].Hz->get();
-                        break;
-                    }
-                    case FILTER_FREQ_TYPE::Relative: {
-                        isRel = true;
-                        auto target = filterParams[i].Target->getIndex();
-                        float lastNote = relNoteNumber;
-                        if (target != NUM_OSC) {
-                            lastNote += oscParams[target].Octave->get() * 12;
-                            lastNote += oscParams[target].Coarse->get();
-                        }
-                        lastNote += filterParams[i].Semitone->get();
-                        freq = 440.0 * std::pow(2.0, (float)(lastNote - 69) / 12);
-                        break;
-                    }
-                }
-                auto q = filterParams[i].Q->get();
-                auto gain = filterParams[i].Gain->get();
-
-                auto params = SimpleFilterParams();
-                params.enabled = filterParams[i].Enabled->get();
-                params.type = filterParams[i].Type->getIndex();
-                params.freq = freq;
-                params.q = q;
-                params.gain = gain;
-                if (lastFilterParams[i].equals(params) && !(isRel && noteChanged)) {
-                    continue;
-                }
-                lastFilterParams[i] = params;
-
-                readyToDrawFrame = true;
-                shouldRepaint = true;
-
-                if (!filterParams[i].Enabled->get()) {
-                    continue;
-                }
-                auto& filter = filters[i];
-                auto sampleRate = 48000;  // TODO: ?
-                filter.setSampleRate(sampleRate);
-                filter.initializePastData();
-                std::fill_n(filterSource, fftSize * 2, 0);
-                filterSource[0] = 1;
-                for (int i = 0; i < fftSize; i++) {
-                    filterSource[i] = filter.step(filterType, freq, q, gain, 0, filterSource[i]);
-                }
-                forwardFFT.performFrequencyOnlyForwardTransform(filterSource);
-
-                auto minFreq = 40.0f;
-                auto maxFreq = 20000.0f;
-                auto mindB = -50.0f;
-                auto maxdB = 50.0f;
-                for (int j = 0; j < scopeSize; ++j) {
-                    float hz = xToHz(minFreq, maxFreq, (float)j / scopeSize);
-                    float gain = getFFTDataByHz(filterSource, fftSize, sampleRate, hz);
-                    auto level = juce::jmap(juce::Decibels::gainToDecibels(gain), mindB, maxdB, 0.0f, 1.0f);
-                    scopeDataForFilter[i][j] = level;
-                }
             }
             break;
         }
@@ -1437,39 +1217,6 @@ void AnalyserWindow::paint(juce::Graphics& g) {
                 paintLevel(g, offsetX, offsetY, levelWidth, height, currentLevel[0]);
                 offsetX += levelWidth;
                 paintLevel(g, offsetX, offsetY, levelWidth, height, currentLevel[1]);
-                break;
-            }
-            case ANALYSER_MODE::Envelope: {
-                auto& mainParams = mainParamList[voiceParams.isDrumMode() ? voiceParams.getTargetNote() : 128];
-                auto& modEnvParams = mainParams.modEnvParams;
-
-                auto spectrumWidth = displayBounds.getWidth();
-                for (int i = NUM_MODENV - 1; i >= 0; i--) {
-                    if (!modEnvParams[i].Enabled->get()) {
-                        continue;
-                    }
-                    juce::Colour colour = colour::ANALYSER_LINE2;
-                    paintSpectrum(g, colour, offsetX, offsetY, spectrumWidth, height, &scopeDataForModEnv[i][0]);
-                }
-                for (int i = NUM_ENVELOPE - 1; i >= 0; i--) {
-                    juce::Colour colour = colour::ANALYSER_LINE;
-                    paintSpectrum(g, colour, offsetX, offsetY, spectrumWidth, height, &scopeDataForAmpEnv[i][0]);
-                }
-                break;
-            }
-            case ANALYSER_MODE::Filter: {
-                auto& mainParams = mainParamList[voiceParams.isDrumMode() ? voiceParams.getTargetNote() : 128];
-                auto& filterParams = mainParams.filterParams;
-
-                for (int i = 0; i < NUM_FILTER; i++) {
-                    if (!filterParams[i].Enabled->get()) {
-                        continue;
-                    }
-                    auto spectrumWidth = displayBounds.getWidth();
-                    bool isRel = !filterParams[i].isFreqAbsolute();
-                    juce::Colour colour = isRel ? colour::ANALYSER_LINE2 : colour::ANALYSER_LINE;
-                    paintSpectrum(g, colour, offsetX, offsetY, spectrumWidth, height, &scopeDataForFilter[i][0]);
-                }
                 break;
             }
         }

@@ -9,7 +9,7 @@
 
 using namespace styles;
 
-enum class ANALYSER_MODE { Spectrum, Envelope, Filter };
+enum class ANALYSER_MODE { Spectrum };
 
 //==============================================================================
 
@@ -372,7 +372,6 @@ private:
 //==============================================================================
 class VoiceComponent : public juce::Component,
                        juce::ComboBox::Listener,
-                       juce::Slider::Listener,
                        IncDecButton::Listener,
                        private juce::Timer,
                        ComponentHelper {
@@ -386,7 +385,6 @@ public:
 
 private:
     virtual void comboBoxChanged(juce::ComboBox* comboBox) override;
-    virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void incDecValueChanged(IncDecButton* button) override;
     virtual void timerCallback() override;
 
@@ -396,13 +394,11 @@ private:
     juce::Component drumTargetSelector;
 
     juce::ComboBox modeSelector;
-    juce::Slider portamentoTimeSlider;
     IncDecButton pitchBendRangeButton;
     juce::ComboBox targetNoteKindSelector;
     juce::ComboBox targetNoteOctSelector;
 
     juce::Label modeLabel;
-    juce::Label portamentoTimeLabel;
     juce::Label pitchBendRangeLabel;
     juce::Label targetNoteLabel;
 };
@@ -784,8 +780,6 @@ public:
 private:
     ANALYSER_MODE* analyserMode;
     AnalyserToggleItem spectrumToggle;
-    AnalyserToggleItem envelopeToggle;
-    AnalyserToggleItem filterToggle;
 
     virtual void toggleItemSelected(AnalyserToggleItem* toggleItem) override;
 };
@@ -795,7 +789,6 @@ class AnalyserWindow : public juce::Component, private juce::Timer {
 public:
     AnalyserWindow(ANALYSER_MODE* analyserMode,
                    LatestDataProvider* latestDataProvider,
-                   MonoStack* monoStack,
                    VoiceParams& voiceParams,
                    std::vector<MainParams>& mainParamList);
     virtual ~AnalyserWindow();
@@ -808,7 +801,6 @@ private:
     enum { scopeSize = 512 };
     ANALYSER_MODE* analyserMode;
     LatestDataProvider* latestDataProvider;
-    MonoStack* monoStack;
     VoiceParams& voiceParams;
     std::vector<MainParams>& mainParamList;
     ANALYSER_MODE lastAnalyserMode = ANALYSER_MODE::Spectrum;

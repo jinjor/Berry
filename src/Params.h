@@ -18,7 +18,6 @@ public:
 class VoiceParams : public SynthParametersBase {
 public:
     juce::AudioParameterChoice* Mode;
-    juce::AudioParameterFloat* PortamentoTime;
     juce::AudioParameterInt* PitchBendRange;
     juce::AudioParameterChoice* TargetNoteKind;
     juce::AudioParameterChoice* TargetNoteOct;
@@ -31,21 +30,16 @@ public:
 
     VOICE_MODE getMode() { return static_cast<VOICE_MODE>(Mode->getIndex()); }
 
-    bool isMonoMode() { return getMode() == VOICE_MODE::Mono; }
     bool isDrumMode() { return getMode() == VOICE_MODE::Drum; }
     int getTargetNote() {
         return (TARGET_NOTE_OCT_VALUES[TargetNoteOct->getIndex()] + 2) * 12 + TargetNoteKind->getIndex();
     }
 
-    bool isMonoModeFreezed;
     bool isDrumModeFreezed;
-    float portamentoTime;
     int pitchBendRange;
     int targetNote;
     void freeze() {
-        isMonoModeFreezed = isMonoMode();
         isDrumModeFreezed = isDrumMode();
-        portamentoTime = PortamentoTime->get();
         pitchBendRange = PitchBendRange->get();
         targetNote = getTargetNote();
     }
@@ -56,7 +50,7 @@ private:
 //==============================================================================
 class GlobalParams : public SynthParametersBase {
 public:
-    //    TODO: portamento time?, pitch bend range?, velocity sense
+    //    TODO: velocity sense
     juce::AudioParameterFloat* Pitch;
     juce::AudioParameterFloat* Pan;
     juce::AudioParameterFloat* Expression;
@@ -89,8 +83,7 @@ private:
 //==============================================================================
 class MasterParams : public SynthParametersBase {
 public:
-    //    TODO: portamento time?, pitch bend range?, velocity sense
-
+    //    TODO: velocity sense
     juce::AudioParameterFloat* Pan;
     juce::AudioParameterFloat* MasterVolume;
 

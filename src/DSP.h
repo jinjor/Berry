@@ -8,8 +8,8 @@ using namespace math_constants;
 
 namespace {
 
-enum class VOICE_MODE { Mono, Poly, Drum };
-const juce::StringArray VOICE_MODE_NAMES = juce::StringArray("Mono", "Poly", "Drum");
+enum class VOICE_MODE { Poly, Drum };
+const juce::StringArray VOICE_MODE_NAMES = juce::StringArray("Poly", "Drum");
 const juce::StringArray TARGET_NOTE_KINDS =
     juce::StringArray("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B");
 const juce::StringArray TARGET_NOTE_OCT_NAMES = juce::StringArray("-1", "0", "1", "2", "3", "4", "5");

@@ -110,12 +110,6 @@ void BerryVoice::mute(double duration) {
         adsr[i].doRelease(fixedSampleRate, duration);
     }
 }
-void BerryVoice::glide(int midiNoteNumber, float velocity) {
-    auto sampleRate = getSampleRate();
-    auto portamentTime = voiceParams.portamentoTime;
-    smoothNote.exponentialInfinite(portamentTime, midiNoteNumber, sampleRate);
-    smoothVelocity.exponentialInfinite(portamentTime, velocity, sampleRate);
-}
 void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int startSample, int numSamples) {
     if (BerrySound *playingSound = dynamic_cast<BerrySound *>(getCurrentlyPlayingSound().get())) {
         // DBG("startSample: " + std::to_string(startSample));

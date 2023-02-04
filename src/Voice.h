@@ -63,61 +63,6 @@ public:
 };
 
 //==============================================================================
-class MonoStack {
-public:
-    int latestNoteNumber = 0;
-    int firstNoteNumber = 0;
-    MonoStack(){};
-    ~MonoStack(){};
-    bool push(int noteNumber, float velocity) {
-        if (noteNumber == 0 || velocity == 0.0f) {
-            return false;
-        }
-        if (firstNoteNumber == 0) {
-            firstNoteNumber = noteNumber;
-        }
-        remove(noteNumber);
-        notes[noteNumber].velocity = velocity;
-        notes[noteNumber].next = latestNoteNumber;
-        latestNoteNumber = noteNumber;
-        return true;
-    }
-    bool remove(int noteNumber) {
-        if (latestNoteNumber == 0) {
-            return false;
-        }
-        auto next = notes[noteNumber].next;
-        notes[noteNumber].velocity = 0.0f;
-        notes[noteNumber].next = 0;
-        if (latestNoteNumber == noteNumber) {
-            latestNoteNumber = next;
-            if (latestNoteNumber == 0) {
-                firstNoteNumber = 0;
-            }
-            return true;
-        }
-        auto currentNoteNumber = latestNoteNumber;
-        while (notes[currentNoteNumber].next != 0) {
-            if (notes[currentNoteNumber].next == noteNumber) {
-                notes[currentNoteNumber].next = next;
-                return true;
-            }
-            currentNoteNumber = notes[currentNoteNumber].next;
-        }
-        return false;
-    }
-    float getVelocity(int noteNumber) { return notes[noteNumber].velocity; }
-    void reset() { std::fill_n(notes, 128, NoteInfo{}); }
-
-private:
-    struct NoteInfo {
-        float velocity = 0.0f;
-        int next = 0;
-    };
-    NoteInfo notes[128]{};
-};
-
-//==============================================================================
 struct Modifiers {
     double normalizedAngleShift[NUM_OSC]{0.0, 0.0, 0.0};
     double octShift[NUM_OSC]{0.0, 0.0, 0.0};
@@ -145,7 +90,6 @@ public:
                    juce::SynthesiserSound *,
                    int currentPitchWheelPosition) override;
     void stopNote(float velocity, bool allowTailOff) override;
-    void glide(int midiNoteNumber, float velocity);
     void mute(double duration);
     virtual void pitchWheelMoved(int) override{};
     virtual void controllerMoved(int, int) override{};
@@ -196,15 +140,10 @@ private:
 class BerrySynthesiser : public juce::Synthesiser {
 public:
     BerrySynthesiser(CurrentPositionInfo *currentPositionInfo,
-                     MonoStack *monoStack,
                      std::vector<std::unique_ptr<juce::AudioBuffer<float>>> &buffers,
                      std::vector<std::optional<juce::AudioBuffer<float>>> &busBuffers,
                      AllParams &allParams)
-        : currentPositionInfo(currentPositionInfo),
-          monoStack(monoStack),
-          buffers(buffers),
-          busBuffers(busBuffers),
-          allParams(allParams) {
+        : currentPositionInfo(currentPositionInfo), buffers(buffers), busBuffers(busBuffers), allParams(allParams) {
         addSound(new BerrySound(allParams.voiceParams, allParams.mainParamList));
         for (auto i = 0; i < 129; i++) {
             stereoDelays.push_back(std::unique_ptr<StereoDelay>(nullptr));
@@ -233,17 +172,6 @@ public:
             auto velocity = m.getFloatVelocity();
             for (auto *sound : sounds) {
                 if (sound->appliesToNote(midiNoteNumber) && sound->appliesToChannel(channel)) {
-                    if (BerryVoice *voice = dynamic_cast<BerryVoice *>(voices[0])) {
-                        bool playingNotesExist = monoStack->latestNoteNumber != 0;
-                        monoStack->push(midiNoteNumber, velocity);
-                        if (allParams.voiceParams.isMonoModeFreezed) {
-                            jassert(getNumVoices() == 1);
-                            if (voice->isPlayingChannel(channel) && playingNotesExist) {
-                                voice->glide(midiNoteNumber, velocity);
-                                return;
-                            }
-                        }
-                    }
                     if (allParams.voiceParams.isDrumModeFreezed) {
                         auto &drumParams = allParams.mainParamList[midiNoteNumber].drumParams;
                         if (drumParams.noteToMuteEnabled) {
@@ -260,34 +188,11 @@ public:
                 }
             }
         } else if (m.isNoteOff()) {
-            auto midiNoteNumber = m.getNoteNumber();
-            for (auto *sound : sounds) {
-                if (sound->appliesToNote(midiNoteNumber) && sound->appliesToChannel(channel)) {
-                    if (BerryVoice *voice = dynamic_cast<BerryVoice *>(voices[0])) {
-                        int firstNoteNumber = monoStack->firstNoteNumber;
-                        bool removed = monoStack->remove(midiNoteNumber);
-                        if (!removed) {
-                            return;
-                        }
-                        bool playingNotesExist = monoStack->latestNoteNumber != 0;
-                        if (allParams.voiceParams.isMonoModeFreezed) {
-                            jassert(getNumVoices() == 1);
-                            if (voice->isPlayingChannel(channel) && playingNotesExist) {
-                                auto velocity = monoStack->getVelocity(monoStack->latestNoteNumber);
-                                jassert(velocity != 0);
-                                voice->glide(monoStack->latestNoteNumber, velocity);
-                                return;
-                            }
-                            noteOff(channel, firstNoteNumber, m.getFloatVelocity(), true);
-                            return;
-                        }
-                    }
-                }
-            }
+            // noop
         } else if (m.isAllNotesOff()) {
-            monoStack->reset();
+            // noop
         } else if (m.isAllSoundOff()) {
-            monoStack->reset();
+            // noop
         }
         jassert(getNumVoices() > 0);
         Synthesiser::handleMidiEvent(m);
@@ -390,8 +295,6 @@ public:
 
 private:
     CurrentPositionInfo *currentPositionInfo;
-
-    MonoStack *monoStack;
     std::vector<std::unique_ptr<juce::AudioBuffer<float>>> &buffers;
     std::vector<std::optional<juce::AudioBuffer<float>>> &busBuffers;
     AllParams &allParams;

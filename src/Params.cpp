@@ -55,12 +55,6 @@ VoiceParams::VoiceParams() {
     std::string namePrefix = "Voice ";
     Mode = new juce::AudioParameterChoice(
         idPrefix + "MODE", namePrefix + "Mode", VOICE_MODE_NAMES, VOICE_MODE_NAMES.indexOf("Poly"));
-    PortamentoTime = new juce::AudioParameterFloat(idPrefix + "PORTAMENTO_TIME",
-                                                   namePrefix + "Portamento Time",
-                                                   rangeWithSkewForCentre(0.001f, 1.0f, 0.1f),
-                                                   0.02f);
-    PitchBendRange =
-        new juce::AudioParameterInt(idPrefix + "PITCH_BEND_RANGE", namePrefix + "Pitch-Bend Range", 1, 12, 2);
     TargetNoteKind = new juce::AudioParameterChoice(idPrefix + "TARGET_NOTE_KIND",
                                                     namePrefix + "Target Note Kind",
                                                     TARGET_NOTE_KINDS,
@@ -73,22 +67,16 @@ VoiceParams::VoiceParams() {
 }
 void VoiceParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Mode);
-    processor.addParameter(PortamentoTime);
-    processor.addParameter(PitchBendRange);
     processor.addParameter(TargetNoteKind);
     processor.addParameter(TargetNoteOct);
 }
 void VoiceParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(Mode->paramID, Mode->getIndex());
-    xml.setAttribute(PortamentoTime->paramID, PortamentoTime->get());
-    xml.setAttribute(PitchBendRange->paramID, PitchBendRange->get());
     xml.setAttribute(TargetNoteKind->paramID, TargetNoteKind->getIndex());
     xml.setAttribute(TargetNoteOct->paramID, TargetNoteOct->getIndex());
 }
 void VoiceParams::loadParameters(juce::XmlElement& xml) {
     *Mode = xml.getIntAttribute(Mode->paramID, 0);
-    *PortamentoTime = xml.getDoubleAttribute(PortamentoTime->paramID, 0.001);
-    *PitchBendRange = xml.getIntAttribute(PitchBendRange->paramID, 2);
     *TargetNoteKind = xml.getIntAttribute(TargetNoteKind->paramID, TARGET_NOTE_KINDS.indexOf("C"));
     *TargetNoteOct = xml.getIntAttribute(TargetNoteOct->paramID, TARGET_NOTE_OCT_NAMES.indexOf("1"));
 }
@@ -535,7 +523,6 @@ void replaceAttributeNames(juce::XmlElement& xml, juce::StringRef before, juce::
     }
 }
 void AllParams::saveParametersToClipboard(juce::XmlElement& xml) {
-    // TODO: portamento, pitchbend range
     auto index = voiceParams.isDrumMode() ? voiceParams.getTargetNote() : 128;
     xml.setAttribute("DRUM_MODE", voiceParams.isDrumMode());
     mainParamList[index].saveParameters(xml);

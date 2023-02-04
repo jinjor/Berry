@@ -13,8 +13,7 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
       audioProcessor(p),
       voiceComponent{SectionComponent{"VOICE", HEADER_CHECK::Hidden, std::make_unique<VoiceComponent>(p.allParams)}},
       analyserToggle(&analyserMode),
-      analyserWindow(
-          &analyserMode, &p.latestDataProvider, &p.monoStack, p.allParams.voiceParams, p.allParams.mainParamList),
+      analyserWindow(&analyserMode, &p.latestDataProvider, p.allParams.voiceParams, p.allParams.mainParamList),
       statusComponent(&p.polyphony, &p.timeConsumptionState, &p.latestDataProvider),
       utilComponent{SectionComponent{"UTILITY", HEADER_CHECK::Hidden, std::make_unique<UtilComponent>(p)}},
       oscComponents{

@@ -22,7 +22,7 @@ BerryAudioProcessor::BerryAudioProcessor()
 #endif
       ,
       allParams{},
-      synth(&currentPositionInfo, &monoStack, buffers, busBuffers, allParams) {
+      synth(&currentPositionInfo, buffers, busBuffers, allParams) {
 
     buffers.reserve(129);
     for (auto i = 0; i < 129; i++) {
@@ -137,12 +137,7 @@ void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& _buffer, juce::
     }
     auto voiceMode = static_cast<VOICE_MODE>(allParams.voiceParams.Mode->getIndex());
     int numVoices = 64;
-    if (voiceMode == VOICE_MODE::Mono && synth.getNumVoices() != 1) {
-        //        this->monoStack.reset();
-        synth.clearVoices();
-        synth.addVoice(new BerryVoice(
-            &currentPositionInfo, buffers, allParams.globalParams, allParams.voiceParams, allParams.mainParamList));
-    } else if ((voiceMode == VOICE_MODE::Poly || voiceMode == VOICE_MODE::Drum) && synth.getNumVoices() != numVoices) {
+    if (synth.getNumVoices() != numVoices) {
         synth.clearVoices();
         for (auto i = 0; i < numVoices; ++i) {
             synth.addVoice(new BerryVoice(
