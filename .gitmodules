@@ -1,0 +1,10 @@
+[submodule "libs/JUCE"]
+	path = libs/JUCE
+	url = https://github.com/juce-framework/JUCE
+	ignore = dirty
+[submodule "libs/benchmark"]
+	path = libs/benchmark
+	url = https://github.com/google/benchmark.git
+[submodule "libs/googletest"]
+	path = libs/googletest
+	url = https://github.com/google/googletest.git
