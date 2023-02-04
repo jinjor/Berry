@@ -128,8 +128,6 @@ struct Modifiers {
     double gain[NUM_OSC]{1.0, 1.0, 1.0};
     double filterOctShift[NUM_FILTER]{0.0, 0.0};
     double filterQExp[NUM_FILTER]{1.0, 1.0};
-    double lfoOctShift[NUM_LFO]{0.0, 0.0, 0.0};
-    double lfoAmountGain[NUM_LFO]{1.0, 1.0, 1.0};
 };
 
 //==============================================================================
@@ -169,7 +167,6 @@ private:
     MultiOsc oscs[NUM_OSC];
     Adsr adsr[NUM_ENVELOPE];
     Filter filters[NUM_FILTER];
-    Osc lfos[NUM_LFO];
     Adsr modEnvs[NUM_MODENV];
 
     TransitiveValue smoothNote;
@@ -192,7 +189,6 @@ private:
         //        return Y * std::pow(X, noteNumber);// こっちの方がパフォーマンス悪かった
     }
     double shiftHertsByNotes(double herts, double notes) { return herts * std::pow(2.0, notes * A); }
-    void updateModifiersByLfo(Modifiers &modifiers);
     void updateModifiersByModEnv(Modifiers &modifiers, double sampleRate);
 };
 
@@ -447,33 +443,6 @@ public:
                                         }
                                         case CONTROL_TARGET_FILTER_PARAM::Q: {
                                             params.setQFromControl(normalizedValue);
-                                            params.freeze();
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            break;
-                        }
-                        case CONTROL_TARGET_TYPE::LFO: {
-                            int targetIndex = params.targetLfo;
-                            auto targetParam = params.targetLfoParam;
-                            for (int lfoIndex = 0; lfoIndex < NUM_MODENV; ++lfoIndex) {
-                                if (targetIndex == lfoIndex) {
-                                    auto &params = mainParams.lfoParams[lfoIndex];
-                                    switch (targetParam) {
-                                        case CONTROL_TARGET_LFO_PARAM::Freq: {
-                                            if (params.shouldUseFastFreqFreezed) {
-                                                params.setFastFreqFromControl(normalizedValue);
-                                                params.freeze();
-                                            } else {
-                                                params.setSlowFreqFromControl(normalizedValue);
-                                                params.freeze();
-                                            }
-                                            break;
-                                        }
-                                        case CONTROL_TARGET_LFO_PARAM::Amount: {
-                                            params.setAmountFromControl(normalizedValue);
                                             params.freeze();
                                             break;
                                         }

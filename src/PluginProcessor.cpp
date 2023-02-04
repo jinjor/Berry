@@ -29,9 +29,6 @@ BerryAudioProcessor::BerryAudioProcessor()
         buffers.push_back(std::make_unique<juce::AudioBuffer<float>>(2, 0));
     }
     *allParams.mainParamList[128].oscParams[0].Enabled = true;
-    *allParams.controlItemParams[0].Number = CONTROL_NUMBER_NAMES.indexOf("1: Modulation");
-    *allParams.controlItemParams[0].TargetType = CONTROL_TARGET_TYPE_NAMES.indexOf("LFO");
-    *allParams.controlItemParams[0].TargetLfoParam = CONTROL_TARGET_LFO_PARAM_NAMES.indexOf("Amount");
 
     allParams.addAllParameters(*this);
 }

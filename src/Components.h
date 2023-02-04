@@ -613,49 +613,6 @@ private:
 };
 
 //==============================================================================
-class LfoComponent : public juce::Component,
-                     juce::ComboBox::Listener,
-                     juce::Slider::Listener,
-                     private juce::Timer,
-                     ComponentHelper {
-public:
-    LfoComponent(int index, AllParams& allParams);
-    virtual ~LfoComponent();
-    LfoComponent(const LfoComponent&) = delete;
-
-    virtual void paint(juce::Graphics& g) override;
-    virtual void resized() override;
-
-private:
-    virtual void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
-    virtual void sliderValueChanged(juce::Slider* slider) override;
-    virtual void timerCallback() override;
-    int index;
-
-    AllParams& allParams;
-
-    juce::Component targetSelector;
-
-    juce::ComboBox targetTypeSelector;
-    juce::ComboBox targetOscSelector;
-    juce::ComboBox targetFilterSelector;
-    juce::ComboBox targetOscParamSelector;
-    juce::ComboBox targetFilterParamSelector;
-    juce::ComboBox waveformSelector;
-    juce::Slider slowFreqSlider;
-    juce::Slider fastFreqSlider;
-    juce::Slider amountSlider;
-
-    juce::Label targetLabel;
-    juce::Label typeLabel;
-    juce::Label waveformLabel;
-    juce::Label freqLabel;
-    juce::Label amountLabel;
-
-    LfoParams& getSelectedLfoParams() { return allParams.getCurrentMainParams().lfoParams[index]; }
-};
-
-//==============================================================================
 class ModEnvComponent : public juce::Component,
                         juce::ComboBox::Listener,
                         juce::Slider::Listener,
@@ -682,10 +639,8 @@ private:
     juce::ComboBox targetTypeSelector;
     juce::ComboBox targetOscSelector;
     juce::ComboBox targetFilterSelector;
-    juce::ComboBox targetLfoSelector;
     juce::ComboBox targetOscParamSelector;
     juce::ComboBox targetFilterParamSelector;
-    juce::ComboBox targetLfoParamSelector;
     juce::ComboBox fadeSelector;
     juce::Slider peakFreqSlider;
     juce::Slider waitSlider;
@@ -986,12 +941,10 @@ private:
     juce::ComboBox targetTypeSelector;
     juce::ComboBox targetOscSelector;
     juce::ComboBox targetFilterSelector;
-    juce::ComboBox targetLfoSelector;
 
     juce::ComboBox targetModEnvSelector;
     juce::ComboBox targetOscParamSelector;
     juce::ComboBox targetFilterParamSelector;
-    juce::ComboBox targetLfoParamSelector;
     juce::ComboBox targetModEnvParamSelector;
     juce::ComboBox targetMiscParamSelector;
 };

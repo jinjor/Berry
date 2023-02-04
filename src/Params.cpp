@@ -237,73 +237,6 @@ void FilterParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-LfoParams::LfoParams(std::string idPrefix, std::string namePrefix, int index) {
-    idPrefix += "LFO" + std::to_string(index) + "_";
-    namePrefix += "LFO" + std::to_string(index) + " ";
-    Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
-    TargetType = new juce::AudioParameterChoice(idPrefix + "TARGET_TYPE",
-                                                namePrefix + "Target Type",
-                                                LFO_TARGET_TYPE_NAMES,
-                                                LFO_TARGET_TYPE_NAMES.indexOf("OSC"));
-    TargetOsc = new juce::AudioParameterChoice(
-        idPrefix + "TARGET_OSC", namePrefix + "Target OSC", LFO_TARGET_OSC_NAMES, LFO_TARGET_OSC_NAMES.indexOf("All"));
-    TargetFilter = new juce::AudioParameterChoice(idPrefix + "TARGET_FILTER",
-                                                  namePrefix + "Target Filter",
-                                                  LFO_TARGET_FILTER_NAMES,
-                                                  LFO_TARGET_FILTER_NAMES.indexOf("All"));
-    TargetOscParam = new juce::AudioParameterChoice(idPrefix + "TARGET_OSC_PARAM",
-                                                    namePrefix + "Target OSC Param",
-                                                    LFO_TARGET_OSC_PARAM_NAMES,
-                                                    LFO_TARGET_OSC_PARAM_NAMES.indexOf("Vibrato"));
-    TargetFilterParam = new juce::AudioParameterChoice(idPrefix + "TARGET_FILTER_PARAM",
-                                                       namePrefix + "Target Filter Param",
-                                                       LFO_TARGET_FILTER_PARAM_NAMES,
-                                                       LFO_TARGET_FILTER_PARAM_NAMES.indexOf("Freq"));
-    Waveform = new juce::AudioParameterChoice(
-        idPrefix + "WAVEFORM", namePrefix + "Waveform", LFO_WAVEFORM_NAMES, LFO_WAVEFORM_NAMES.indexOf("Sine"));
-    SlowFreq = new juce::AudioParameterFloat(
-        idPrefix + "SLOW_FREQ", namePrefix + "Slow Freq", rangeWithSkewForCentre(0.0f, 100.0f, 4.0f), 4.0f);
-    FastFreq = new juce::AudioParameterFloat(
-        idPrefix + "FAST_FREQ", namePrefix + "Fast Freq", rangeWithSkewForCentre(0.01f, 100.0f, 1.0f), 1.0f);
-    Amount = new juce::AudioParameterFloat(idPrefix + "AMOUNT", namePrefix + "Amount", 0.0f, 1.0f, 0.2f);
-    freeze();
-}
-void LfoParams::addAllParameters(juce::AudioProcessor& processor) {
-    processor.addParameter(Enabled);
-    processor.addParameter(TargetType);
-    processor.addParameter(TargetOsc);
-    processor.addParameter(TargetFilter);
-    processor.addParameter(TargetOscParam);
-    processor.addParameter(TargetFilterParam);
-    processor.addParameter(Waveform);
-    processor.addParameter(SlowFreq);
-    processor.addParameter(FastFreq);
-    processor.addParameter(Amount);
-}
-void LfoParams::saveParameters(juce::XmlElement& xml) {
-    xml.setAttribute(Enabled->paramID, Enabled->get());
-    xml.setAttribute(TargetType->paramID, TargetType->getIndex());
-    xml.setAttribute(TargetOsc->paramID, TargetOsc->getIndex());
-    xml.setAttribute(TargetFilter->paramID, TargetFilter->getIndex());
-    xml.setAttribute(TargetOscParam->paramID, TargetOscParam->getIndex());
-    xml.setAttribute(TargetFilterParam->paramID, TargetFilterParam->getIndex());
-    xml.setAttribute(SlowFreq->paramID, (double)SlowFreq->get());
-    xml.setAttribute(FastFreq->paramID, (double)FastFreq->get());
-    xml.setAttribute(Amount->paramID, (double)Amount->get());
-}
-void LfoParams::loadParameters(juce::XmlElement& xml) {
-    *Enabled = xml.getIntAttribute(Enabled->paramID, 0);
-    *TargetType = xml.getIntAttribute(TargetType->paramID, 0);
-    *TargetOsc = xml.getIntAttribute(TargetOsc->paramID, NUM_OSC);
-    *TargetFilter = xml.getIntAttribute(TargetOsc->paramID, NUM_FILTER);
-    *TargetOscParam = xml.getIntAttribute(TargetOscParam->paramID, 0);
-    *TargetFilterParam = xml.getIntAttribute(TargetFilterParam->paramID, 0);
-    *SlowFreq = (float)xml.getDoubleAttribute(SlowFreq->paramID, 0);
-    *FastFreq = (float)xml.getDoubleAttribute(FastFreq->paramID, 0);
-    *Amount = (float)xml.getDoubleAttribute(Amount->paramID, 1.0);
-}
-
-//==============================================================================
 ModEnvParams::ModEnvParams(std::string idPrefix, std::string namePrefix, int index) {
     idPrefix += "MODENV" + std::to_string(index) + "_";
     namePrefix += "ModEnv" + std::to_string(index) + " ";
@@ -320,10 +253,6 @@ ModEnvParams::ModEnvParams(std::string idPrefix, std::string namePrefix, int ind
                                                   namePrefix + "Target Filter",
                                                   MODENV_TARGET_FILTER_NAMES,
                                                   MODENV_TARGET_FILTER_NAMES.indexOf("All"));
-    TargetLfo = new juce::AudioParameterChoice(idPrefix + "TARGET_LFO",
-                                               namePrefix + "Target LFO",
-                                               MODENV_TARGET_LFO_NAMES,
-                                               MODENV_TARGET_LFO_NAMES.indexOf("All"));
     TargetOscParam = new juce::AudioParameterChoice(idPrefix + "TARGET_OSC_PARAM",
                                                     namePrefix + "Target OSC Param",
                                                     MODENV_TARGET_OSC_PARAM_NAMES,
@@ -332,10 +261,6 @@ ModEnvParams::ModEnvParams(std::string idPrefix, std::string namePrefix, int ind
                                                        namePrefix + "Target Filter Param",
                                                        MODENV_TARGET_FILTER_PARAM_NAMES,
                                                        MODENV_TARGET_FILTER_PARAM_NAMES.indexOf("Freq"));
-    TargetLfoParam = new juce::AudioParameterChoice(idPrefix + "TARGET_LFO_PARAM",
-                                                    namePrefix + "Target LFO Param",
-                                                    MODENV_TARGET_LFO_PARAM_NAMES,
-                                                    MODENV_TARGET_LFO_PARAM_NAMES.indexOf("Amount"));
     Fade = new juce::AudioParameterChoice(
         idPrefix + "FADE", namePrefix + "Fade", MODENV_FADE_NAMES, MODENV_FADE_NAMES.indexOf("In"));
     PeakFreq = new juce::AudioParameterFloat(idPrefix + "PEAK_FREQ", namePrefix + "Peak Freq", -8.0f, 8.0, 2.0f);
@@ -352,10 +277,8 @@ void ModEnvParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(TargetType);
     processor.addParameter(TargetOsc);
     processor.addParameter(TargetFilter);
-    processor.addParameter(TargetLfo);
     processor.addParameter(TargetOscParam);
     processor.addParameter(TargetFilterParam);
-    processor.addParameter(TargetLfoParam);
     processor.addParameter(Fade);
     processor.addParameter(PeakFreq);
     processor.addParameter(Wait);
@@ -367,10 +290,8 @@ void ModEnvParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(TargetType->paramID, TargetType->getIndex());
     xml.setAttribute(TargetOsc->paramID, TargetOsc->getIndex());
     xml.setAttribute(TargetFilter->paramID, TargetFilter->getIndex());
-    xml.setAttribute(TargetLfo->paramID, TargetLfo->getIndex());
     xml.setAttribute(TargetOscParam->paramID, TargetOscParam->getIndex());
     xml.setAttribute(TargetFilterParam->paramID, TargetFilterParam->getIndex());
-    xml.setAttribute(TargetLfoParam->paramID, TargetLfoParam->getIndex());
     xml.setAttribute(Fade->paramID, Fade->getIndex());
     xml.setAttribute(PeakFreq->paramID, (double)PeakFreq->get());
     xml.setAttribute(Wait->paramID, (double)Wait->get());
@@ -382,10 +303,8 @@ void ModEnvParams::loadParameters(juce::XmlElement& xml) {
     *TargetType = xml.getIntAttribute(TargetType->paramID, 0);
     *TargetOsc = xml.getIntAttribute(TargetOsc->paramID, NUM_OSC);
     *TargetFilter = xml.getIntAttribute(TargetOsc->paramID, NUM_FILTER);
-    *TargetLfo = xml.getIntAttribute(TargetOsc->paramID, NUM_LFO);
     *TargetOscParam = xml.getIntAttribute(TargetOscParam->paramID, 0);
     *TargetFilterParam = xml.getIntAttribute(TargetFilterParam->paramID, 0);
-    *TargetLfoParam = xml.getIntAttribute(TargetLfoParam->paramID, 0);
     *Fade = xml.getIntAttribute(Fade->paramID, 0);
     *PeakFreq = (float)xml.getDoubleAttribute(PeakFreq->paramID, 0);
     *Wait = (float)xml.getDoubleAttribute(Wait->paramID, 0);
@@ -510,9 +429,6 @@ MainParams::MainParams(int groupIndex)
                      EnvelopeParams{idPrefix(groupIndex), namePrefix(groupIndex), 1}},
       filterParams{FilterParams{idPrefix(groupIndex), namePrefix(groupIndex), 0},
                    FilterParams{idPrefix(groupIndex), namePrefix(groupIndex), 1}},
-      lfoParams{LfoParams{idPrefix(groupIndex), namePrefix(groupIndex), 0},
-                LfoParams{idPrefix(groupIndex), namePrefix(groupIndex), 1},
-                LfoParams{idPrefix(groupIndex), namePrefix(groupIndex), 2}},
       modEnvParams{ModEnvParams{idPrefix(groupIndex), namePrefix(groupIndex), 0},
                    ModEnvParams{idPrefix(groupIndex), namePrefix(groupIndex), 1},
                    ModEnvParams{idPrefix(groupIndex), namePrefix(groupIndex), 2}},
@@ -527,9 +443,6 @@ void MainParams::addAllParameters(juce::AudioProcessor& processor) {
         params.addAllParameters(processor);
     }
     for (auto& params : filterParams) {
-        params.addAllParameters(processor);
-    }
-    for (auto& params : lfoParams) {
         params.addAllParameters(processor);
     }
     for (auto& params : modEnvParams) {
@@ -549,9 +462,6 @@ void MainParams::saveParameters(juce::XmlElement& xml) {
     for (auto& param : filterParams) {
         param.saveParameters(xml);
     }
-    for (auto& param : lfoParams) {
-        param.saveParameters(xml);
-    }
     for (auto& param : modEnvParams) {
         param.saveParameters(xml);
     }
@@ -567,9 +477,6 @@ void MainParams::loadParameters(juce::XmlElement& xml) {
         param.loadParameters(xml);
     }
     for (auto& param : filterParams) {
-        param.loadParameters(xml);
-    }
-    for (auto& param : lfoParams) {
         param.loadParameters(xml);
     }
     for (auto& param : modEnvParams) {
@@ -598,10 +505,6 @@ ControlItemParams::ControlItemParams(int index) {
                                                   namePrefix + "TargetFilter",
                                                   CONTROL_TARGET_FILTER_NAMES,
                                                   CONTROL_TARGET_FILTER_NAMES.indexOf("1"));
-    TargetLfo = new juce::AudioParameterChoice(idPrefix + "TARGET_LFO",
-                                               namePrefix + "TargetLfo",
-                                               CONTROL_TARGET_LFO_NAMES,
-                                               CONTROL_TARGET_LFO_NAMES.indexOf("1"));
     TargetOscParam = new juce::AudioParameterChoice(idPrefix + "TARGET_OSC_PARAM",
                                                     namePrefix + "TargetOscParam",
                                                     CONTROL_TARGET_OSC_PARAM_NAMES,
@@ -610,10 +513,6 @@ ControlItemParams::ControlItemParams(int index) {
                                                        namePrefix + "TargetFilterParam",
                                                        CONTROL_TARGET_FILTER_PARAM_NAMES,
                                                        CONTROL_TARGET_FILTER_PARAM_NAMES.indexOf("Freq"));
-    TargetLfoParam = new juce::AudioParameterChoice(idPrefix + "TARGET_LFO_PARAM",
-                                                    namePrefix + "TargetLfoParam",
-                                                    CONTROL_TARGET_LFO_PARAM_NAMES,
-                                                    CONTROL_TARGET_LFO_PARAM_NAMES.indexOf("Amount"));
     TargetMiscParam = new juce::AudioParameterChoice(idPrefix + "TARGET_MISC_PARAM",
                                                      namePrefix + "TargetMiscParam",
                                                      CONTROL_TARGET_MISC_PARAM_NAMES,
@@ -625,10 +524,8 @@ void ControlItemParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(TargetType);
     processor.addParameter(TargetOsc);
     processor.addParameter(TargetFilter);
-    processor.addParameter(TargetLfo);
     processor.addParameter(TargetOscParam);
     processor.addParameter(TargetFilterParam);
-    processor.addParameter(TargetLfoParam);
     processor.addParameter(TargetMiscParam);
 }
 void ControlItemParams::saveParameters(juce::XmlElement& xml) {
@@ -636,10 +533,8 @@ void ControlItemParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(TargetType->paramID, TargetType->getIndex());
     xml.setAttribute(TargetOsc->paramID, TargetOsc->getIndex());
     xml.setAttribute(TargetFilter->paramID, TargetFilter->getIndex());
-    xml.setAttribute(TargetLfo->paramID, TargetLfo->getIndex());
     xml.setAttribute(TargetOscParam->paramID, TargetOscParam->getIndex());
     xml.setAttribute(TargetFilterParam->paramID, TargetFilterParam->getIndex());
-    xml.setAttribute(TargetLfoParam->paramID, TargetLfoParam->getIndex());
     xml.setAttribute(TargetMiscParam->paramID, TargetMiscParam->getIndex());
 }
 void ControlItemParams::loadParameters(juce::XmlElement& xml) {
@@ -647,10 +542,8 @@ void ControlItemParams::loadParameters(juce::XmlElement& xml) {
     *TargetType = xml.getIntAttribute(TargetType->paramID, 0);
     *TargetOsc = xml.getIntAttribute(TargetOsc->paramID, NUM_OSC);
     *TargetFilter = xml.getIntAttribute(TargetOsc->paramID, NUM_FILTER);
-    *TargetLfo = xml.getIntAttribute(TargetOsc->paramID, NUM_LFO);
     *TargetOscParam = xml.getIntAttribute(TargetOscParam->paramID, 0);
     *TargetFilterParam = xml.getIntAttribute(TargetFilterParam->paramID, 0);
-    *TargetLfoParam = xml.getIntAttribute(TargetLfoParam->paramID, 0);
     *TargetMiscParam = xml.getIntAttribute(TargetMiscParam->paramID, 0);
 }
 

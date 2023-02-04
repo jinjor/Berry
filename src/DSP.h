@@ -16,10 +16,9 @@ const juce::StringArray TARGET_NOTE_OCT_NAMES = juce::StringArray("-1", "0", "1"
 const int TARGET_NOTE_OCT_VALUES[7] = {-1, 0, 1, 2, 3, 4, 5};
 const juce::StringArray BUS_NAMES = juce::StringArray("Main", "1", "2", "3", "4");
 
-enum class WAVEFORM { Sine, Triangle, SawUp, SawDown, Square, Random, Pink, White };
-const juce::StringArray OSC_WAVEFORM_NAMES = juce::StringArray("Sine", "Triangle", "Saw", "Square", "Pink", "White");
-const WAVEFORM OSC_WAVEFORM_VALUES[6] = {
-    WAVEFORM::Sine, WAVEFORM::Triangle, WAVEFORM::SawDown, WAVEFORM::Square, WAVEFORM::Pink, WAVEFORM::White};
+enum class WAVEFORM { Sine, Pink, White };
+const juce::StringArray OSC_WAVEFORM_NAMES = juce::StringArray("Sine", "Pink", "White");
+const WAVEFORM OSC_WAVEFORM_VALUES[3] = {WAVEFORM::Sine, WAVEFORM::Pink, WAVEFORM::White};
 
 const juce::StringArray OSC_ENV_NAMES = juce::StringArray("1", "2");
 
@@ -32,38 +31,17 @@ const juce::StringArray FILTER_TYPE_NAMES =
 enum class FILTER_FREQ_TYPE { Absolute, Relative };
 const juce::StringArray FILTER_FREQ_TYPE_NAMES = juce::StringArray("Abs", "Rel");
 
-enum class LFO_TARGET_TYPE { OSC, Filter };
-const juce::StringArray LFO_TARGET_TYPE_NAMES = juce::StringArray("OSC", "Filter");
-
-const juce::StringArray LFO_TARGET_OSC_NAMES = juce::StringArray("1", "2", "3", "All");
-const juce::StringArray LFO_TARGET_FILTER_NAMES = juce::StringArray("1", "2", "All");
-
-enum class LFO_TARGET_OSC_PARAM { Vibrato, Tremolo, Edge, FM, AM, Pan };
-const juce::StringArray LFO_TARGET_OSC_PARAM_NAMES = juce::StringArray("Vibrato", "Tremolo", "Edge", "FM", "AM", "Pan");
-
-enum class LFO_TARGET_FILTER_PARAM { Freq, Q };
-const juce::StringArray LFO_TARGET_FILTER_PARAM_NAMES = juce::StringArray("Freq", "Q");
-
-const juce::StringArray LFO_WAVEFORM_NAMES =
-    juce::StringArray("Sine", "Triangle", "Saw-Up", "Saw-Down", "Square", "Random");
-const WAVEFORM LFO_WAVEFORM_VALUES[7] = {
-    WAVEFORM::Sine, WAVEFORM::Triangle, WAVEFORM::SawUp, WAVEFORM::SawDown, WAVEFORM::Square, WAVEFORM::Random};
-
-enum class MODENV_TARGET_TYPE { OSC, Filter, LFO };
-const juce::StringArray MODENV_TARGET_TYPE_NAMES = juce::StringArray("OSC", "Filter", "LFO");
+enum class MODENV_TARGET_TYPE { OSC, Filter };
+const juce::StringArray MODENV_TARGET_TYPE_NAMES = juce::StringArray("OSC", "Filter");
 
 const juce::StringArray MODENV_TARGET_OSC_NAMES = juce::StringArray("1", "2", "3", "All");
 const juce::StringArray MODENV_TARGET_FILTER_NAMES = juce::StringArray("1", "2", "All");
-const juce::StringArray MODENV_TARGET_LFO_NAMES = juce::StringArray("1", "2", "3", "All");
 
 enum class MODENV_TARGET_OSC_PARAM { Freq, Edge, Detune, Spread };
 const juce::StringArray MODENV_TARGET_OSC_PARAM_NAMES = juce::StringArray("Freq", "Edge", "Detune", "Spread");
 
 enum class MODENV_TARGET_FILTER_PARAM { Freq, Q };
 const juce::StringArray MODENV_TARGET_FILTER_PARAM_NAMES = juce::StringArray("Freq", "Q");
-
-enum class MODENV_TARGET_LFO_PARAM { Freq, Amount };
-const juce::StringArray MODENV_TARGET_LFO_PARAM_NAMES = juce::StringArray("Freq", "Amount");
 
 enum class MODENV_FADE { In, Out };
 const juce::StringArray MODENV_FADE_NAMES = juce::StringArray("In", "Out");
@@ -127,12 +105,11 @@ const juce::StringArray CONTROL_NUMBER_NAMES = juce::StringArray("None",
                                                                  "95: Phaser");
 const int CONTROL_NUMBER_VALUES[17]{-1, 1, 2, 4, 5, 71, 74, 75, 76, 77, 78, 79, 91, 92, 93, 94, 95};
 
-enum class CONTROL_TARGET_TYPE { OSC, Filter, LFO, Master };
-const juce::StringArray CONTROL_TARGET_TYPE_NAMES = juce::StringArray("OSC", "Filter", "LFO", "Misc");
+enum class CONTROL_TARGET_TYPE { OSC, Filter, Master };
+const juce::StringArray CONTROL_TARGET_TYPE_NAMES = juce::StringArray("OSC", "Filter", "Misc");
 
 const juce::StringArray CONTROL_TARGET_OSC_NAMES = juce::StringArray("1", "2", "3");
 const juce::StringArray CONTROL_TARGET_FILTER_NAMES = juce::StringArray("1", "2");
-const juce::StringArray CONTROL_TARGET_LFO_NAMES = juce::StringArray("1", "2", "3");
 const juce::StringArray CONTROL_TARGET_MODENV_NAMES = juce::StringArray("1", "2", "3");
 
 enum class CONTROL_TARGET_OSC_PARAM { Edge, Detune, Spread, /*Pan,*/ Gain };
@@ -142,9 +119,6 @@ const juce::StringArray CONTROL_TARGET_OSC_PARAM_NAMES =
 enum class CONTROL_TARGET_FILTER_PARAM { Freq, Q };
 const juce::StringArray CONTROL_TARGET_FILTER_PARAM_NAMES = juce::StringArray("Freq", "Q");
 
-enum class CONTROL_TARGET_LFO_PARAM { Freq, Amount };
-const juce::StringArray CONTROL_TARGET_LFO_PARAM_NAMES = juce::StringArray("Freq", "Amount");
-
 enum class CONTROL_TARGET_MISC_PARAM { PortamentoTime, DelayMix };
 const juce::StringArray CONTROL_TARGET_MISC_PARAM_NAMES = juce::StringArray("Portamento Time", "Delay Mix");
 
@@ -153,49 +127,13 @@ const juce::StringArray CONTROL_TARGET_MISC_PARAM_NAMES = juce::StringArray("Por
 //==============================================================================
 class Wavetable {
 public:
-    const int *lookup = reinterpret_cast<const int *>(BinaryData::lookup);
     const float *sine = reinterpret_cast<const float *>(BinaryData::sine);
-    const float *saw = reinterpret_cast<const float *>(BinaryData::saw);            // 128 variations
-    const float *parabola = reinterpret_cast<const float *>(BinaryData::parabola);  // 128 variations
     Wavetable(){};
     ~Wavetable(){};
     Wavetable(const Wavetable &) = delete;
     double getSineValue(double normalizedAngle) {
         normalizedAngle = std::fmod(normalizedAngle, 1.0);
         return getValue(sine, normalizedAngle);
-    }
-    double getSawDownValue(double freq, double normalizedAngle) {
-        normalizedAngle = std::fmod(normalizedAngle, 1.0);
-        const float *partial = getPartial(saw, freq);
-        return getValue(partial, normalizedAngle);
-    }
-    double getSawUpValue(double freq, double normalizedAngle) {
-        normalizedAngle = std::fmod(normalizedAngle, 1.0);
-        const float *partial = getPartial(saw, freq);
-        return getValueReverse(partial, normalizedAngle);
-    }
-    double getPulseValue(double freq, double normalizedAngle, double edge) {
-        double phaseShift = (1.0 - edge * 0.99) * 0.5;
-        jassert(phaseShift > 0.0);
-        jassert(phaseShift <= 0.5);
-        normalizedAngle = std::fmod(normalizedAngle, 1.0);
-        float pos1 = normalizedAngle;
-        float pos2 = std::fmod(pos1 + phaseShift, 1.0f);
-        const float *partial = getPartial(saw, freq);
-        return getValue(partial, pos1) + getValueReverse(partial, pos2) + (1.0 - 2 * phaseShift);
-    }
-    double getTriangleValue(double freq, double normalizedAngle) {
-        return getSlopedVariableTriangleValue(freq, normalizedAngle, 0.5);
-    }
-    double getSlopedVariableTriangleValue(double freq, double normalizedAngle, double edge) {
-        double phaseShift = (1.0 - edge * 0.9) * 0.5;
-        jassert(phaseShift > 0.0);
-        jassert(phaseShift <= 0.5);
-        normalizedAngle = std::fmod(normalizedAngle, 1.0);
-        float pos1 = normalizedAngle;
-        float pos2 = std::fmod(pos1 + phaseShift, 1.0f);
-        const float *partial = getPartial(parabola, freq);
-        return (getValue(partial, pos1) - getValue(partial, pos2)) / (8 * (phaseShift - phaseShift * phaseShift));
     }
 
 private:
@@ -204,16 +142,6 @@ private:
         int index = indexFloat;
         float fragment = indexFloat - index;
         return partial[index] * (1 - fragment) + partial[index + 1] * fragment;
-    }
-    double getValueReverse(const float *partial, float normalizedAngle) {
-        float indexFloat = normalizedAngle * 4095;
-        int index = indexFloat;
-        float fragment = indexFloat - index;
-        return partial[4095 - index] * (1 - fragment) + partial[4095 - index - 1] * fragment;
-    }
-    const float *getPartial(const float *data, double freq) {
-        int partialIndex = lookup[freq >= 22000 ? 21999 : (int)freq];
-        return &data[partialIndex * 4096];
     }
 };
 
@@ -757,39 +685,6 @@ public:
             case WAVEFORM::Sine:
                 //                return std::sin(angle);
                 return wavetable.getSineValue(normalizedAngle);
-            case WAVEFORM::Triangle:
-                if (useWavetable) {
-                    return wavetable.getSlopedVariableTriangleValue(freq, normalizedAngle, edge);
-                } else {
-                    normalizedAngle = std::fmod(normalizedAngle, 1.0);
-                    return normalizedAngle >= 0.5 ? normalizedAngle * 4.0 - 1.0 : normalizedAngle - 4.0 + 3.0;
-                }
-            case WAVEFORM::SawUp:
-                if (useWavetable) {
-                    return wavetable.getSawUpValue(freq, normalizedAngle);
-                } else {
-                    normalizedAngle = std::fmod(normalizedAngle, 1.0);
-                    return normalizedAngle * 2.0 - 1.0;
-                }
-            case WAVEFORM::SawDown:
-                if (useWavetable) {
-                    return wavetable.getSawDownValue(freq, normalizedAngle);
-                } else {
-                    normalizedAngle = std::fmod(normalizedAngle, 1.0);
-                    return normalizedAngle * -2.0 + 1.0;
-                }
-            case WAVEFORM::Square:
-                if (useWavetable) {
-                    return wavetable.getPulseValue(freq, normalizedAngle, edge);
-                } else {
-                    normalizedAngle = std::fmod(normalizedAngle, 1.0);
-                    return normalizedAngle < 0.5 ? 1.0 : -1.0;
-                }
-            case WAVEFORM::Random:
-                if (currentRandomValue == 0.0) {
-                    currentRandomValue = whiteNoise.nextDouble() * 2.0 - 1.0;
-                }
-                return currentRandomValue;
             case WAVEFORM::Pink: {
                 auto white = (whiteNoise.nextDouble() * 2.0 - 1.0) * 0.5;
                 bool eco = true;

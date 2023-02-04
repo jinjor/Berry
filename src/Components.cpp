@@ -760,134 +760,6 @@ void FilterComponent::timerCallback() {
 }
 
 //==============================================================================
-LfoComponent::LfoComponent(int index, AllParams& allParams)
-    : index(index),
-      allParams(allParams),
-      targetTypeSelector("TargetType"),
-      targetOscSelector("TargetOsc"),
-      targetFilterSelector("TargetFilter"),
-      targetOscParamSelector("TargetOscParam"),
-      targetFilterParamSelector("TargetFilterParam"),
-      waveformSelector("Waveform"),
-      slowFreqSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                     juce::Slider::TextEntryBoxPosition::NoTextBox),
-      fastFreqSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                     juce::Slider::TextEntryBoxPosition::NoTextBox),
-      amountSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                   juce::Slider::TextEntryBoxPosition::NoTextBox) {
-    auto& params = getSelectedLfoParams();
-
-    initChoice(targetTypeSelector, params.TargetType, this, targetSelector);
-    initChoice(targetOscSelector, params.TargetOsc, this, targetSelector);
-    initChoice(targetFilterSelector, params.TargetFilter, this, targetSelector);
-    initChoice(targetOscParamSelector, params.TargetOscParam, this, targetSelector);
-    initChoice(targetFilterParamSelector, params.TargetFilterParam, this, targetSelector);
-    initChoice(waveformSelector, params.Waveform, this, *this);
-    initSkewFromMid(slowFreqSlider, params.SlowFreq, 0.01f, " Hz", nullptr, this, *this);
-    initSkewFromMid(fastFreqSlider, params.FastFreq, 0.01f, " x", nullptr, this, *this);
-    initLinear(amountSlider, params.Amount, 0.01, this, *this);
-
-    initLabel(targetLabel, "Destination", *this);
-    initLabel(typeLabel, "Type", *this);
-    initLabel(waveformLabel, "Waveform", *this);
-    initLabel(freqLabel, "Freq", *this);
-    initLabel(amountLabel, "Amount", *this);
-
-    this->addAndMakeVisible(targetSelector);
-
-    startTimerHz(30.0f);
-}
-
-LfoComponent::~LfoComponent() {}
-
-void LfoComponent::paint(juce::Graphics& g) {}
-
-void LfoComponent::resized() {
-    juce::Rectangle<int> bounds = getLocalBounds();
-
-    auto bodyHeight = bounds.getHeight();
-    auto upperArea = bounds.removeFromTop(bodyHeight / 2);
-    auto& lowerArea = bounds;
-    consumeLabeledComboBox(upperArea, 280, targetLabel, targetSelector);
-    {
-        juce::Rectangle<int> selectorsArea = targetSelector.getLocalBounds();
-        targetTypeSelector.setBounds(selectorsArea.removeFromLeft(90));
-        auto indexArea = selectorsArea.removeFromLeft(70);
-        targetOscSelector.setBounds(indexArea);
-        targetFilterSelector.setBounds(indexArea);
-        auto paramArea = selectorsArea.removeFromLeft(110);
-        targetOscParamSelector.setBounds(paramArea);
-        targetFilterParamSelector.setBounds(paramArea);
-    }
-    consumeLabeledComboBox(lowerArea, 120, waveformLabel, waveformSelector);
-    consumeLabeledKnob(lowerArea, freqLabel, fastFreqSlider, slowFreqSlider);
-    consumeLabeledKnob(lowerArea, amountLabel, amountSlider);
-}
-void LfoComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) {
-    auto& params = getSelectedLfoParams();
-    if (comboBoxThatHasChanged == &targetTypeSelector) {
-        *params.TargetType = targetTypeSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetOscSelector) {
-        *params.TargetOsc = targetOscSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetFilterSelector) {
-        *params.TargetFilter = targetFilterSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetOscParamSelector) {
-        *params.TargetOscParam = targetOscParamSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetFilterParamSelector) {
-        *params.TargetFilterParam = targetFilterParamSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &waveformSelector) {
-        *params.Waveform = waveformSelector.getSelectedItemIndex();
-    }
-    resized();  // re-render
-}
-void LfoComponent::sliderValueChanged(juce::Slider* slider) {
-    auto& params = getSelectedLfoParams();
-    if (slider == &slowFreqSlider) {
-        *params.SlowFreq = (float)slowFreqSlider.getValue();
-    } else if (slider == &fastFreqSlider) {
-        *params.FastFreq = (float)fastFreqSlider.getValue();
-    } else if (slider == &amountSlider) {
-        *params.Amount = (float)amountSlider.getValue();
-    }
-}
-void LfoComponent::timerCallback() {
-    auto& params = getSelectedLfoParams();
-
-    targetTypeSelector.setSelectedItemIndex(params.TargetType->getIndex(), juce::dontSendNotification);
-    targetOscSelector.setSelectedItemIndex(params.TargetOsc->getIndex(), juce::dontSendNotification);
-    targetFilterSelector.setSelectedItemIndex(params.TargetFilter->getIndex(), juce::dontSendNotification);
-    targetOscParamSelector.setSelectedItemIndex(params.TargetOscParam->getIndex(), juce::dontSendNotification);
-    targetFilterParamSelector.setSelectedItemIndex(params.TargetFilterParam->getIndex(), juce::dontSendNotification);
-    waveformSelector.setSelectedItemIndex(params.Waveform->getIndex(), juce::dontSendNotification);
-
-    slowFreqSlider.setValue(params.SlowFreq->get(), juce::dontSendNotification);
-    fastFreqSlider.setValue(params.FastFreq->get(), juce::dontSendNotification);
-    amountSlider.setValue(params.Amount->get(), juce::dontSendNotification);
-
-    auto targetType = params.getTargetType();
-    targetOscSelector.setVisible(targetType == LFO_TARGET_TYPE::OSC);
-    targetOscParamSelector.setVisible(targetType == LFO_TARGET_TYPE::OSC);
-    targetFilterSelector.setVisible(targetType == LFO_TARGET_TYPE::Filter);
-    targetFilterParamSelector.setVisible(targetType == LFO_TARGET_TYPE::Filter);
-
-    auto shouldUseFastFreq = params.shouldUseFastFreq();
-    fastFreqSlider.setVisible(shouldUseFastFreq);
-    slowFreqSlider.setVisible(!shouldUseFastFreq);
-
-    fastFreqSlider.setLookAndFeel(&berryLookAndFeel);
-    slowFreqSlider.setLookAndFeel(&berryLookAndFeel);
-    amountSlider.setLookAndFeel(&berryLookAndFeel);
-    for (auto& p : allParams.controlItemParams) {
-        if (p.isControlling(CONTROL_TARGET_LFO_PARAM::Freq, index)) {
-            fastFreqSlider.setLookAndFeel(&berryLookAndFeelControlled);
-            slowFreqSlider.setLookAndFeel(&berryLookAndFeelControlled);
-        } else if (p.isControlling(CONTROL_TARGET_LFO_PARAM::Amount, index)) {
-            amountSlider.setLookAndFeel(&berryLookAndFeelControlled);
-        }
-    }
-}
-
-//==============================================================================
 ModEnvComponent::ModEnvComponent(int index, AllParams& allParams)
     : index(index),
       allParams(allParams),
@@ -909,10 +781,8 @@ ModEnvComponent::ModEnvComponent(int index, AllParams& allParams)
     initChoice(targetTypeSelector, params.TargetType, this, targetSelector);
     initChoice(targetOscSelector, params.TargetOsc, this, targetSelector);
     initChoice(targetFilterSelector, params.TargetFilter, this, targetSelector);
-    initChoice(targetLfoSelector, params.TargetLfo, this, targetSelector);
     initChoice(targetOscParamSelector, params.TargetOscParam, this, targetSelector);
     initChoice(targetFilterParamSelector, params.TargetFilterParam, this, targetSelector);
-    initChoice(targetLfoParamSelector, params.TargetLfoParam, this, targetSelector);
     initChoice(fadeSelector, params.Fade, this, *this);
     auto formatPeakFreq = [](double oct) -> juce::String {
         return (oct == 0 ? " " : oct > 0 ? "+" : "-") + juce::String(std::abs(oct), 2) + " oct";
@@ -952,11 +822,9 @@ void ModEnvComponent::resized() {
         auto indexArea = selectorsArea.removeFromLeft(70);
         targetOscSelector.setBounds(indexArea);
         targetFilterSelector.setBounds(indexArea);
-        targetLfoSelector.setBounds(indexArea);
         auto paramArea = selectorsArea.removeFromLeft(110);
         targetOscParamSelector.setBounds(paramArea);
         targetFilterParamSelector.setBounds(paramArea);
-        targetLfoParamSelector.setBounds(paramArea);
     }
     {
         juce::Rectangle<int> area = lowerArea.removeFromLeft(SLIDER_WIDTH);
@@ -975,14 +843,10 @@ void ModEnvComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) {
         *params.TargetOsc = targetOscSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &targetFilterSelector) {
         *params.TargetFilter = targetFilterSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetLfoSelector) {
-        *params.TargetLfo = targetLfoSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &targetOscParamSelector) {
         *params.TargetOscParam = targetOscParamSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &targetFilterParamSelector) {
         *params.TargetFilterParam = targetFilterParamSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetLfoParamSelector) {
-        *params.TargetLfoParam = targetLfoParamSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &fadeSelector) {
         *params.Fade = fadeSelector.getSelectedItemIndex();
     }
@@ -1006,10 +870,8 @@ void ModEnvComponent::timerCallback() {
     targetTypeSelector.setSelectedItemIndex(params.TargetType->getIndex(), juce::dontSendNotification);
     targetOscSelector.setSelectedItemIndex(params.TargetOsc->getIndex(), juce::dontSendNotification);
     targetFilterSelector.setSelectedItemIndex(params.TargetFilter->getIndex(), juce::dontSendNotification);
-    targetLfoSelector.setSelectedItemIndex(params.TargetLfo->getIndex(), juce::dontSendNotification);
     targetOscParamSelector.setSelectedItemIndex(params.TargetOscParam->getIndex(), juce::dontSendNotification);
     targetFilterParamSelector.setSelectedItemIndex(params.TargetFilterParam->getIndex(), juce::dontSendNotification);
-    targetLfoParamSelector.setSelectedItemIndex(params.TargetLfoParam->getIndex(), juce::dontSendNotification);
     fadeSelector.setSelectedItemIndex(params.Fade->getIndex(), juce::dontSendNotification);
 
     peakFreqSlider.setValue(params.PeakFreq->get(), juce::dontSendNotification);
@@ -1022,8 +884,6 @@ void ModEnvComponent::timerCallback() {
     targetOscParamSelector.setVisible(targetType == MODENV_TARGET_TYPE::OSC);
     targetFilterSelector.setVisible(targetType == MODENV_TARGET_TYPE::Filter);
     targetFilterParamSelector.setVisible(targetType == MODENV_TARGET_TYPE::Filter);
-    targetLfoSelector.setVisible(targetType == MODENV_TARGET_TYPE::LFO);
-    targetLfoParamSelector.setVisible(targetType == MODENV_TARGET_TYPE::LFO);
 
     auto isTargetFreq = params.isTargetFreq();
     auto isFadeIn = params.isFadeIn();
@@ -1251,10 +1111,8 @@ ControlItemComponent::ControlItemComponent(ControlItemParams& params)
     initChoice(targetTypeSelector, params.TargetType, this, *this);
     initChoice(targetOscSelector, params.TargetOsc, this, *this);
     initChoice(targetFilterSelector, params.TargetFilter, this, *this);
-    initChoice(targetLfoSelector, params.TargetLfo, this, *this);
     initChoice(targetOscParamSelector, params.TargetOscParam, this, *this);
     initChoice(targetFilterParamSelector, params.TargetFilterParam, this, *this);
-    initChoice(targetLfoParamSelector, params.TargetLfoParam, this, *this);
     initChoice(targetMiscParamSelector, params.TargetMiscParam, this, *this);
 
     startTimerHz(30.0f);
@@ -1278,12 +1136,10 @@ void ControlItemComponent::resized() {
     auto indexArea = area.removeFromLeft(70);
     targetOscSelector.setBounds(indexArea);
     targetFilterSelector.setBounds(indexArea);
-    targetLfoSelector.setBounds(indexArea);
 
     auto& paramArea = area;
     targetOscParamSelector.setBounds(paramArea);
     targetFilterParamSelector.setBounds(paramArea);
-    targetLfoParamSelector.setBounds(paramArea);
 }
 void ControlItemComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) {
     if (comboBoxThatHasChanged == &numberSelector) {
@@ -1294,14 +1150,10 @@ void ControlItemComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChange
         *params.TargetOsc = targetOscSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &targetFilterSelector) {
         *params.TargetFilter = targetFilterSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetLfoSelector) {
-        *params.TargetLfo = targetLfoSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &targetOscParamSelector) {
         *params.TargetOscParam = targetOscParamSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &targetFilterParamSelector) {
         *params.TargetFilterParam = targetFilterParamSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetLfoParamSelector) {
-        *params.TargetLfoParam = targetLfoParamSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &targetMiscParamSelector) {
         *params.TargetMiscParam = targetMiscParamSelector.getSelectedItemIndex();
     }
@@ -1312,19 +1164,15 @@ void ControlItemComponent::timerCallback() {
     targetTypeSelector.setSelectedItemIndex(params.TargetType->getIndex(), juce::dontSendNotification);
     targetOscSelector.setSelectedItemIndex(params.TargetOsc->getIndex(), juce::dontSendNotification);
     targetFilterSelector.setSelectedItemIndex(params.TargetFilter->getIndex(), juce::dontSendNotification);
-    targetLfoSelector.setSelectedItemIndex(params.TargetLfo->getIndex(), juce::dontSendNotification);
     targetOscParamSelector.setSelectedItemIndex(params.TargetOscParam->getIndex(), juce::dontSendNotification);
     targetFilterParamSelector.setSelectedItemIndex(params.TargetFilterParam->getIndex(), juce::dontSendNotification);
-    targetLfoParamSelector.setSelectedItemIndex(params.TargetLfoParam->getIndex(), juce::dontSendNotification);
     targetMiscParamSelector.setSelectedItemIndex(params.TargetMiscParam->getIndex(), juce::dontSendNotification);
     auto enabled = params.Number->getIndex() != 0;
     targetTypeSelector.setEnabled(enabled);
     targetOscSelector.setEnabled(enabled);
     targetFilterSelector.setEnabled(enabled);
-    targetLfoSelector.setEnabled(enabled);
     targetOscParamSelector.setEnabled(enabled);
     targetFilterParamSelector.setEnabled(enabled);
-    targetLfoParamSelector.setEnabled(enabled);
     targetMiscParamSelector.setEnabled(enabled);
 
     auto targetType = params.getTargetType();
@@ -1332,8 +1180,6 @@ void ControlItemComponent::timerCallback() {
     targetOscParamSelector.setVisible(targetType == CONTROL_TARGET_TYPE::OSC);
     targetFilterSelector.setVisible(targetType == CONTROL_TARGET_TYPE::Filter);
     targetFilterParamSelector.setVisible(targetType == CONTROL_TARGET_TYPE::Filter);
-    targetLfoSelector.setVisible(targetType == CONTROL_TARGET_TYPE::LFO);
-    targetLfoParamSelector.setVisible(targetType == CONTROL_TARGET_TYPE::LFO);
     targetMiscParamSelector.setVisible(targetType == CONTROL_TARGET_TYPE::Master);
 }
 
