@@ -488,70 +488,7 @@ void MainParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-ControlItemParams::ControlItemParams(int index) {
-    auto idPrefix = "CONTROL" + std::to_string(index) + "_";
-    auto namePrefix = "Control" + std::to_string(index) + " ";
-    Number = new juce::AudioParameterChoice(
-        idPrefix + "NUMBER", namePrefix + "Number", CONTROL_NUMBER_NAMES, CONTROL_NUMBER_NAMES.indexOf("None"));
-    TargetType = new juce::AudioParameterChoice(idPrefix + "TARGET_TYPE",
-                                                namePrefix + "TargetType",
-                                                CONTROL_TARGET_TYPE_NAMES,
-                                                CONTROL_TARGET_TYPE_NAMES.indexOf("OSC"));
-    TargetOsc = new juce::AudioParameterChoice(idPrefix + "TARGET_OSC",
-                                               namePrefix + "TargetOsc",
-                                               CONTROL_TARGET_OSC_NAMES,
-                                               CONTROL_TARGET_OSC_NAMES.indexOf("1"));
-    TargetFilter = new juce::AudioParameterChoice(idPrefix + "TARGET_FILTER",
-                                                  namePrefix + "TargetFilter",
-                                                  CONTROL_TARGET_FILTER_NAMES,
-                                                  CONTROL_TARGET_FILTER_NAMES.indexOf("1"));
-    TargetOscParam = new juce::AudioParameterChoice(idPrefix + "TARGET_OSC_PARAM",
-                                                    namePrefix + "TargetOscParam",
-                                                    CONTROL_TARGET_OSC_PARAM_NAMES,
-                                                    CONTROL_TARGET_OSC_PARAM_NAMES.indexOf("Gain"));
-    TargetFilterParam = new juce::AudioParameterChoice(idPrefix + "TARGET_FILTER_PARAM",
-                                                       namePrefix + "TargetFilterParam",
-                                                       CONTROL_TARGET_FILTER_PARAM_NAMES,
-                                                       CONTROL_TARGET_FILTER_PARAM_NAMES.indexOf("Freq"));
-    TargetMiscParam = new juce::AudioParameterChoice(idPrefix + "TARGET_MISC_PARAM",
-                                                     namePrefix + "TargetMiscParam",
-                                                     CONTROL_TARGET_MISC_PARAM_NAMES,
-                                                     CONTROL_TARGET_MISC_PARAM_NAMES.indexOf("Master Volume"));
-    freeze();
-}
-void ControlItemParams::addAllParameters(juce::AudioProcessor& processor) {
-    processor.addParameter(Number);
-    processor.addParameter(TargetType);
-    processor.addParameter(TargetOsc);
-    processor.addParameter(TargetFilter);
-    processor.addParameter(TargetOscParam);
-    processor.addParameter(TargetFilterParam);
-    processor.addParameter(TargetMiscParam);
-}
-void ControlItemParams::saveParameters(juce::XmlElement& xml) {
-    xml.setAttribute(Number->paramID, Number->getIndex());
-    xml.setAttribute(TargetType->paramID, TargetType->getIndex());
-    xml.setAttribute(TargetOsc->paramID, TargetOsc->getIndex());
-    xml.setAttribute(TargetFilter->paramID, TargetFilter->getIndex());
-    xml.setAttribute(TargetOscParam->paramID, TargetOscParam->getIndex());
-    xml.setAttribute(TargetFilterParam->paramID, TargetFilterParam->getIndex());
-    xml.setAttribute(TargetMiscParam->paramID, TargetMiscParam->getIndex());
-}
-void ControlItemParams::loadParameters(juce::XmlElement& xml) {
-    *Number = xml.getIntAttribute(Number->paramID, 0);
-    *TargetType = xml.getIntAttribute(TargetType->paramID, 0);
-    *TargetOsc = xml.getIntAttribute(TargetOsc->paramID, NUM_OSC);
-    *TargetFilter = xml.getIntAttribute(TargetOsc->paramID, NUM_FILTER);
-    *TargetOscParam = xml.getIntAttribute(TargetOscParam->paramID, 0);
-    *TargetFilterParam = xml.getIntAttribute(TargetFilterParam->paramID, 0);
-    *TargetMiscParam = xml.getIntAttribute(TargetMiscParam->paramID, 0);
-}
-
-//==============================================================================
-AllParams::AllParams()
-    : globalParams{},
-      voiceParams{},
-      controlItemParams{ControlItemParams{0}, ControlItemParams{1}, ControlItemParams{2}} {
+AllParams::AllParams() : globalParams{}, voiceParams{} {
     mainParamList.reserve(129);
     for (int i = 0; i < 129; i++) {
         mainParamList.push_back(MainParams{i});
@@ -562,9 +499,6 @@ void AllParams::addAllParameters(juce::AudioProcessor& processor) {
     voiceParams.addAllParameters(processor);
     for (int i = 0; i < 129; i++) {
         mainParamList[i].addAllParameters(processor);
-    }
-    for (auto& params : controlItemParams) {
-        params.addAllParameters(processor);
     }
 }
 void AllParams::saveParameters(juce::XmlElement& xml) {
@@ -577,9 +511,6 @@ void AllParams::saveParameters(juce::XmlElement& xml) {
             mainParamList[i].saveParameters(xml);
         }
     }
-    for (auto& param : controlItemParams) {
-        param.saveParameters(xml);
-    }
 }
 void AllParams::loadParameters(juce::XmlElement& xml) {
     globalParams.loadParameters(xml);
@@ -589,9 +520,6 @@ void AllParams::loadParameters(juce::XmlElement& xml) {
         if (enabled) {
             mainParamList[i].loadParameters(xml);
         }
-    }
-    for (auto& param : controlItemParams) {
-        param.loadParameters(xml);
     }
 }
 void replaceAttributeNames(juce::XmlElement& xml, juce::StringRef before, juce::StringRef after) {
@@ -611,11 +539,6 @@ void AllParams::saveParametersToClipboard(juce::XmlElement& xml) {
     auto index = voiceParams.isDrumMode() ? voiceParams.getTargetNote() : 128;
     xml.setAttribute("DRUM_MODE", voiceParams.isDrumMode());
     mainParamList[index].saveParameters(xml);
-    if (!voiceParams.isDrumMode()) {
-        for (auto& param : controlItemParams) {
-            param.saveParameters(xml);
-        }
-    }
 
     replaceAttributeNames(xml, "G" + std::to_string(index) + "_", "GROUP_");
 }
@@ -626,9 +549,4 @@ void AllParams::loadParametersFromClipboard(juce::XmlElement& xml) {
 
     auto wasDrumMode = xml.getBoolAttribute("DRUM_MODE", false);
     mainParamList[index].loadParameters(xml);
-    if (!wasDrumMode && !voiceParams.isDrumMode()) {
-        for (auto& param : controlItemParams) {
-            param.loadParameters(xml);
-        }
-    }
 }

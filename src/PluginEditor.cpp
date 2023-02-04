@@ -11,8 +11,6 @@ using namespace styles;
 BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     : AudioProcessorEditor(&p),
       audioProcessor(p),
-      controlComponent{SectionComponent{
-          "CONTROLS", HEADER_CHECK::Hidden, std::make_unique<ControlComponent>(p.allParams.controlItemParams)}},
       voiceComponent{SectionComponent{"VOICE", HEADER_CHECK::Hidden, std::make_unique<VoiceComponent>(p.allParams)}},
       analyserToggle(&analyserMode),
       analyserWindow(
@@ -78,7 +76,6 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     }
     addAndMakeVisible(masterComponent);
     addAndMakeVisible(drumComponent);
-    addAndMakeVisible(controlComponent);
     setSize(1024, 768);
 #if JUCE_DEBUG
     setResizable(true, true);  // for debug
@@ -194,7 +191,6 @@ void BerryAudioProcessorEditor::resized() {
             area.removeFromTop(PANEL_MARGIN_Y);
             masterComponent.setBounds(area.removeFromTop(masterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
-            controlComponent.setBounds(area);
             drumComponent.setBounds(area.removeFromTop(drumPanelHeight));
         }
     }
@@ -202,7 +198,6 @@ void BerryAudioProcessorEditor::resized() {
 void BerryAudioProcessorEditor::timerCallback() {
     auto isDrumMode = audioProcessor.allParams.voiceParams.isDrumMode();
     drumComponent.setVisible(isDrumMode);
-    controlComponent.setVisible(!isDrumMode);
     auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
     for (auto i = 0; i < NUM_OSC; i++) {
         oscComponents[i].setEnabled(mainParams.oscParams[i].Enabled->get());

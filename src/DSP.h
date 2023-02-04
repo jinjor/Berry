@@ -86,42 +86,6 @@ const double DELAY_TIME_SYNC_VALUES[18] = {1.0,
                                            0.0625 * 3 / 2,
                                            0.03125 * 3 / 2};
 
-const juce::StringArray CONTROL_NUMBER_NAMES = juce::StringArray("None",
-                                                                 "1: Modulation",
-                                                                 "2: Breath",
-                                                                 "4: Foot",
-                                                                 "5: Portamento Time",
-                                                                 "71: Resonance",
-                                                                 "74: Brightness",
-                                                                 "75: Sound Control",
-                                                                 "76: Sound Control",
-                                                                 "77: Sound Control",
-                                                                 "78: Sound Control",
-                                                                 "79: Sound Control",
-                                                                 "91: Reverb",
-                                                                 "92: Tremolo",
-                                                                 "93: Chorus",
-                                                                 "94: Detune",
-                                                                 "95: Phaser");
-const int CONTROL_NUMBER_VALUES[17]{-1, 1, 2, 4, 5, 71, 74, 75, 76, 77, 78, 79, 91, 92, 93, 94, 95};
-
-enum class CONTROL_TARGET_TYPE { OSC, Filter, Master };
-const juce::StringArray CONTROL_TARGET_TYPE_NAMES = juce::StringArray("OSC", "Filter", "Misc");
-
-const juce::StringArray CONTROL_TARGET_OSC_NAMES = juce::StringArray("1", "2", "3");
-const juce::StringArray CONTROL_TARGET_FILTER_NAMES = juce::StringArray("1", "2");
-const juce::StringArray CONTROL_TARGET_MODENV_NAMES = juce::StringArray("1", "2", "3");
-
-enum class CONTROL_TARGET_OSC_PARAM { Edge, Detune, Spread, /*Pan,*/ Gain };
-const juce::StringArray CONTROL_TARGET_OSC_PARAM_NAMES =
-    juce::StringArray("Edge", "Detune", "Spread", /*"Pan",*/ "Gain");
-
-enum class CONTROL_TARGET_FILTER_PARAM { Freq, Q };
-const juce::StringArray CONTROL_TARGET_FILTER_PARAM_NAMES = juce::StringArray("Freq", "Q");
-
-enum class CONTROL_TARGET_MISC_PARAM { PortamentoTime, DelayMix };
-const juce::StringArray CONTROL_TARGET_MISC_PARAM_NAMES = juce::StringArray("Portamento Time", "Delay Mix");
-
 }  // namespace
 
 //==============================================================================

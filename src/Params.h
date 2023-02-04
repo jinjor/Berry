@@ -30,9 +30,6 @@ public:
     virtual void loadParameters(juce::XmlElement& xml) override;
 
     VOICE_MODE getMode() { return static_cast<VOICE_MODE>(Mode->getIndex()); }
-    void setPortamentoTimeFromControl(double normalizedValue) {
-        *PortamentoTime = PortamentoTime->range.convertFrom0to1(normalizedValue);
-    }
 
     bool isMonoMode() { return getMode() == VOICE_MODE::Mono; }
     bool isDrumMode() { return getMode() == VOICE_MODE::Drum; }
@@ -136,11 +133,6 @@ public:
     virtual void addAllParameters(juce::AudioProcessor& processor) override;
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
-
-    void setEdgeFromControl(double normalizedValue) { *Edge = normalizedValue; }
-    void setDetuneFromControl(double normalizedValue) { *Detune = normalizedValue; }
-    void setSpreadFromControl(double normalizedValue) { *Spread = normalizedValue; }
-    void setGainFromControl(double normalizedValue) { *Gain = Gain->range.convertFrom0to1(normalizedValue); }
 
     WAVEFORM getWaveForm() { return OSC_WAVEFORM_VALUES[Waveform->getIndex()]; }
     bool hasEdge() { return false; }
@@ -249,12 +241,6 @@ public:
         }
     }
     bool isFreqAbsolute() { return getFreqType() == FILTER_FREQ_TYPE::Absolute; }
-
-    void setHzFromControl(double normalizedValue) { *Hz = Hz->range.convertFrom0to1(normalizedValue); }
-    void setSemitoneFromControl(double normalizedValue) {
-        *Semitone = Semitone->getNormalisableRange().convertFrom0to1(normalizedValue);
-    }
-    void setQFromControl(double normalizedValue) { *Q = Q->range.convertFrom0to1(normalizedValue); }
 
     bool enabled;
     int target;
@@ -367,8 +353,6 @@ public:
     virtual void addAllParameters(juce::AudioProcessor& processor) override;
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
-
-    void setMixFromControl(double normalizedValue) { *Mix = normalizedValue; }
 
     DELAY_TYPE getType() { return static_cast<DELAY_TYPE>(Type->getIndex()); }
     double getTimeSyncL() { return DELAY_TIME_SYNC_VALUES[TimeSyncL->getIndex()]; }
@@ -488,72 +472,11 @@ private:
 };
 
 //==============================================================================
-class ControlItemParams : public SynthParametersBase {
-public:
-    juce::AudioParameterChoice* Number;
-    juce::AudioParameterChoice* TargetType;
-    juce::AudioParameterChoice* TargetOsc;
-    juce::AudioParameterChoice* TargetFilter;
-    juce::AudioParameterChoice* TargetOscParam;
-    juce::AudioParameterChoice* TargetFilterParam;
-    juce::AudioParameterChoice* TargetMiscParam;
-    ControlItemParams(int index);
-    ControlItemParams(const ControlItemParams&) = delete;
-    virtual void addAllParameters(juce::AudioProcessor& processor) override;
-    virtual void saveParameters(juce::XmlElement& xml) override;
-    virtual void loadParameters(juce::XmlElement& xml) override;
-
-    int getCcNumber() { return CONTROL_NUMBER_VALUES[Number->getIndex()]; }
-    CONTROL_TARGET_TYPE getTargetType() { return static_cast<CONTROL_TARGET_TYPE>(TargetType->getIndex()); }
-    CONTROL_TARGET_OSC_PARAM getTargetOscParam() {
-        return static_cast<CONTROL_TARGET_OSC_PARAM>(TargetOscParam->getIndex());
-    }
-    CONTROL_TARGET_FILTER_PARAM getTargetFilterParam() {
-        return static_cast<CONTROL_TARGET_FILTER_PARAM>(TargetFilterParam->getIndex());
-    }
-    CONTROL_TARGET_MISC_PARAM getTargetMiscParam() {
-        return static_cast<CONTROL_TARGET_MISC_PARAM>(TargetMiscParam->getIndex());
-    }
-    bool isControlling(CONTROL_TARGET_OSC_PARAM param, int index) {
-        return getCcNumber() >= 0 && getTargetType() == CONTROL_TARGET_TYPE::OSC && TargetOsc->getIndex() == index &&
-               getTargetOscParam() == param;
-    }
-    bool isControlling(CONTROL_TARGET_FILTER_PARAM param, int index) {
-        return getCcNumber() >= 0 && getTargetType() == CONTROL_TARGET_TYPE::Filter &&
-               TargetFilter->getIndex() == index && getTargetFilterParam() == param;
-    }
-    bool isControlling(CONTROL_TARGET_MISC_PARAM param) {
-        return getCcNumber() >= 0 && getTargetType() == CONTROL_TARGET_TYPE::Master && getTargetMiscParam() == param;
-    }
-
-    int number;
-    CONTROL_TARGET_TYPE targetType;
-    int targetOsc;
-    int targetFilter;
-    CONTROL_TARGET_OSC_PARAM targetOscParam;
-    CONTROL_TARGET_FILTER_PARAM targetFilterParam;
-    CONTROL_TARGET_MISC_PARAM targetMiscParam;
-    void freeze() {
-        number = getCcNumber();
-        targetType = getTargetType();
-        targetOsc = TargetOsc->getIndex();
-        targetFilter = TargetFilter->getIndex();
-        targetOscParam = getTargetOscParam();
-        targetFilterParam = getTargetFilterParam();
-        targetMiscParam = getTargetMiscParam();
-    }
-
-private:
-    ControlItemParams(){};
-};
-
-//==============================================================================
 class AllParams : public SynthParametersBase {
 public:
     GlobalParams globalParams;
     VoiceParams voiceParams;
     std::vector<MainParams> mainParamList{};
-    std::array<ControlItemParams, NUM_CONTROL> controlItemParams;
 
     AllParams();
     AllParams(const AllParams&) = delete;
@@ -571,9 +494,6 @@ public:
             if (mainParams.isEnabled()) {
                 mainParams.freeze();
             }
-        }
-        for (int i = 0; i < NUM_CONTROL; ++i) {
-            controlItemParams[i].freeze();
         }
     }
     MainParams& getCurrentMainParams() {

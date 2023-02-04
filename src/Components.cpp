@@ -185,7 +185,6 @@ void IncDecButton::sliderValueChanged(juce::Slider* _slider) {
 VoiceComponent::VoiceComponent(AllParams& allParams)
     : params(allParams.voiceParams),
       mainParamList(allParams.mainParamList),
-      controlItemParams(allParams.controlItemParams),
       modeSelector("Mode"),
       portamentoTimeSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                            juce::Slider::TextEntryBoxPosition::NoTextBox),
@@ -282,11 +281,6 @@ void VoiceComponent::timerCallback() {
     drumTargetSelector.setVisible(isDrum);
 
     portamentoTimeSlider.setLookAndFeel(&berryLookAndFeel);
-    for (auto& p : controlItemParams) {
-        if (p.isControlling(CONTROL_TARGET_MISC_PARAM::PortamentoTime)) {
-            portamentoTimeSlider.setLookAndFeel(&berryLookAndFeelControlled);
-        }
-    }
 }
 
 //==============================================================================
@@ -567,17 +561,6 @@ void OscComponent::timerCallback() {
     detuneSlider.setLookAndFeel(&berryLookAndFeel);
     spreadSlider.setLookAndFeel(&berryLookAndFeel);
     gainSlider.setLookAndFeel(&berryLookAndFeel);
-    for (auto& p : allParams.controlItemParams) {
-        if (p.isControlling(CONTROL_TARGET_OSC_PARAM::Edge, index)) {
-            edgeSlider.setLookAndFeel(&berryLookAndFeelControlled);
-        } else if (p.isControlling(CONTROL_TARGET_OSC_PARAM::Detune, index)) {
-            detuneSlider.setLookAndFeel(&berryLookAndFeelControlled);
-        } else if (p.isControlling(CONTROL_TARGET_OSC_PARAM::Spread, index)) {
-            spreadSlider.setLookAndFeel(&berryLookAndFeelControlled);
-        } else if (p.isControlling(CONTROL_TARGET_OSC_PARAM::Gain, index)) {
-            gainSlider.setLookAndFeel(&berryLookAndFeelControlled);
-        }
-    }
 }
 
 //==============================================================================
@@ -749,14 +732,6 @@ void FilterComponent::timerCallback() {
     hzSlider.setLookAndFeel(&berryLookAndFeel);
     semitoneSlider.setLookAndFeel(&berryLookAndFeel);
     qSlider.setLookAndFeel(&berryLookAndFeel);
-    for (auto& p : allParams.controlItemParams) {
-        if (p.isControlling(CONTROL_TARGET_FILTER_PARAM::Freq, index)) {
-            hzSlider.setLookAndFeel(&berryLookAndFeelControlled);
-            semitoneSlider.setLookAndFeel(&berryLookAndFeelControlled);
-        } else if (p.isControlling(CONTROL_TARGET_FILTER_PARAM::Q, index)) {
-            qSlider.setLookAndFeel(&berryLookAndFeelControlled);
-        }
-    }
 }
 
 //==============================================================================
@@ -1013,11 +988,6 @@ void DelayComponent::timerCallback() {
     mixSlider.setValue(params.Mix->get(), juce::dontSendNotification);
 
     mixSlider.setLookAndFeel(&berryLookAndFeel);
-    for (auto& p : allParams.controlItemParams) {
-        if (p.isControlling(CONTROL_TARGET_MISC_PARAM::DelayMix)) {
-            mixSlider.setLookAndFeel(&berryLookAndFeelControlled);
-        }
-    }
 }
 
 //==============================================================================
@@ -1095,122 +1065,6 @@ void DrumComponent::timerCallback() {
     noteToMuteKindSelector.setEnabled(muteEnabled);
     noteToMuteOctSelector.setEnabled(muteEnabled);
     busSelector.setSelectedItemIndex(params.Bus->getIndex(), juce::dontSendNotification);
-}
-
-//==============================================================================
-ControlItemComponent::ControlItemComponent(ControlItemParams& params)
-    : params(params),
-      numberSelector("Number"),
-      targetTypeSelector("TargetType"),
-      targetOscSelector("TargetOsc"),
-      targetFilterSelector("TargetFilter"),
-      targetOscParamSelector("TargetOscParam"),
-      targetFilterParamSelector("TargetFilterParam"),
-      targetMiscParamSelector("TargetMiscParam") {
-    initChoice(numberSelector, params.Number, this, *this);
-    initChoice(targetTypeSelector, params.TargetType, this, *this);
-    initChoice(targetOscSelector, params.TargetOsc, this, *this);
-    initChoice(targetFilterSelector, params.TargetFilter, this, *this);
-    initChoice(targetOscParamSelector, params.TargetOscParam, this, *this);
-    initChoice(targetFilterParamSelector, params.TargetFilterParam, this, *this);
-    initChoice(targetMiscParamSelector, params.TargetMiscParam, this, *this);
-
-    startTimerHz(30.0f);
-}
-
-ControlItemComponent::~ControlItemComponent() {}
-
-void ControlItemComponent::paint(juce::Graphics& g) {}
-
-void ControlItemComponent::resized() {
-    juce::Rectangle<int> area = getLocalBounds();
-
-    numberSelector.setBounds(area.removeFromLeft(area.getWidth() / 5));
-
-    area.removeFromLeft(PARAM_MARGIN_LEFT);
-
-    targetTypeSelector.setBounds(area.removeFromLeft(90));
-
-    targetMiscParamSelector.setBounds(area);
-
-    auto indexArea = area.removeFromLeft(70);
-    targetOscSelector.setBounds(indexArea);
-    targetFilterSelector.setBounds(indexArea);
-
-    auto& paramArea = area;
-    targetOscParamSelector.setBounds(paramArea);
-    targetFilterParamSelector.setBounds(paramArea);
-}
-void ControlItemComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) {
-    if (comboBoxThatHasChanged == &numberSelector) {
-        *params.Number = numberSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetTypeSelector) {
-        *params.TargetType = targetTypeSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetOscSelector) {
-        *params.TargetOsc = targetOscSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetFilterSelector) {
-        *params.TargetFilter = targetFilterSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetOscParamSelector) {
-        *params.TargetOscParam = targetOscParamSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetFilterParamSelector) {
-        *params.TargetFilterParam = targetFilterParamSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetMiscParamSelector) {
-        *params.TargetMiscParam = targetMiscParamSelector.getSelectedItemIndex();
-    }
-    resized();  // re-render
-}
-void ControlItemComponent::timerCallback() {
-    numberSelector.setSelectedItemIndex(params.Number->getIndex(), juce::dontSendNotification);
-    targetTypeSelector.setSelectedItemIndex(params.TargetType->getIndex(), juce::dontSendNotification);
-    targetOscSelector.setSelectedItemIndex(params.TargetOsc->getIndex(), juce::dontSendNotification);
-    targetFilterSelector.setSelectedItemIndex(params.TargetFilter->getIndex(), juce::dontSendNotification);
-    targetOscParamSelector.setSelectedItemIndex(params.TargetOscParam->getIndex(), juce::dontSendNotification);
-    targetFilterParamSelector.setSelectedItemIndex(params.TargetFilterParam->getIndex(), juce::dontSendNotification);
-    targetMiscParamSelector.setSelectedItemIndex(params.TargetMiscParam->getIndex(), juce::dontSendNotification);
-    auto enabled = params.Number->getIndex() != 0;
-    targetTypeSelector.setEnabled(enabled);
-    targetOscSelector.setEnabled(enabled);
-    targetFilterSelector.setEnabled(enabled);
-    targetOscParamSelector.setEnabled(enabled);
-    targetFilterParamSelector.setEnabled(enabled);
-    targetMiscParamSelector.setEnabled(enabled);
-
-    auto targetType = params.getTargetType();
-    targetOscSelector.setVisible(targetType == CONTROL_TARGET_TYPE::OSC);
-    targetOscParamSelector.setVisible(targetType == CONTROL_TARGET_TYPE::OSC);
-    targetFilterSelector.setVisible(targetType == CONTROL_TARGET_TYPE::Filter);
-    targetFilterParamSelector.setVisible(targetType == CONTROL_TARGET_TYPE::Filter);
-    targetMiscParamSelector.setVisible(targetType == CONTROL_TARGET_TYPE::Master);
-}
-
-//==============================================================================
-ControlComponent::ControlComponent(std::array<ControlItemParams, NUM_CONTROL>& params)
-    : controlItemComponents{
-          ControlItemComponent(params[0]), ControlItemComponent(params[1]), ControlItemComponent(params[2])} {
-    initLabel(numberLabel, "CC", *this);
-    initLabel(targetLabel, "Destination", *this);
-
-    for (int i = 0; i < NUM_CONTROL; i++) {
-        addAndMakeVisible(controlItemComponents[i]);
-    }
-}
-
-ControlComponent::~ControlComponent() {}
-
-void ControlComponent::paint(juce::Graphics& g) {}
-
-void ControlComponent::resized() {
-    juce::Rectangle<int> bounds = getLocalBounds();
-    auto width = bounds.getWidth();
-
-    auto labelArea = bounds.removeFromTop(LABEL_HEIGHT);
-    numberLabel.setBounds(labelArea.removeFromLeft(width / 5));
-    targetLabel.setBounds(labelArea);
-
-    for (int i = 0; i < NUM_CONTROL; i++) {
-        bounds.removeFromTop(LABEL_MARGIN_BOTTOM);
-        controlItemComponents[i].setBounds(bounds.removeFromTop(COMBO_BOX_HEIGHT));
-    }
 }
 
 //==============================================================================

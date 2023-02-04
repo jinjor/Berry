@@ -392,7 +392,6 @@ private:
 
     VoiceParams& params;
     std::vector<MainParams>& mainParamList;
-    std::array<ControlItemParams, NUM_CONTROL>& controlItemParams;
 
     juce::Component drumTargetSelector;
 
@@ -919,49 +918,4 @@ private:
         float frac = indexFloat - index;
         return processedFFTData[index] * (1 - frac) + processedFFTData[index + 1] * frac;
     }
-};
-
-//==============================================================================
-class ControlItemComponent : public juce::Component, private juce::ComboBox::Listener, juce::Timer, ComponentHelper {
-public:
-    ControlItemComponent(ControlItemParams& params);
-    virtual ~ControlItemComponent();
-    ControlItemComponent(const ControlItemComponent&) = delete;
-
-    virtual void paint(juce::Graphics& g) override;
-    virtual void resized() override;
-
-private:
-    virtual void comboBoxChanged(juce::ComboBox* comboBox) override;
-    virtual void timerCallback() override;
-
-    ControlItemParams& params;
-
-    juce::ComboBox numberSelector;
-    juce::ComboBox targetTypeSelector;
-    juce::ComboBox targetOscSelector;
-    juce::ComboBox targetFilterSelector;
-
-    juce::ComboBox targetModEnvSelector;
-    juce::ComboBox targetOscParamSelector;
-    juce::ComboBox targetFilterParamSelector;
-    juce::ComboBox targetModEnvParamSelector;
-    juce::ComboBox targetMiscParamSelector;
-};
-
-//==============================================================================
-class ControlComponent : public juce::Component, private ComponentHelper {
-public:
-    ControlComponent(std::array<ControlItemParams, NUM_CONTROL>& params);
-    virtual ~ControlComponent();
-    ControlComponent(const ControlComponent&) = delete;
-
-    virtual void paint(juce::Graphics& g) override;
-
-    virtual void resized() override;
-
-private:
-    juce::Label numberLabel;
-    juce::Label targetLabel;
-    std::array<ControlItemComponent, NUM_CONTROL> controlItemComponents;
 };
