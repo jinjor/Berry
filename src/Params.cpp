@@ -55,6 +55,8 @@ VoiceParams::VoiceParams() {
     std::string namePrefix = "Voice ";
     Mode = new juce::AudioParameterChoice(
         idPrefix + "MODE", namePrefix + "Mode", VOICE_MODE_NAMES, VOICE_MODE_NAMES.indexOf("Poly"));
+    PitchBendRange =
+        new juce::AudioParameterInt(idPrefix + "PITCH_BEND_RANGE", namePrefix + "Pitch-Bend Range", 1, 12, 2);
     TargetNoteKind = new juce::AudioParameterChoice(idPrefix + "TARGET_NOTE_KIND",
                                                     namePrefix + "Target Note Kind",
                                                     TARGET_NOTE_KINDS,
@@ -67,16 +69,19 @@ VoiceParams::VoiceParams() {
 }
 void VoiceParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Mode);
+    processor.addParameter(PitchBendRange);
     processor.addParameter(TargetNoteKind);
     processor.addParameter(TargetNoteOct);
 }
 void VoiceParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(Mode->paramID, Mode->getIndex());
+    xml.setAttribute(PitchBendRange->paramID, PitchBendRange->get());
     xml.setAttribute(TargetNoteKind->paramID, TargetNoteKind->getIndex());
     xml.setAttribute(TargetNoteOct->paramID, TargetNoteOct->getIndex());
 }
 void VoiceParams::loadParameters(juce::XmlElement& xml) {
     *Mode = xml.getIntAttribute(Mode->paramID, 0);
+    *PitchBendRange = xml.getIntAttribute(PitchBendRange->paramID, 2);
     *TargetNoteKind = xml.getIntAttribute(TargetNoteKind->paramID, TARGET_NOTE_KINDS.indexOf("C"));
     *TargetNoteOct = xml.getIntAttribute(TargetNoteOct->paramID, TARGET_NOTE_OCT_NAMES.indexOf("1"));
 }
