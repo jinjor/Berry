@@ -96,7 +96,6 @@ public:
     void renderNextBlock(juce::AudioSampleBuffer &outputBuffer, int startSample, int numSamples) override;
     void applyParamsBeforeLoop(double sampleRate);
     bool step(double *out, double sampleRate, int numChannels);
-    bool isDrumAtStart = false;
     int noteNumberAtStart = -1;
 
 private:
@@ -122,11 +121,11 @@ private:
     SparseLog sparseLog = SparseLog(10000);
     MainParams &getMainParams() {
         jassert(noteNumberAtStart >= 0);
-        return mainParamList[isDrumAtStart ? noteNumberAtStart : 128];
+        return mainParamList[128];
     }
     std::unique_ptr<juce::AudioBuffer<float>> &getBuffer() {
         jassert(noteNumberAtStart >= 0);
-        return buffers[isDrumAtStart ? noteNumberAtStart : 128];
+        return buffers[128];
     }
     double getMidiNoteInHertzDouble(double noteNumber) {
         return 440.0 * std::pow(2.0, (noteNumber - 69) * A);
@@ -165,38 +164,7 @@ public:
         }
         juce::Synthesiser::renderNextBlock(outputAudio, inputMidi, startSample, numSamples);
     }
-    virtual void handleMidiEvent(const juce::MidiMessage &m) override {
-        const int channel = m.getChannel();
-        if (m.isNoteOn()) {
-            auto midiNoteNumber = m.getNoteNumber();
-            auto velocity = m.getFloatVelocity();
-            for (auto *sound : sounds) {
-                if (sound->appliesToNote(midiNoteNumber) && sound->appliesToChannel(channel)) {
-                    if (allParams.voiceParams.isDrumModeFreezed) {
-                        auto &drumParams = allParams.mainParamList[midiNoteNumber].drumParams;
-                        if (drumParams.noteToMuteEnabled) {
-                            for (auto *voice_ : voices) {
-                                if (BerryVoice *voice = dynamic_cast<BerryVoice *>(voice_)) {
-                                    if (voice->isPlayingChannel(channel) &&
-                                        voice->noteNumberAtStart == drumParams.noteToMute) {
-                                        voice->mute(0.001);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else if (m.isNoteOff()) {
-            // noop
-        } else if (m.isAllNotesOff()) {
-            // noop
-        } else if (m.isAllSoundOff()) {
-            // noop
-        }
-        jassert(getNumVoices() > 0);
-        Synthesiser::handleMidiEvent(m);
-    }
+    virtual void handleMidiEvent(const juce::MidiMessage &m) override { Synthesiser::handleMidiEvent(m); }
     void handleController(const int midiChannel, const int controllerNumber, const int controllerValue) override {
         DBG("handleController: " << midiChannel << ", " << controllerNumber << ", " << controllerValue);
         juce::Synthesiser::handleController(midiChannel, controllerNumber, controllerValue);
@@ -223,7 +191,7 @@ public:
             auto &delayParams = mainParams.delayParams;
             auto &stereoDelay = stereoDelays[n];
 
-            auto busIndex = allParams.voiceParams.isDrumModeFreezed ? mainParams.drumParams.busIndex : 0;
+            auto busIndex = 0;
             auto &outBuffer = busBuffers[busIndex];
             if (delayParams.enabled) {
                 if (!stereoDelay) {

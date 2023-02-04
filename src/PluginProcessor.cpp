@@ -13,10 +13,6 @@ BerryAudioProcessor::BerryAudioProcessor()
                          .withInput("Input", juce::AudioChannelSet::stereo(), true)
 #endif
                          .withOutput("Output", juce::AudioChannelSet::stereo(), true)
-                         .withOutput("Output 1", juce::AudioChannelSet::stereo(), false)
-                         .withOutput("Output 2", juce::AudioChannelSet::stereo(), false)
-                         .withOutput("Output 3", juce::AudioChannelSet::stereo(), false)
-                         .withOutput("Output 4", juce::AudioChannelSet::stereo(), false)
 #endif
                          )
 #endif
@@ -135,7 +131,6 @@ void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& _buffer, juce::
             currentPositionInfo.bpm = *positionInfo->getBpm();
         }
     }
-    auto voiceMode = static_cast<VOICE_MODE>(allParams.voiceParams.Mode->getIndex());
     int numVoices = 64;
     if (synth.getNumVoices() != numVoices) {
         synth.clearVoices();
@@ -159,7 +154,7 @@ void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& _buffer, juce::
             polyphony++;
         }
     }
-    latestDataProvider.push(buffer);  // TODO: パラアウトした時は最初の bus しか表示されない
+    latestDataProvider.push(buffer);
 
     midiMessages.clear();
 #if JUCE_DEBUG

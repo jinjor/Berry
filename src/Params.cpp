@@ -53,8 +53,6 @@ void MasterParams::loadParameters(juce::XmlElement& xml) {
 VoiceParams::VoiceParams() {
     std::string idPrefix = "VOICE_";
     std::string namePrefix = "Voice ";
-    Mode = new juce::AudioParameterChoice(
-        idPrefix + "MODE", namePrefix + "Mode", VOICE_MODE_NAMES, VOICE_MODE_NAMES.indexOf("Poly"));
     PitchBendRange =
         new juce::AudioParameterInt(idPrefix + "PITCH_BEND_RANGE", namePrefix + "Pitch-Bend Range", 1, 12, 2);
     TargetNoteKind = new juce::AudioParameterChoice(idPrefix + "TARGET_NOTE_KIND",
@@ -68,19 +66,16 @@ VoiceParams::VoiceParams() {
     freeze();
 }
 void VoiceParams::addAllParameters(juce::AudioProcessor& processor) {
-    processor.addParameter(Mode);
     processor.addParameter(PitchBendRange);
     processor.addParameter(TargetNoteKind);
     processor.addParameter(TargetNoteOct);
 }
 void VoiceParams::saveParameters(juce::XmlElement& xml) {
-    xml.setAttribute(Mode->paramID, Mode->getIndex());
     xml.setAttribute(PitchBendRange->paramID, PitchBendRange->get());
     xml.setAttribute(TargetNoteKind->paramID, TargetNoteKind->getIndex());
     xml.setAttribute(TargetNoteOct->paramID, TargetNoteOct->getIndex());
 }
 void VoiceParams::loadParameters(juce::XmlElement& xml) {
-    *Mode = xml.getIntAttribute(Mode->paramID, 0);
     *PitchBendRange = xml.getIntAttribute(PitchBendRange->paramID, 2);
     *TargetNoteKind = xml.getIntAttribute(TargetNoteKind->paramID, TARGET_NOTE_KINDS.indexOf("C"));
     *TargetNoteOct = xml.getIntAttribute(TargetNoteOct->paramID, TARGET_NOTE_OCT_NAMES.indexOf("1"));
@@ -374,46 +369,6 @@ void DelayParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-DrumParams::DrumParams(std::string idPrefix, std::string namePrefix) {
-    idPrefix += "DELAY_";
-    namePrefix += "Delay ";
-    NoteToPlay = new juce::AudioParameterInt(idPrefix + "NOTE_TO_PLAY", namePrefix + "Note to play", 0, 127, 60);
-    NoteToMuteEnabled =
-        new juce::AudioParameterBool(idPrefix + "NOTE_TO_MUTE_ENABLED", namePrefix + "Note to Mute Enabled", false);
-    NoteToMuteKind = new juce::AudioParameterChoice(idPrefix + "NOTE_TO_MUTE_KIND",
-                                                    namePrefix + "Note to Mute Kind",
-                                                    TARGET_NOTE_KINDS,
-                                                    TARGET_NOTE_KINDS.indexOf("C"));
-    NoteToMuteOct = new juce::AudioParameterChoice(idPrefix + "NOTE_TO_MUTE_OCT",
-                                                   namePrefix + "Note to Mute Oct",
-                                                   TARGET_NOTE_OCT_NAMES,
-                                                   TARGET_NOTE_OCT_NAMES.indexOf("1"));
-    Bus = new juce::AudioParameterChoice(idPrefix + "Bus", namePrefix + "Bus", BUS_NAMES, BUS_NAMES.indexOf("Main"));
-    freeze();
-}
-void DrumParams::addAllParameters(juce::AudioProcessor& processor) {
-    processor.addParameter(NoteToPlay);
-    processor.addParameter(NoteToMuteEnabled);
-    processor.addParameter(NoteToMuteKind);
-    processor.addParameter(NoteToMuteOct);
-    processor.addParameter(Bus);
-}
-void DrumParams::saveParameters(juce::XmlElement& xml) {
-    xml.setAttribute(NoteToPlay->paramID, NoteToPlay->get());
-    xml.setAttribute(NoteToMuteEnabled->paramID, NoteToMuteEnabled->get());
-    xml.setAttribute(NoteToMuteKind->paramID, NoteToMuteKind->getIndex());
-    xml.setAttribute(NoteToMuteOct->paramID, NoteToMuteOct->getIndex());
-    xml.setAttribute(Bus->paramID, Bus->getIndex());
-}
-void DrumParams::loadParameters(juce::XmlElement& xml) {
-    *NoteToPlay = xml.getIntAttribute(NoteToPlay->paramID, 60);
-    *NoteToMuteEnabled = xml.getIntAttribute(NoteToMuteEnabled->paramID, false);
-    *NoteToMuteKind = xml.getIntAttribute(NoteToMuteKind->paramID, TARGET_NOTE_KINDS.indexOf("C"));
-    *NoteToMuteOct = xml.getIntAttribute(NoteToMuteOct->paramID, TARGET_NOTE_OCT_NAMES.indexOf("1"));
-    *Bus = xml.getIntAttribute(Bus->paramID, BUS_NAMES.indexOf("Bus"));
-}
-
-//==============================================================================
 MainParams::MainParams(int groupIndex)
     : oscParams{OscParams{idPrefix(groupIndex), namePrefix(groupIndex), 0},
                 OscParams{idPrefix(groupIndex), namePrefix(groupIndex), 1},
@@ -426,7 +381,6 @@ MainParams::MainParams(int groupIndex)
                    ModEnvParams{idPrefix(groupIndex), namePrefix(groupIndex), 1},
                    ModEnvParams{idPrefix(groupIndex), namePrefix(groupIndex), 2}},
       delayParams{idPrefix(groupIndex), namePrefix(groupIndex)},
-      drumParams{idPrefix(groupIndex), namePrefix(groupIndex)},
       masterParams{idPrefix(groupIndex), namePrefix(groupIndex)} {}
 void MainParams::addAllParameters(juce::AudioProcessor& processor) {
     for (auto& params : envelopeParams) {
@@ -442,7 +396,6 @@ void MainParams::addAllParameters(juce::AudioProcessor& processor) {
         params.addAllParameters(processor);
     }
     delayParams.addAllParameters(processor);
-    drumParams.addAllParameters(processor);
     masterParams.addAllParameters(processor);
 }
 void MainParams::saveParameters(juce::XmlElement& xml) {
@@ -459,7 +412,6 @@ void MainParams::saveParameters(juce::XmlElement& xml) {
         param.saveParameters(xml);
     }
     delayParams.saveParameters(xml);
-    drumParams.saveParameters(xml);
     masterParams.saveParameters(xml);
 }
 void MainParams::loadParameters(juce::XmlElement& xml) {
@@ -476,7 +428,6 @@ void MainParams::loadParameters(juce::XmlElement& xml) {
         param.loadParameters(xml);
     }
     delayParams.loadParameters(xml);
-    drumParams.loadParameters(xml);
     masterParams.loadParameters(xml);
 }
 
@@ -528,17 +479,15 @@ void replaceAttributeNames(juce::XmlElement& xml, juce::StringRef before, juce::
     }
 }
 void AllParams::saveParametersToClipboard(juce::XmlElement& xml) {
-    auto index = voiceParams.isDrumMode() ? voiceParams.getTargetNote() : 128;
-    xml.setAttribute("DRUM_MODE", voiceParams.isDrumMode());
+    auto index = 128;
     mainParamList[index].saveParameters(xml);
 
     replaceAttributeNames(xml, "G" + std::to_string(index) + "_", "GROUP_");
 }
 void AllParams::loadParametersFromClipboard(juce::XmlElement& xml) {
-    auto index = voiceParams.isDrumMode() ? voiceParams.getTargetNote() : 128;
+    auto index = 128;
 
     replaceAttributeNames(xml, "GROUP_", "G" + std::to_string(index) + "_");
 
-    auto wasDrumMode = xml.getBoolAttribute("DRUM_MODE", false);
     mainParamList[index].loadParameters(xml);
 }

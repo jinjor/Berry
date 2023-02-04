@@ -17,7 +17,6 @@ public:
 //==============================================================================
 class VoiceParams : public SynthParametersBase {
 public:
-    juce::AudioParameterChoice* Mode;
     juce::AudioParameterInt* PitchBendRange;
     juce::AudioParameterChoice* TargetNoteKind;
     juce::AudioParameterChoice* TargetNoteOct;
@@ -28,18 +27,13 @@ public:
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
 
-    VOICE_MODE getMode() { return static_cast<VOICE_MODE>(Mode->getIndex()); }
-
-    bool isDrumMode() { return getMode() == VOICE_MODE::Drum; }
     int getTargetNote() {
         return (TARGET_NOTE_OCT_VALUES[TargetNoteOct->getIndex()] + 2) * 12 + TargetNoteKind->getIndex();
     }
 
-    bool isDrumModeFreezed;
     int pitchBendRange;
     int targetNote;
     void freeze() {
-        isDrumModeFreezed = isDrumMode();
         pitchBendRange = PitchBendRange->get();
         targetNote = getTargetNote();
     }
@@ -379,40 +373,6 @@ public:
 private:
 };
 
-//==============================================================================
-class DrumParams : public SynthParametersBase {
-public:
-    juce::AudioParameterInt* NoteToPlay;
-    juce::AudioParameterBool* NoteToMuteEnabled;
-    juce::AudioParameterChoice* NoteToMuteKind;
-    juce::AudioParameterChoice* NoteToMuteOct;
-    juce::AudioParameterChoice* Bus;
-
-    DrumParams(std::string idPrefix, std::string namePrefix);
-    DrumParams(const DrumParams&) = delete;
-    DrumParams(DrumParams&&) noexcept = default;
-
-    virtual void addAllParameters(juce::AudioProcessor& processor) override;
-    virtual void saveParameters(juce::XmlElement& xml) override;
-    virtual void loadParameters(juce::XmlElement& xml) override;
-
-    int noteToPlay;
-    bool noteToMuteEnabled;
-    int noteToMute;
-    int busIndex;
-    int getNoteToMute() {
-        return (TARGET_NOTE_OCT_VALUES[NoteToMuteOct->getIndex()] + 2) * 12 + NoteToMuteKind->getIndex();
-    }
-    void freeze() {
-        noteToPlay = NoteToPlay->get();
-        noteToMuteEnabled = NoteToMuteEnabled->get();
-        noteToMute = getNoteToMute();
-        busIndex = Bus->getIndex();
-    }
-
-private:
-};
-
 class MainParams : public SynthParametersBase {
 public:
     virtual void addAllParameters(juce::AudioProcessor& processor) override;
@@ -427,7 +387,6 @@ public:
     std::array<FilterParams, NUM_FILTER> filterParams;
     std::array<ModEnvParams, NUM_MODENV> modEnvParams;
     DelayParams delayParams;
-    DrumParams drumParams;
     MasterParams masterParams;
     bool isEnabled() {
         for (int i = 0; i < NUM_OSC; ++i) {
@@ -451,7 +410,6 @@ public:
             modEnvParams[i].freeze();
         }
         delayParams.freeze();
-        drumParams.freeze();
         masterParams.freeze();
     }
 
@@ -482,16 +440,14 @@ public:
     void freeze() {
         globalParams.freeze();
         voiceParams.freeze();
-        auto& mainParams = mainParamList[voiceParams.isDrumModeFreezed ? voiceParams.targetNote : 128];
+        auto& mainParams = mainParamList[128];
         for (auto& mainParams : mainParamList) {
             if (mainParams.isEnabled()) {
                 mainParams.freeze();
             }
         }
     }
-    MainParams& getCurrentMainParams() {
-        return mainParamList[voiceParams.isDrumMode() ? voiceParams.getTargetNote() : 128];
-    }
+    MainParams& getCurrentMainParams() { return mainParamList[128]; }
 
 private:
 };

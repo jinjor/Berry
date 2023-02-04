@@ -32,8 +32,8 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
           SectionComponent{"MOD ENV 2", HEADER_CHECK::Enabled, std::make_unique<ModEnvComponent>(1, p.allParams)},
           SectionComponent{"MOD ENV 3", HEADER_CHECK::Enabled, std::make_unique<ModEnvComponent>(2, p.allParams)}},
       delayComponent{SectionComponent{"DELAY", HEADER_CHECK::Enabled, std::make_unique<DelayComponent>(p.allParams)}},
-      masterComponent{SectionComponent{"MASTER", HEADER_CHECK::Hidden, std::make_unique<MasterComponent>(p.allParams)}},
-      drumComponent{SectionComponent{"DRUM", HEADER_CHECK::Hidden, std::make_unique<DrumComponent>(p.allParams)}} {
+      masterComponent{
+          SectionComponent{"MASTER", HEADER_CHECK::Hidden, std::make_unique<MasterComponent>(p.allParams)}} {
     getLookAndFeel().setColour(juce::Label::textColourId, colour::TEXT);
 
     addAndMakeVisible(voiceComponent);
@@ -74,7 +74,6 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
         addAndMakeVisible(delayComponent);
     }
     addAndMakeVisible(masterComponent);
-    addAndMakeVisible(drumComponent);
     setSize(1024, 768);
 #if JUCE_DEBUG
     setResizable(true, true);  // for debug
@@ -173,7 +172,6 @@ void BerryAudioProcessorEditor::resized() {
         auto modEnvPanelHeight = (lowerHeight - PANEL_MARGIN_Y * 2) / 3;
         auto delayPanelHeight = (lowerHeight - PANEL_MARGIN_Y * 2) / 3;
         auto masterPanelHeight = (lowerHeight - delayPanelHeight - PANEL_MARGIN_Y) * 1 / 3;
-        auto drumPanelHeight = (lowerHeight - delayPanelHeight - PANEL_MARGIN_Y) * 1 / 3;
         lowerArea.removeFromLeft(PANEL_MARGIN_X);
         {
             auto area = lowerArea.removeFromLeft(leftWidth);
@@ -189,14 +187,10 @@ void BerryAudioProcessorEditor::resized() {
             delayComponent.setBounds(area.removeFromTop(delayPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
             masterComponent.setBounds(area.removeFromTop(masterPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            drumComponent.setBounds(area.removeFromTop(drumPanelHeight));
         }
     }
 }
 void BerryAudioProcessorEditor::timerCallback() {
-    auto isDrumMode = audioProcessor.allParams.voiceParams.isDrumMode();
-    drumComponent.setVisible(isDrumMode);
     auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
     for (auto i = 0; i < NUM_OSC; i++) {
         oscComponents[i].setEnabled(mainParams.oscParams[i].Enabled->get());

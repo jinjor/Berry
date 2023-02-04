@@ -31,7 +31,6 @@ private:
     SectionComponent modEnvComponents[NUM_MODENV];
     SectionComponent delayComponent;
     SectionComponent masterComponent;
-    SectionComponent drumComponent;
 
     virtual void timerCallback() override;
     virtual void enabledChanged(SectionComponent *section) override;

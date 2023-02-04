@@ -183,19 +183,9 @@ void IncDecButton::sliderValueChanged(juce::Slider* _slider) {
 
 //==============================================================================
 VoiceComponent::VoiceComponent(AllParams& allParams)
-    : params(allParams.voiceParams),
-      mainParamList(allParams.mainParamList),
-      modeSelector("Mode"),
-      pitchBendRangeButton() {
-    initChoice(modeSelector, params.Mode, this, *this);
+    : params(allParams.voiceParams), mainParamList(allParams.mainParamList), pitchBendRangeButton() {
     initIncDec(pitchBendRangeButton, params.PitchBendRange, this, *this);
-    initChoice(targetNoteKindSelector, params.TargetNoteKind, this, drumTargetSelector);
-    initChoice(targetNoteOctSelector, params.TargetNoteOct, this, drumTargetSelector);
-    initLabel(modeLabel, "Mode", *this);
     initLabel(pitchBendRangeLabel, "PB Range", *this);
-    initLabel(targetNoteLabel, "Target Note", *this);
-
-    addAndMakeVisible(drumTargetSelector);
 
     startTimerHz(30.0f);
 }
@@ -207,24 +197,7 @@ void VoiceComponent::paint(juce::Graphics& g) {}
 void VoiceComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.reduce(0, 10);
-    consumeLabeledComboBox(bounds, 70, modeLabel, modeSelector);
-    auto drumBounds = bounds;
-    consumeLabeledComboBox(drumBounds, 120, targetNoteLabel, drumTargetSelector);
-    {
-        juce::Rectangle<int> selectorsArea = drumTargetSelector.getLocalBounds();
-        targetNoteKindSelector.setBounds(selectorsArea.removeFromLeft(60));
-        targetNoteOctSelector.setBounds(selectorsArea.removeFromLeft(60));
-    }
     consumeLabeledIncDecButton(bounds, 60, pitchBendRangeLabel, pitchBendRangeButton);
-}
-void VoiceComponent::comboBoxChanged(juce::ComboBox* comboBox) {
-    if (comboBox == &modeSelector) {
-        *params.Mode = modeSelector.getSelectedItemIndex();
-    } else if (comboBox == &targetNoteKindSelector) {
-        *params.TargetNoteKind = targetNoteKindSelector.getSelectedItemIndex();
-    } else if (comboBox == &targetNoteOctSelector) {
-        *params.TargetNoteOct = targetNoteOctSelector.getSelectedItemIndex();
-    }
 }
 void VoiceComponent::incDecValueChanged(IncDecButton* button) {
     if (button == &pitchBendRangeButton) {
@@ -232,35 +205,7 @@ void VoiceComponent::incDecValueChanged(IncDecButton* button) {
     }
 }
 void VoiceComponent::timerCallback() {
-    modeSelector.setSelectedItemIndex(params.Mode->getIndex(), juce::dontSendNotification);
     pitchBendRangeButton.setValue(params.PitchBendRange->get(), juce::dontSendNotification);
-    targetNoteKindSelector.setSelectedItemIndex(params.TargetNoteKind->getIndex(), juce::dontSendNotification);
-    targetNoteOctSelector.setSelectedItemIndex(params.TargetNoteOct->getIndex(), juce::dontSendNotification);
-
-    for (auto octIndex = 0; octIndex < 7; octIndex++) {
-        auto oct = TARGET_NOTE_OCT_VALUES[octIndex];
-        auto cNote = (oct + 2) * 12;
-        auto isOctSelected = TARGET_NOTE_OCT_VALUES[params.TargetNoteOct->getIndex()] == oct;
-        auto isAnyNoteInOctEnabled = false;
-        for (auto kindIndex = 0; kindIndex < 12; kindIndex++) {
-            auto note = cNote + kindIndex;
-            auto isNoteEnabled = mainParamList[note].isEnabled();
-            isAnyNoteInOctEnabled |= isNoteEnabled;
-            if (isOctSelected) {
-                auto kindName = TARGET_NOTE_KINDS[kindIndex];
-                kindName = (isNoteEnabled ? "*" : " ") + kindName;
-                targetNoteKindSelector.changeItemText(kindIndex + 1, kindName);
-            }
-        }
-        auto octName = juce::String(oct);
-        octName = (isAnyNoteInOctEnabled ? "*" : " ") + octName;
-        targetNoteOctSelector.changeItemText(octIndex + 1, octName);
-    }
-    auto isDrum = params.isDrumMode();
-    pitchBendRangeLabel.setVisible(!isDrum);
-    pitchBendRangeButton.setVisible(!isDrum);
-    targetNoteLabel.setVisible(isDrum);
-    drumTargetSelector.setVisible(isDrum);
 }
 
 //==============================================================================
@@ -968,83 +913,6 @@ void DelayComponent::timerCallback() {
     mixSlider.setValue(params.Mix->get(), juce::dontSendNotification);
 
     mixSlider.setLookAndFeel(&berryLookAndFeel);
-}
-
-//==============================================================================
-DrumComponent::DrumComponent(AllParams& allParams)
-    : allParams(allParams),
-      noteToPlaySlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                       juce::Slider::TextEntryBoxPosition::NoTextBox) {
-    auto& params = getSelectedDrumParams();
-
-    initLinear(noteToPlaySlider, params.NoteToPlay, this, *this);
-    initChoice(noteToMuteEnabledSelector, params.NoteToMuteEnabled, this, noteToMuteSelector);
-    initChoice(noteToMuteKindSelector, params.NoteToMuteKind, this, noteToMuteSelector);
-    initChoice(noteToMuteOctSelector, params.NoteToMuteOct, this, noteToMuteSelector);
-    initChoice(busSelector, params.Bus, this, *this);
-
-    initLabel(noteToPlayLabel, "Note", *this);
-    initLabel(noteToMuteLabel, "Note to Mute", *this);
-    initLabel(busLabel, "Bus", *this);
-
-    this->addAndMakeVisible(noteToMuteSelector);
-
-    startTimerHz(30.0f);
-}
-
-DrumComponent::~DrumComponent() {}
-
-void DrumComponent::paint(juce::Graphics& g) {}
-
-void DrumComponent::resized() {
-    juce::Rectangle<int> bounds = getLocalBounds();
-    auto height = bounds.getHeight();
-    // auto upperArea = bounds.removeFromTop(height / 2);
-    auto upperArea = bounds.removeFromTop(height * 3 / 4);
-    auto& lowerArea = bounds;
-
-    auto& params = getSelectedDrumParams();
-
-    consumeLabeledKnob(upperArea, noteToPlayLabel, noteToPlaySlider);
-    consumeLabeledComboBox(upperArea, 180, noteToMuteLabel, noteToMuteSelector);
-    {
-        juce::Rectangle<int> selectorsArea = noteToMuteSelector.getLocalBounds();
-        noteToMuteEnabledSelector.setBounds(selectorsArea.removeFromLeft(60));
-        noteToMuteKindSelector.setBounds(selectorsArea.removeFromLeft(60));
-        noteToMuteOctSelector.setBounds(selectorsArea.removeFromLeft(60));
-    }
-    consumeLabeledComboBox(upperArea, 70, busLabel, busSelector);
-}
-void DrumComponent::comboBoxChanged(juce::ComboBox* comboBox) {
-    auto& params = getSelectedDrumParams();
-    if (comboBox == &noteToMuteEnabledSelector) {
-        *params.NoteToMuteEnabled = noteToMuteEnabledSelector.getSelectedItemIndex();
-    } else if (comboBox == &noteToMuteKindSelector) {
-        *params.NoteToMuteKind = noteToMuteKindSelector.getSelectedItemIndex();
-    } else if (comboBox == &noteToMuteOctSelector) {
-        *params.NoteToMuteOct = noteToMuteOctSelector.getSelectedItemIndex();
-    } else if (comboBox == &busSelector) {
-        *params.Bus = busSelector.getSelectedItemIndex();
-    }
-}
-void DrumComponent::sliderValueChanged(juce::Slider* slider) {
-    auto& params = getSelectedDrumParams();
-    if (slider == &noteToPlaySlider) {
-        *params.NoteToPlay = noteToPlaySlider.getValue();
-    }
-}
-
-void DrumComponent::timerCallback() {
-    auto& params = getSelectedDrumParams();
-    noteToPlaySlider.setValue(params.NoteToPlay->get(), juce::dontSendNotification);
-    noteToMuteEnabledSelector.setSelectedItemIndex(params.NoteToMuteEnabled->get(), juce::dontSendNotification);
-    noteToMuteKindSelector.setSelectedItemIndex(params.NoteToMuteKind->getIndex(), juce::dontSendNotification);
-    noteToMuteOctSelector.setSelectedItemIndex(params.NoteToMuteOct->getIndex(), juce::dontSendNotification);
-
-    auto muteEnabled = params.NoteToMuteEnabled->get();
-    noteToMuteKindSelector.setEnabled(muteEnabled);
-    noteToMuteOctSelector.setEnabled(muteEnabled);
-    busSelector.setSelectedItemIndex(params.Bus->getIndex(), juce::dontSendNotification);
 }
 
 //==============================================================================

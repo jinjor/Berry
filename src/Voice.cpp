@@ -30,7 +30,6 @@ void BerryVoice::startNote(int midiNoteNumber,
                            juce::SynthesiserSound *sound,
                            int currentPitchWheelPosition) {
     DBG("startNote() midiNoteNumber:" << midiNoteNumber);
-    isDrumAtStart = voiceParams.isDrumModeFreezed;
     noteNumberAtStart = midiNoteNumber;
     if (BerrySound *playingSound = dynamic_cast<BerrySound *>(sound)) {
         jassert(mainParamList.size() == 129);
@@ -39,9 +38,6 @@ void BerryVoice::startNote(int midiNoteNumber,
         if (!mainParams.isEnabled()) {
             clearCurrentNote();
             return;
-        }
-        if (isDrumAtStart) {
-            midiNoteNumber = mainParams.drumParams.noteToPlay;
         }
         smoothNote.init(midiNoteNumber);
         if (stolen) {
@@ -118,20 +114,6 @@ void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int sta
             return;
         }
         auto sampleRate = getSampleRate();
-
-        if (voiceParams.isDrumModeFreezed != isDrumAtStart) {
-            DBG("drum mode changed: " + std::to_string(isDrumAtStart) + " -> " +
-                std::to_string(voiceParams.isDrumModeFreezed));
-            stolen = true;
-            for (int i = 0; i < NUM_OSC; ++i) {
-                oscs[i].setSampleRate(0.0);  // stop
-            }
-            for (int i = 0; i < NUM_ENVELOPE; ++i) {
-                adsr[i].forceStop();
-            }
-            clearCurrentNote();
-            return;
-        }
 
         applyParamsBeforeLoop(sampleRate);
 

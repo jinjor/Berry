@@ -370,11 +370,7 @@ private:
 };
 
 //==============================================================================
-class VoiceComponent : public juce::Component,
-                       juce::ComboBox::Listener,
-                       IncDecButton::Listener,
-                       private juce::Timer,
-                       ComponentHelper {
+class VoiceComponent : public juce::Component, IncDecButton::Listener, private juce::Timer, ComponentHelper {
 public:
     VoiceComponent(AllParams& allParams);
     virtual ~VoiceComponent();
@@ -384,23 +380,15 @@ public:
     virtual void resized() override;
 
 private:
-    virtual void comboBoxChanged(juce::ComboBox* comboBox) override;
     virtual void incDecValueChanged(IncDecButton* button) override;
     virtual void timerCallback() override;
 
     VoiceParams& params;
     std::vector<MainParams>& mainParamList;
 
-    juce::Component drumTargetSelector;
-
-    juce::ComboBox modeSelector;
     IncDecButton pitchBendRangeButton;
-    juce::ComboBox targetNoteKindSelector;
-    juce::ComboBox targetNoteOctSelector;
 
-    juce::Label modeLabel;
     juce::Label pitchBendRangeLabel;
-    juce::Label targetNoteLabel;
 };
 
 //==============================================================================
@@ -697,42 +685,6 @@ private:
     juce::Label mixLabel;
 
     DelayParams& getSelectedDelayParams() { return allParams.getCurrentMainParams().delayParams; }
-};
-
-//==============================================================================
-class DrumComponent : public juce::Component,
-                      juce::ComboBox::Listener,
-                      juce::Slider::Listener,
-                      private juce::Timer,
-                      ComponentHelper {
-public:
-    DrumComponent(AllParams& allParams);
-    virtual ~DrumComponent();
-    DrumComponent(const DrumComponent&) = delete;
-
-    virtual void paint(juce::Graphics& g) override;
-    virtual void resized() override;
-
-private:
-    virtual void comboBoxChanged(juce::ComboBox* comboBox) override;
-    virtual void sliderValueChanged(juce::Slider* slider) override;
-    virtual void timerCallback() override;
-
-    AllParams& allParams;
-
-    juce::Component noteToMuteSelector;
-
-    juce::Slider noteToPlaySlider;
-    juce::ComboBox noteToMuteEnabledSelector;
-    juce::ComboBox noteToMuteKindSelector;
-    juce::ComboBox noteToMuteOctSelector;
-    juce::ComboBox busSelector;
-
-    juce::Label noteToPlayLabel;
-    juce::Label noteToMuteLabel;
-    juce::Label busLabel;
-
-    DrumParams& getSelectedDrumParams() { return allParams.getCurrentMainParams().drumParams; }
 };
 
 //==============================================================================
