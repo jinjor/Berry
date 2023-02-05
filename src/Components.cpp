@@ -576,9 +576,7 @@ ModEnvComponent::ModEnvComponent(int index, AllParams& allParams)
     : index(index),
       allParams(allParams),
       targetTypeSelector("TargetType"),
-      targetOscSelector("TargetOsc"),
       targetFilterSelector("TargetFilter"),
-      targetOscParamSelector("TargetOscParam"),
       targetFilterParamSelector("TargetFilterParam"),
       peakFreqSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                      juce::Slider::TextEntryBoxPosition::NoTextBox),
@@ -591,9 +589,7 @@ ModEnvComponent::ModEnvComponent(int index, AllParams& allParams)
     auto& params = getSelectedModEnvParams();
 
     initChoice(targetTypeSelector, params.TargetType, this, targetSelector);
-    initChoice(targetOscSelector, params.TargetOsc, this, targetSelector);
     initChoice(targetFilterSelector, params.TargetFilter, this, targetSelector);
-    initChoice(targetOscParamSelector, params.TargetOscParam, this, targetSelector);
     initChoice(targetFilterParamSelector, params.TargetFilterParam, this, targetSelector);
     initChoice(fadeSelector, params.Fade, this, *this);
     auto formatPeakFreq = [](double oct) -> juce::String {
@@ -632,10 +628,8 @@ void ModEnvComponent::resized() {
 
         targetTypeSelector.setBounds(selectorsArea.removeFromLeft(90));
         auto indexArea = selectorsArea.removeFromLeft(70);
-        targetOscSelector.setBounds(indexArea);
         targetFilterSelector.setBounds(indexArea);
         auto paramArea = selectorsArea.removeFromLeft(110);
-        targetOscParamSelector.setBounds(paramArea);
         targetFilterParamSelector.setBounds(paramArea);
     }
     {
@@ -651,12 +645,8 @@ void ModEnvComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) {
     auto& params = getSelectedModEnvParams();
     if (comboBoxThatHasChanged == &targetTypeSelector) {
         *params.TargetType = targetTypeSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetOscSelector) {
-        *params.TargetOsc = targetOscSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &targetFilterSelector) {
         *params.TargetFilter = targetFilterSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetOscParamSelector) {
-        *params.TargetOscParam = targetOscParamSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &targetFilterParamSelector) {
         *params.TargetFilterParam = targetFilterParamSelector.getSelectedItemIndex();
     } else if (comboBoxThatHasChanged == &fadeSelector) {
@@ -680,9 +670,7 @@ void ModEnvComponent::timerCallback() {
     auto& params = getSelectedModEnvParams();
 
     targetTypeSelector.setSelectedItemIndex(params.TargetType->getIndex(), juce::dontSendNotification);
-    targetOscSelector.setSelectedItemIndex(params.TargetOsc->getIndex(), juce::dontSendNotification);
     targetFilterSelector.setSelectedItemIndex(params.TargetFilter->getIndex(), juce::dontSendNotification);
-    targetOscParamSelector.setSelectedItemIndex(params.TargetOscParam->getIndex(), juce::dontSendNotification);
     targetFilterParamSelector.setSelectedItemIndex(params.TargetFilterParam->getIndex(), juce::dontSendNotification);
     fadeSelector.setSelectedItemIndex(params.Fade->getIndex(), juce::dontSendNotification);
 
@@ -692,8 +680,6 @@ void ModEnvComponent::timerCallback() {
     decaySlider.setValue(params.Decay->get(), juce::dontSendNotification);
 
     auto targetType = params.getTargetType();
-    targetOscSelector.setVisible(targetType == MODENV_TARGET_TYPE::OSC);
-    targetOscParamSelector.setVisible(targetType == MODENV_TARGET_TYPE::OSC);
     targetFilterSelector.setVisible(targetType == MODENV_TARGET_TYPE::Filter);
     targetFilterParamSelector.setVisible(targetType == MODENV_TARGET_TYPE::Filter);
 

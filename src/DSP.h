@@ -20,14 +20,11 @@ const juce::StringArray FILTER_TYPE_NAMES =
 enum class FILTER_FREQ_TYPE { Absolute, Relative };
 const juce::StringArray FILTER_FREQ_TYPE_NAMES = juce::StringArray("Abs", "Rel");
 
-enum class MODENV_TARGET_TYPE { OSC, Filter };
-const juce::StringArray MODENV_TARGET_TYPE_NAMES = juce::StringArray("OSC", "Filter");
+enum class MODENV_TARGET_TYPE { Filter };
+const juce::StringArray MODENV_TARGET_TYPE_NAMES = juce::StringArray("Filter", "Dummy");
 
 const juce::StringArray MODENV_TARGET_OSC_NAMES = juce::StringArray("1", "2", "3", "All");
 const juce::StringArray MODENV_TARGET_FILTER_NAMES = juce::StringArray("1", "2", "All");
-
-enum class MODENV_TARGET_OSC_PARAM { Freq, Dummy };                                          // TODO
-const juce::StringArray MODENV_TARGET_OSC_PARAM_NAMES = juce::StringArray("Freq", "Dummy");  // TODO
 
 enum class MODENV_TARGET_FILTER_PARAM { Freq, Q };
 const juce::StringArray MODENV_TARGET_FILTER_PARAM_NAMES = juce::StringArray("Freq", "Q");

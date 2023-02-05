@@ -202,14 +202,14 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         }
         active = true;
 
-        auto freq = getMidiNoteInHertzDouble(shiftedNoteNumbers[oscIndex] + modifiers.octShift[oscIndex] * 12);
+        auto freq = getMidiNoteInHertzDouble(shiftedNoteNumbers[oscIndex]);
         auto pan = panBase + panModAmp * modifiers.panMod[oscIndex];
         jassert(pan >= -1);
         jassert(pan <= 1);
 
         double o[2]{0, 0};
-        oscs[oscIndex].step(pan, freq, modifiers.normalizedAngleShift[oscIndex], o);
-        auto oscGain = adsr[envelopeIndex].getValue() * modifiers.gain[oscIndex] * p.gain;
+        oscs[oscIndex].step(pan, freq, 0.0, o);
+        auto oscGain = adsr[envelopeIndex].getValue() * p.gain;
         o[0] *= oscGain;
         o[1] *= oscGain;
 
@@ -267,23 +267,6 @@ void BerryVoice::updateModifiersByModEnv(Modifiers &modifiers, double sampleRate
         modEnvs[i].step(sampleRate);
         auto modEnvValue = modEnvs[i].getValue();
         switch (params.targetType) {
-            case MODENV_TARGET_TYPE::OSC: {
-                int targetIndex = params.targetOsc;
-                switch (params.targetOscParam) {
-                    case MODENV_TARGET_OSC_PARAM::Freq: {
-                        auto v = params.peakFreq * modEnvValue;
-                        if (targetIndex == NUM_OSC) {
-                            for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
-                                modifiers.octShift[oscIndex] += v;
-                            }
-                        } else {
-                            modifiers.octShift[targetIndex] += v;
-                        }
-                        break;
-                    }
-                }
-                break;
-            }
             case MODENV_TARGET_TYPE::Filter: {
                 int targetIndex = params.targetFilter;
                 switch (params.targetFilterParam) {

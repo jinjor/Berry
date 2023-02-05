@@ -91,8 +91,8 @@ static void BM_VoiceStep_full(benchmark::State& state) {
     *p.mainParams.filterParams[1].Enabled = true;
     *p.mainParams.filterParams[1].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
     *p.mainParams.modEnvParams[0].Enabled = true;
-    *p.mainParams.modEnvParams[0].TargetType = MODENV_TARGET_TYPE_NAMES.indexOf("OSC");
-    *p.mainParams.modEnvParams[0].TargetOscParam = MODENV_TARGET_OSC_PARAM_NAMES.indexOf("Freq");
+    *p.mainParams.modEnvParams[0].TargetType = MODENV_TARGET_TYPE_NAMES.indexOf("Filter");
+    *p.mainParams.modEnvParams[0].TargetFilterParam = MODENV_TARGET_FILTER_PARAM_NAMES.indexOf("Freq");
     *p.mainParams.modEnvParams[1].Enabled = true;
     *p.mainParams.modEnvParams[1].TargetType = MODENV_TARGET_TYPE_NAMES.indexOf("Filter");
     *p.mainParams.modEnvParams[1].TargetFilterParam = MODENV_TARGET_FILTER_PARAM_NAMES.indexOf("Freq");

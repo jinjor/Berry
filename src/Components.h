@@ -601,9 +601,7 @@ private:
     juce::Component targetSelector;
 
     juce::ComboBox targetTypeSelector;
-    juce::ComboBox targetOscSelector;
     juce::ComboBox targetFilterSelector;
-    juce::ComboBox targetOscParamSelector;
     juce::ComboBox targetFilterParamSelector;
     juce::ComboBox fadeSelector;
     juce::Slider peakFreqSlider;

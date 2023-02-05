@@ -208,9 +208,7 @@ class ModEnvParams : public SynthParametersBase {
 public:
     juce::AudioParameterBool* Enabled;
     juce::AudioParameterChoice* TargetType;
-    juce::AudioParameterChoice* TargetOsc;
     juce::AudioParameterChoice* TargetFilter;
-    juce::AudioParameterChoice* TargetOscParam;
     juce::AudioParameterChoice* TargetFilterParam;
     juce::AudioParameterChoice* Fade;
     juce::AudioParameterFloat* PeakFreq;
@@ -227,25 +225,19 @@ public:
     virtual void loadParameters(juce::XmlElement& xml) override;
 
     MODENV_TARGET_TYPE getTargetType() { return static_cast<MODENV_TARGET_TYPE>(TargetType->getIndex()); }
-    MODENV_TARGET_OSC_PARAM getTargetOscParam() {
-        return static_cast<MODENV_TARGET_OSC_PARAM>(TargetOscParam->getIndex());
-    }
     MODENV_TARGET_FILTER_PARAM getTargetFilterParam() {
         return static_cast<MODENV_TARGET_FILTER_PARAM>(TargetFilterParam->getIndex());
     }
     bool isTargetFreq() {
         auto t = getTargetType();
-        return (t == MODENV_TARGET_TYPE::OSC && getTargetOscParam() == MODENV_TARGET_OSC_PARAM::Freq) ||
-               (t == MODENV_TARGET_TYPE::Filter && getTargetFilterParam() == MODENV_TARGET_FILTER_PARAM::Freq);
+        return (t == MODENV_TARGET_TYPE::Filter && getTargetFilterParam() == MODENV_TARGET_FILTER_PARAM::Freq);
     }
     bool shouldUseHold() { return !isTargetFreq() && isFadeIn(); }
     bool isFadeIn() { return static_cast<MODENV_FADE>(Fade->getIndex()) == MODENV_FADE::In; }
 
     bool enabled;
     MODENV_TARGET_TYPE targetType;
-    int targetOsc;
     int targetFilter;
-    MODENV_TARGET_OSC_PARAM targetOscParam;
     MODENV_TARGET_FILTER_PARAM targetFilterParam;
     bool fadeIn;
     float peakFreq;
@@ -255,9 +247,7 @@ public:
     void freeze() {
         enabled = Enabled->get();
         targetType = getTargetType();
-        targetOsc = TargetOsc->getIndex();
         targetFilter = TargetFilter->getIndex();
-        targetOscParam = getTargetOscParam();
         targetFilterParam = getTargetFilterParam();
         fadeIn = isFadeIn();
         peakFreq = PeakFreq->get();

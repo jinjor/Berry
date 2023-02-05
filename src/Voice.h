@@ -63,10 +63,7 @@ public:
 
 //==============================================================================
 struct Modifiers {
-    double normalizedAngleShift[NUM_OSC]{0.0, 0.0, 0.0};
-    double octShift[NUM_OSC]{0.0, 0.0, 0.0};
-    double panMod[NUM_OSC]{0.0, 0.0, 0.0};
-    double gain[NUM_OSC]{1.0, 1.0, 1.0};
+    double panMod[NUM_OSC]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double filterOctShift[NUM_FILTER]{0.0, 0.0};
     double filterQExp[NUM_FILTER]{1.0, 1.0};
 };

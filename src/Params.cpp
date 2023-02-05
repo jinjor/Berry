@@ -179,18 +179,10 @@ ModEnvParams::ModEnvParams(int index) {
                                                 namePrefix + "Target Type",
                                                 MODENV_TARGET_TYPE_NAMES,
                                                 MODENV_TARGET_TYPE_NAMES.indexOf("LFO"));
-    TargetOsc = new juce::AudioParameterChoice(idPrefix + "TARGET_OSC",
-                                               namePrefix + "Target OSC",
-                                               MODENV_TARGET_OSC_NAMES,
-                                               MODENV_TARGET_OSC_NAMES.indexOf("All"));
     TargetFilter = new juce::AudioParameterChoice(idPrefix + "TARGET_FILTER",
                                                   namePrefix + "Target Filter",
                                                   MODENV_TARGET_FILTER_NAMES,
                                                   MODENV_TARGET_FILTER_NAMES.indexOf("All"));
-    TargetOscParam = new juce::AudioParameterChoice(idPrefix + "TARGET_OSC_PARAM",
-                                                    namePrefix + "Target OSC Param",
-                                                    MODENV_TARGET_OSC_PARAM_NAMES,
-                                                    MODENV_TARGET_OSC_PARAM_NAMES.indexOf("Freq"));
     TargetFilterParam = new juce::AudioParameterChoice(idPrefix + "TARGET_FILTER_PARAM",
                                                        namePrefix + "Target Filter Param",
                                                        MODENV_TARGET_FILTER_PARAM_NAMES,
@@ -209,9 +201,7 @@ ModEnvParams::ModEnvParams(int index) {
 void ModEnvParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Enabled);
     processor.addParameter(TargetType);
-    processor.addParameter(TargetOsc);
     processor.addParameter(TargetFilter);
-    processor.addParameter(TargetOscParam);
     processor.addParameter(TargetFilterParam);
     processor.addParameter(Fade);
     processor.addParameter(PeakFreq);
@@ -222,9 +212,7 @@ void ModEnvParams::addAllParameters(juce::AudioProcessor& processor) {
 void ModEnvParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(Enabled->paramID, Enabled->get());
     xml.setAttribute(TargetType->paramID, TargetType->getIndex());
-    xml.setAttribute(TargetOsc->paramID, TargetOsc->getIndex());
     xml.setAttribute(TargetFilter->paramID, TargetFilter->getIndex());
-    xml.setAttribute(TargetOscParam->paramID, TargetOscParam->getIndex());
     xml.setAttribute(TargetFilterParam->paramID, TargetFilterParam->getIndex());
     xml.setAttribute(Fade->paramID, Fade->getIndex());
     xml.setAttribute(PeakFreq->paramID, (double)PeakFreq->get());
@@ -235,9 +223,7 @@ void ModEnvParams::saveParameters(juce::XmlElement& xml) {
 void ModEnvParams::loadParameters(juce::XmlElement& xml) {
     *Enabled = xml.getIntAttribute(Enabled->paramID, 0);
     *TargetType = xml.getIntAttribute(TargetType->paramID, 0);
-    *TargetOsc = xml.getIntAttribute(TargetOsc->paramID, NUM_OSC);
-    *TargetFilter = xml.getIntAttribute(TargetOsc->paramID, NUM_FILTER);
-    *TargetOscParam = xml.getIntAttribute(TargetOscParam->paramID, 0);
+    *TargetFilter = xml.getIntAttribute(TargetFilter->paramID, NUM_FILTER);
     *TargetFilterParam = xml.getIntAttribute(TargetFilterParam->paramID, 0);
     *Fade = xml.getIntAttribute(Fade->paramID, 0);
     *PeakFreq = (float)xml.getDoubleAttribute(PeakFreq->paramID, 0);
