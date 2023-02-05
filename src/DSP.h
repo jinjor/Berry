@@ -7,12 +7,6 @@
 using namespace math_constants;
 
 namespace {
-const juce::StringArray TARGET_NOTE_KINDS =
-    juce::StringArray("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B");
-const juce::StringArray TARGET_NOTE_OCT_NAMES = juce::StringArray("-1", "0", "1", "2", "3", "4", "5");
-const int TARGET_NOTE_OCT_VALUES[7] = {-1, 0, 1, 2, 3, 4, 5};
-const juce::StringArray BUS_NAMES = juce::StringArray("Main", "1", "2", "3", "4");
-
 enum class WAVEFORM { Sine, Pink, White };
 const juce::StringArray OSC_WAVEFORM_NAMES = juce::StringArray("Sine", "Pink", "White");
 const WAVEFORM OSC_WAVEFORM_VALUES[3] = {WAVEFORM::Sine, WAVEFORM::Pink, WAVEFORM::White};
@@ -637,7 +631,6 @@ public:
         currentNormalizedAngle += normalizedAngleDelta;
         if (currentNormalizedAngle > 1.0) {
             currentNormalizedAngle -= 1.0;
-            currentRandomValue = 0.0;
         }
         auto normalizedAngle = currentNormalizedAngle + normalizedAngleShift;
         switch (waveform) {
@@ -673,7 +666,6 @@ public:
 private:
     Wavetable wavetable;
     double currentNormalizedAngle = 0.0;
-    double currentRandomValue = 0.0;
     double pink[7]{};
     juce::Random whiteNoise;
     WAVEFORM waveform = WAVEFORM::Sine;

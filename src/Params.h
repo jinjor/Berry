@@ -18,8 +18,6 @@ public:
 class VoiceParams : public SynthParametersBase {
 public:
     juce::AudioParameterInt* PitchBendRange;
-    juce::AudioParameterChoice* TargetNoteKind;
-    juce::AudioParameterChoice* TargetNoteOct;
 
     VoiceParams();
     VoiceParams(const VoiceParams&) = delete;
@@ -27,16 +25,8 @@ public:
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
 
-    int getTargetNote() {
-        return (TARGET_NOTE_OCT_VALUES[TargetNoteOct->getIndex()] + 2) * 12 + TargetNoteKind->getIndex();
-    }
-
     int pitchBendRange;
-    int targetNote;
-    void freeze() {
-        pitchBendRange = PitchBendRange->get();
-        targetNote = getTargetNote();
-    }
+    void freeze() { pitchBendRange = PitchBendRange->get(); }
 
 private:
 };
