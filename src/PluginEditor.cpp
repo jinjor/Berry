@@ -178,10 +178,6 @@ void BerryAudioProcessorEditor::resized() {
             oscComponents[7].setBounds(area.removeFromTop(quarterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
             oscComponents[8].setBounds(area);
-
-            // filterComponents[0].setBounds(area.removeFromTop(halfPanelHeight));
-            // area.removeFromTop(PANEL_MARGIN_Y);
-            // filterComponents[1].setBounds(area);
         }
     }
     {
@@ -196,11 +192,15 @@ void BerryAudioProcessorEditor::resized() {
         lowerArea.removeFromLeft(PANEL_MARGIN_X);
         {
             auto area = lowerArea.removeFromLeft(leftWidth);
-            modEnvComponents[0].setBounds(area.removeFromTop(modEnvPanelHeight));
+            filterComponents[0].setBounds(area.removeFromTop(modEnvPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
-            modEnvComponents[1].setBounds(area.removeFromTop(modEnvPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            modEnvComponents[2].setBounds(area.removeFromTop(modEnvPanelHeight));
+            filterComponents[1].setBounds(area.removeFromTop(modEnvPanelHeight));
+
+            // modEnvComponents[0].setBounds(area.removeFromTop(modEnvPanelHeight));
+            // area.removeFromTop(PANEL_MARGIN_Y);
+            // modEnvComponents[1].setBounds(area.removeFromTop(modEnvPanelHeight));
+            // area.removeFromTop(PANEL_MARGIN_Y);
+            // modEnvComponents[2].setBounds(area.removeFromTop(modEnvPanelHeight));
         }
         lowerArea.removeFromLeft(PANEL_MARGIN_X);
         {

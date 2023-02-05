@@ -47,6 +47,7 @@ void BerryVoice::startNote(int midiNoteNumber,
         for (int i = 0; i < NUM_OSC; ++i) {
             if (!stolen) {
                 //                oscs[i].setAngle(0.0);
+                oscs[i].initializePastData();
             }
         }
         for (int i = 0; i < NUM_ENVELOPE; ++i) {
@@ -202,7 +203,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         auto sineGain = adsr[envelopeIndex].getValue() * p.gain;
         auto noiseGain = adsr[envelopeIndex].getValue() * p.noiseGain;
 
-        oscs[oscIndex].step(pan, freq, 0.0, sineGain, noiseGain, o);
+        oscs[oscIndex].step(pan, freq, 0.0, sineGain, noiseGain, p.noiseQ, o);
 
         out[0] += o[0];
         out[1] += o[1];
@@ -212,8 +213,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         if (!fp.enabled) {
             continue;
         }
-        // TODO
-        if (false) {
+        if (true) {
             auto filterType = fp.type;
             double freq;
             if (fp.isFreqAbsoluteFreezed) {
