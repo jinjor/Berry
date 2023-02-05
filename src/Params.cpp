@@ -316,7 +316,14 @@ void DelayParams::loadParameters(juce::XmlElement& xml) {
 
 //==============================================================================
 MainParams::MainParams()
-    : oscParams{OscParams{0}, OscParams{1}, OscParams{2}},
+    : oscParams{OscParams{0},
+                OscParams{1},
+                OscParams{2},
+                OscParams{3},
+                OscParams{4},
+                OscParams{5},
+                OscParams{6},
+                OscParams{7}},
       envelopeParams{EnvelopeParams{0}, EnvelopeParams{1}},
       filterParams{FilterParams{0}, FilterParams{1}},
       modEnvParams{ModEnvParams{0}, ModEnvParams{1}, ModEnvParams{2}},

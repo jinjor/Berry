@@ -391,11 +391,8 @@ void OscComponent::paint(juce::Graphics& g) {}
 
 void OscComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
-    auto bodyHeight = bounds.getHeight();
-    auto upperArea = bounds.removeFromTop(bodyHeight / 2);
-    auto& lowerArea = bounds;
-    consumeLabeledComboBox(upperArea, 60, envelopeLabel, envelopeSelector);
-    consumeLabeledKnob(upperArea, gainLabel, gainSlider);
+    consumeLabeledComboBox(bounds, 60, envelopeLabel, envelopeSelector);
+    consumeLabeledKnob(bounds, gainLabel, gainSlider);
 }
 void OscComponent::comboBoxChanged(juce::ComboBox* comboBox) {
     auto& params = getSelectedOscParams();

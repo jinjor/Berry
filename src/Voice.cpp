@@ -14,7 +14,7 @@ BerryVoice::BerryVoice(CurrentPositionInfo *currentPositionInfo,
       globalParams(globalParams),
       voiceParams(voiceParams),
       mainParams(mainParams),
-      oscs{MultiOsc(), MultiOsc(), MultiOsc()},
+      oscs{MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc()},
       adsr{Adsr(), Adsr()},
       filters{Filter(), Filter()},
       modEnvs{Adsr(), Adsr(), Adsr()} {}

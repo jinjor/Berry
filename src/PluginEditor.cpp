@@ -20,6 +20,11 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
           SectionComponent{"OSC 1", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(0, p.allParams)},
           SectionComponent{"OSC 2", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(1, p.allParams)},
           SectionComponent{"OSC 3", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(2, p.allParams)},
+          SectionComponent{"OSC 4", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(2, p.allParams)},
+          SectionComponent{"OSC 5", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(2, p.allParams)},
+          SectionComponent{"OSC 6", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(2, p.allParams)},
+          SectionComponent{"OSC 7", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(2, p.allParams)},
+          SectionComponent{"OSC 8", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(2, p.allParams)},
       },
       envelopeComponents{
           SectionComponent{"ENV 1", HEADER_CHECK::Hidden, std::make_unique<EnvelopeComponent>(0, p.allParams)},
@@ -146,14 +151,20 @@ void BerryAudioProcessorEditor::resized() {
             area.removeFromTop(PANEL_MARGIN_Y);
             envelopeComponents[1].setBounds(area.removeFromTop(quarterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
-            oscComponents[0].setBounds(area);
+            oscComponents[0].setBounds(area.removeFromTop(quarterPanelHeight));
+            area.removeFromTop(PANEL_MARGIN_Y);
+            oscComponents[1].setBounds(area);
         }
         middleArea.removeFromLeft(PANEL_MARGIN_X);
         {
             auto area = middleArea.removeFromLeft(centreWidth);
-            oscComponents[1].setBounds(area.removeFromTop(halfPanelHeight));
+            oscComponents[2].setBounds(area.removeFromTop(quarterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
-            oscComponents[2].setBounds(area);
+            oscComponents[3].setBounds(area.removeFromTop(quarterPanelHeight));
+            area.removeFromTop(PANEL_MARGIN_Y);
+            oscComponents[4].setBounds(area.removeFromTop(quarterPanelHeight));
+            area.removeFromTop(PANEL_MARGIN_Y);
+            oscComponents[5].setBounds(area);
         }
         middleArea.removeFromLeft(PANEL_MARGIN_X);
         {

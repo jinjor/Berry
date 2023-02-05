@@ -690,7 +690,7 @@ public:
 
 private:
     Osc oscs;
-    double pans[2]{};
+    double pans[2]{std::cos(0.5 * HALF_PI), std::sin(0.5 * HALF_PI)};
     double currentPan = 0.0;
     void calcPan(int numOsc, double pan, double detune, double spread) {
         if (pan != currentPan) {
