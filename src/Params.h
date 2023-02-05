@@ -81,7 +81,7 @@ public:
     juce::AudioParameterFloat* Pan;
     juce::AudioParameterFloat* MasterVolume;
 
-    MasterParams(std::string idPrefix, std::string namePrefix);
+    MasterParams();
     MasterParams(const MasterParams&) = delete;
     MasterParams(MasterParams&&) noexcept = default;
 
@@ -113,7 +113,7 @@ public:
     juce::AudioParameterFloat* Gain;
     juce::AudioParameterChoice* Envelope;
 
-    OscParams(std::string idPrefix, std::string namePrefix, int index);
+    OscParams(int index);
     OscParams(const OscParams&) = delete;
     OscParams(OscParams&&) noexcept = default;
 
@@ -169,7 +169,7 @@ public:
     juce::AudioParameterFloat* Sustain;
     juce::AudioParameterFloat* Release;
 
-    EnvelopeParams(std::string idPrefix, std::string namePrefix, int index);
+    EnvelopeParams(int index);
     EnvelopeParams(const EnvelopeParams&) = delete;
     EnvelopeParams(EnvelopeParams&&) noexcept = default;
 
@@ -206,7 +206,7 @@ public:
     juce::AudioParameterFloat* Q;
     juce::AudioParameterFloat* Gain;
 
-    FilterParams(std::string idPrefix, std::string namePrefix, int index);
+    FilterParams(int index);
     FilterParams(const FilterParams&) = delete;
     FilterParams(FilterParams&&) noexcept = default;
 
@@ -267,7 +267,7 @@ public:
     juce::AudioParameterFloat* Attack;
     juce::AudioParameterFloat* Decay;
 
-    ModEnvParams(std::string idPrefix, std::string namePrefix, int index);
+    ModEnvParams(int index);
     ModEnvParams(const ModEnvParams&) = delete;
     ModEnvParams(ModEnvParams&&) noexcept = default;
 
@@ -333,7 +333,7 @@ public:
     juce::AudioParameterFloat* HighFreq;
     juce::AudioParameterFloat* Feedback;
     juce::AudioParameterFloat* Mix;
-    DelayParams(std::string idPrefix, std::string namePrefix);
+    DelayParams();
     DelayParams(const DelayParams&) = delete;
     DelayParams(DelayParams&&) noexcept = default;
 
@@ -378,7 +378,7 @@ public:
     virtual void addAllParameters(juce::AudioProcessor& processor) override;
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
-    MainParams(int groupIndex);
+    MainParams();
     MainParams(const MainParams&) = delete;
     MainParams(MainParams&&) noexcept = default;
 
@@ -388,14 +388,7 @@ public:
     std::array<ModEnvParams, NUM_MODENV> modEnvParams;
     DelayParams delayParams;
     MasterParams masterParams;
-    bool isEnabled() {
-        for (int i = 0; i < NUM_OSC; ++i) {
-            if (oscParams[i].Enabled->get()) {
-                return true;
-            }
-        }
-        return false;
-    }
+
     void freeze() {
         for (int i = 0; i < NUM_OSC; ++i) {
             oscParams[i].freeze();
@@ -412,14 +405,6 @@ public:
         delayParams.freeze();
         masterParams.freeze();
     }
-
-private:
-    static std::string idPrefix(int groupIndex) {
-        return groupIndex == 128 ? "" : "G" + std::to_string(groupIndex) + "_";
-    }
-    static std::string namePrefix(int groupIndex) {
-        return groupIndex == 128 ? "" : "G" + std::to_string(groupIndex) + " ";
-    }
 };
 
 //==============================================================================
@@ -427,7 +412,7 @@ class AllParams : public SynthParametersBase {
 public:
     GlobalParams globalParams;
     VoiceParams voiceParams;
-    std::vector<MainParams> mainParamList{};
+    MainParams mainParams;
 
     AllParams();
     AllParams(const AllParams&) = delete;
@@ -440,14 +425,8 @@ public:
     void freeze() {
         globalParams.freeze();
         voiceParams.freeze();
-        auto& mainParams = mainParamList[128];
-        for (auto& mainParams : mainParamList) {
-            if (mainParams.isEnabled()) {
-                mainParams.freeze();
-            }
-        }
+        mainParams.freeze();
     }
-    MainParams& getCurrentMainParams() { return mainParamList[128]; }
 
 private:
 };

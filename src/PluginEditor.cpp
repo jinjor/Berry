@@ -13,7 +13,7 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
       audioProcessor(p),
       voiceComponent{SectionComponent{"VOICE", HEADER_CHECK::Hidden, std::make_unique<VoiceComponent>(p.allParams)}},
       analyserToggle(&analyserMode),
-      analyserWindow(&analyserMode, &p.latestDataProvider, p.allParams.voiceParams, p.allParams.mainParamList),
+      analyserWindow(&analyserMode, &p.latestDataProvider, p.allParams.voiceParams, p.allParams.mainParams),
       statusComponent(&p.polyphony, &p.timeConsumptionState, &p.latestDataProvider),
       utilComponent{SectionComponent{"UTILITY", HEADER_CHECK::Hidden, std::make_unique<UtilComponent>(p)}},
       oscComponents{
@@ -42,7 +42,7 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     addAndMakeVisible(statusComponent);
     addAndMakeVisible(utilComponent);
     for (auto i = 0; i < NUM_OSC; i++) {
-        auto &params = audioProcessor.allParams.getCurrentMainParams().oscParams[i];
+        auto &params = audioProcessor.allParams.mainParams.oscParams[i];
         auto &component = oscComponents[i];
         component.setEnabled(params.Enabled->get());
         component.addListener(this);
@@ -54,21 +54,21 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
         addAndMakeVisible(component);
     }
     for (auto i = 0; i < NUM_FILTER; i++) {
-        auto &params = audioProcessor.allParams.getCurrentMainParams().filterParams[i];
+        auto &params = audioProcessor.allParams.mainParams.filterParams[i];
         auto &component = filterComponents[i];
         component.setEnabled(params.Enabled->get());
         component.addListener(this);
         addAndMakeVisible(component);
     }
     for (auto i = 0; i < NUM_MODENV; i++) {
-        auto &params = audioProcessor.allParams.getCurrentMainParams().modEnvParams[i];
+        auto &params = audioProcessor.allParams.mainParams.modEnvParams[i];
         auto &component = modEnvComponents[i];
         component.setEnabled(params.Enabled->get());
         component.addListener(this);
         addAndMakeVisible(component);
     }
     {
-        auto &params = audioProcessor.allParams.getCurrentMainParams().delayParams;
+        auto &params = audioProcessor.allParams.mainParams.delayParams;
         delayComponent.setEnabled(params.Enabled->get());
         delayComponent.addListener(this);
         addAndMakeVisible(delayComponent);
@@ -191,7 +191,7 @@ void BerryAudioProcessorEditor::resized() {
     }
 }
 void BerryAudioProcessorEditor::timerCallback() {
-    auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
+    auto &mainParams = audioProcessor.allParams.mainParams;
     for (auto i = 0; i < NUM_OSC; i++) {
         oscComponents[i].setEnabled(mainParams.oscParams[i].Enabled->get());
     }
@@ -206,27 +206,27 @@ void BerryAudioProcessorEditor::timerCallback() {
 void BerryAudioProcessorEditor::enabledChanged(SectionComponent *section) {
     for (auto i = 0; i < NUM_OSC; i++) {
         if (&oscComponents[i] == section) {
-            auto &params = audioProcessor.allParams.getCurrentMainParams().oscParams[i];
+            auto &params = audioProcessor.allParams.mainParams.oscParams[i];
             *params.Enabled = section->getEnabled();
             return;
         }
     }
     for (auto i = 0; i < NUM_FILTER; i++) {
         if (&filterComponents[i] == section) {
-            auto &params = audioProcessor.allParams.getCurrentMainParams().filterParams[i];
+            auto &params = audioProcessor.allParams.mainParams.filterParams[i];
             *params.Enabled = section->getEnabled();
             return;
         }
     }
     for (auto i = 0; i < NUM_MODENV; i++) {
         if (&modEnvComponents[i] == section) {
-            auto &params = audioProcessor.allParams.getCurrentMainParams().modEnvParams[i];
+            auto &params = audioProcessor.allParams.mainParams.modEnvParams[i];
             *params.Enabled = section->getEnabled();
             return;
         }
     }
     if (&delayComponent == section) {
-        auto &params = audioProcessor.allParams.getCurrentMainParams().delayParams;
+        auto &params = audioProcessor.allParams.mainParams.delayParams;
         *params.Enabled = section->getEnabled();
     }
 }

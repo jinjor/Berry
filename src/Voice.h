@@ -43,15 +43,14 @@ private:
 //==============================================================================
 class BerrySound : public juce::SynthesiserSound {
 public:
-    BerrySound(VoiceParams &voiceParams, std::vector<MainParams> &mainParamList)
-        : voiceParams(voiceParams), mainParamList(mainParamList) {}
+    BerrySound(VoiceParams &voiceParams, MainParams &mainParams) : voiceParams(voiceParams), mainParams(mainParams) {}
     ~BerrySound(){};
     bool appliesToNote(int noteNumber) override { return true; };
     bool appliesToChannel(int) override { return true; };
 
 private:
     VoiceParams &voiceParams;
-    std::vector<MainParams> &mainParamList;
+    MainParams &mainParams;
 };
 
 //==============================================================================
@@ -82,7 +81,7 @@ public:
                std::vector<std::unique_ptr<juce::AudioBuffer<float>>> &buffers,
                GlobalParams &globalParams,
                VoiceParams &voiceParams,
-               std::vector<MainParams> &mainParamList);
+               MainParams &mainParamList);
     ~BerryVoice();
     bool canPlaySound(juce::SynthesiserSound *sound) override;
     void startNote(int midiNoteNumber,
@@ -104,7 +103,7 @@ private:
 
     GlobalParams &globalParams;
     VoiceParams &voiceParams;
-    std::vector<MainParams> &mainParamList;
+    MainParams &mainParams;
     std::vector<std::unique_ptr<juce::AudioBuffer<float>>> &buffers;
 
     MultiOsc oscs[NUM_OSC];
@@ -121,7 +120,7 @@ private:
     SparseLog sparseLog = SparseLog(10000);
     MainParams &getMainParams() {
         jassert(noteNumberAtStart >= 0);
-        return mainParamList[128];
+        return mainParams;
     }
     std::unique_ptr<juce::AudioBuffer<float>> &getBuffer() {
         jassert(noteNumberAtStart >= 0);
@@ -143,7 +142,7 @@ public:
                      std::vector<std::optional<juce::AudioBuffer<float>>> &busBuffers,
                      AllParams &allParams)
         : currentPositionInfo(currentPositionInfo), buffers(buffers), busBuffers(busBuffers), allParams(allParams) {
-        addSound(new BerrySound(allParams.voiceParams, allParams.mainParamList));
+        addSound(new BerrySound(allParams.voiceParams, allParams.mainParams));
         for (auto i = 0; i < 129; i++) {
             stereoDelays.push_back(std::unique_ptr<StereoDelay>(nullptr));
         }
@@ -154,14 +153,10 @@ public:
                                  int startSample,
                                  int numSamples) {
         allParams.freeze();
-        for (auto i = 0; i < 129; i++) {
-            if (allParams.mainParamList[i].isEnabled()) {
-                buffers[i]->setSize(2, startSample + numSamples, false, false, true);
-                buffers[i]->clear();
-            } else {
-                buffers[i]->setSize(2, 0);
-            }
-        }
+        auto i = 128;
+        buffers[i]->setSize(2, startSample + numSamples, false, false, true);
+        buffers[i]->clear();
+
         juce::Synthesiser::renderNextBlock(outputAudio, inputMidi, startSample, numSamples);
     }
     virtual void handleMidiEvent(const juce::MidiMessage &m) override { Synthesiser::handleMidiEvent(m); }
@@ -182,57 +177,54 @@ public:
     void renderVoices(juce::AudioBuffer<float> &_buffer, int startSample, int numSamples) override {
         juce::Synthesiser::renderVoices(_buffer, startSample, numSamples);
 
-        for (auto n = 0; n < 129; n++) {
-            if (!allParams.mainParamList[n].isEnabled()) {
-                continue;
+        auto n = 128;
+
+        auto &buffer = buffers[n];
+        auto &mainParams = allParams.mainParams;
+        auto &delayParams = mainParams.delayParams;
+        auto &stereoDelay = stereoDelays[n];
+
+        auto busIndex = 0;
+        auto &outBuffer = busBuffers[busIndex];
+        if (delayParams.enabled) {
+            if (!stereoDelay) {
+                stereoDelay.reset(new StereoDelay());
             }
-            auto &buffer = buffers[n];
-            auto &mainParams = allParams.mainParamList[n];
-            auto &delayParams = mainParams.delayParams;
-            auto &stereoDelay = stereoDelays[n];
+            stereoDelay->setParams(getSampleRate(),
+                                   currentPositionInfo->bpm,
+                                   delayParams.type,
+                                   delayParams.sync,
+                                   delayParams.timeL,
+                                   delayParams.timeR,
+                                   delayParams.timeSyncL,
+                                   delayParams.timeSyncR,
+                                   delayParams.lowFreq,
+                                   delayParams.highFreq,
+                                   delayParams.feedback,
+                                   delayParams.mix);
+        } else {
+            stereoDelay.reset();
+        }
+        auto *leftIn = buffer->getReadPointer(0, startSample);
+        auto *rightIn = buffer->getReadPointer(1, startSample);
 
-            auto busIndex = 0;
-            auto &outBuffer = busBuffers[busIndex];
-            if (delayParams.enabled) {
-                if (!stereoDelay) {
-                    stereoDelay.reset(new StereoDelay());
-                }
-                stereoDelay->setParams(getSampleRate(),
-                                       currentPositionInfo->bpm,
-                                       delayParams.type,
-                                       delayParams.sync,
-                                       delayParams.timeL,
-                                       delayParams.timeR,
-                                       delayParams.timeSyncL,
-                                       delayParams.timeSyncR,
-                                       delayParams.lowFreq,
-                                       delayParams.highFreq,
-                                       delayParams.feedback,
-                                       delayParams.mix);
-            } else {
-                stereoDelay.reset();
+        auto delayEnabled = delayParams.enabled;
+        auto expression = allParams.globalParams.expression;
+        auto masterVolume = mainParams.masterParams.masterVolume * allParams.globalParams.midiVolume;
+        for (int i = 0; i < numSamples; ++i) {
+            double sample[2]{leftIn[i] * expression, rightIn[i] * expression};
+
+            // Delay
+            if (delayEnabled) {
+                stereoDelay->step(sample);
             }
-            auto *leftIn = buffer->getReadPointer(0, startSample);
-            auto *rightIn = buffer->getReadPointer(1, startSample);
 
-            auto delayEnabled = delayParams.enabled;
-            auto expression = allParams.globalParams.expression;
-            auto masterVolume = mainParams.masterParams.masterVolume * allParams.globalParams.midiVolume;
-            for (int i = 0; i < numSamples; ++i) {
-                double sample[2]{leftIn[i] * expression, rightIn[i] * expression};
-
-                // Delay
-                if (delayEnabled) {
-                    stereoDelay->step(sample);
-                }
-
-                // Master Volume
-                sample[0] *= masterVolume;
-                sample[1] *= masterVolume;
-                if (outBuffer) {
-                    outBuffer->addSample(0, startSample + i, sample[0]);
-                    outBuffer->addSample(1, startSample + i, sample[1]);
-                }
+            // Master Volume
+            sample[0] *= masterVolume;
+            sample[1] *= masterVolume;
+            if (outBuffer) {
+                outBuffer->addSample(0, startSample + i, sample[0]);
+                outBuffer->addSample(1, startSample + i, sample[1]);
             }
         }
     }

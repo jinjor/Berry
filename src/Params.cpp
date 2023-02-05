@@ -29,9 +29,9 @@ void GlobalParams::saveParameters(juce::XmlElement& xml) {}
 void GlobalParams::loadParameters(juce::XmlElement& xml) {}
 
 //==============================================================================
-MasterParams::MasterParams(std::string idPrefix, std::string namePrefix) {
-    idPrefix += "MASTER_";
-    namePrefix += "Master ";
+MasterParams::MasterParams() {
+    juce::String idPrefix = "MASTER_";
+    juce::String namePrefix = "Master ";
     Pan = new juce::AudioParameterFloat(idPrefix + "PAN", namePrefix + "Pan", -1.0f, 1.0f, 0.0f);
     MasterVolume = new juce::AudioParameterFloat(idPrefix + "VOLUME", namePrefix + "Volume", 0.0f, 1.0f, 1.0f);
     freeze();
@@ -82,9 +82,9 @@ void VoiceParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-OscParams::OscParams(std::string idPrefix, std::string namePrefix, int index) {
-    idPrefix += "OSC" + std::to_string(index) + "_";
-    namePrefix += "OSC" + std::to_string(index) + " ";
+OscParams::OscParams(int index) {
+    auto idPrefix = "OSC" + std::to_string(index) + "_";
+    auto namePrefix = "OSC" + std::to_string(index) + " ";
     Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
     Waveform = new juce::AudioParameterChoice(
         idPrefix + "WAVEFORM", namePrefix + "Waveform", OSC_WAVEFORM_NAMES, OSC_WAVEFORM_NAMES.indexOf("Sine"));
@@ -138,9 +138,9 @@ void OscParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-EnvelopeParams::EnvelopeParams(std::string idPrefix, std::string namePrefix, int index) {
-    idPrefix += "ENV" + std::to_string(index) + "_";
-    namePrefix += "Env" + std::to_string(index) + " ";
+EnvelopeParams::EnvelopeParams(int index) {
+    auto idPrefix = "ENV" + std::to_string(index) + "_";
+    auto namePrefix = "Env" + std::to_string(index) + " ";
     AttackCurve = new juce::AudioParameterFloat(idPrefix + "ATTACK_CURVE", "Attack Curve", 0.01, 0.99, 0.5f);
     Attack =
         new juce::AudioParameterFloat(idPrefix + "ATTACK", "Attack", rangeWithSkewForCentre(0.001f, 1.0f, 0.2f), 0.05f);
@@ -173,9 +173,9 @@ void EnvelopeParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-FilterParams::FilterParams(std::string idPrefix, std::string namePrefix, int index) {
-    idPrefix += "FILTER" + std::to_string(index) + "_";
-    namePrefix += "Filter" + std::to_string(index) + " ";
+FilterParams::FilterParams(int index) {
+    auto idPrefix = "FILTER" + std::to_string(index) + "_";
+    auto namePrefix = "Filter" + std::to_string(index) + " ";
     Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
     Target = new juce::AudioParameterChoice(
         idPrefix + "TARGET", namePrefix + "Target", FILTER_TARGET_NAMES, FILTER_TARGET_NAMES.indexOf("All"));
@@ -225,9 +225,9 @@ void FilterParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-ModEnvParams::ModEnvParams(std::string idPrefix, std::string namePrefix, int index) {
-    idPrefix += "MODENV" + std::to_string(index) + "_";
-    namePrefix += "ModEnv" + std::to_string(index) + " ";
+ModEnvParams::ModEnvParams(int index) {
+    auto idPrefix = "MODENV" + std::to_string(index) + "_";
+    auto namePrefix = "ModEnv" + std::to_string(index) + " ";
     Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
     TargetType = new juce::AudioParameterChoice(idPrefix + "TARGET_TYPE",
                                                 namePrefix + "Target Type",
@@ -301,9 +301,9 @@ void ModEnvParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-DelayParams::DelayParams(std::string idPrefix, std::string namePrefix) {
-    idPrefix += "DELAY_";
-    namePrefix += "Delay ";
+DelayParams::DelayParams() {
+    juce::String idPrefix = "DELAY_";
+    juce::String namePrefix = "Delay ";
     Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
     Type = new juce::AudioParameterChoice(
         idPrefix + "TYPE", namePrefix + "Type", DELAY_TYPE_NAMES, DELAY_TYPE_NAMES.indexOf("Parallel"));
@@ -369,19 +369,13 @@ void DelayParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-MainParams::MainParams(int groupIndex)
-    : oscParams{OscParams{idPrefix(groupIndex), namePrefix(groupIndex), 0},
-                OscParams{idPrefix(groupIndex), namePrefix(groupIndex), 1},
-                OscParams{idPrefix(groupIndex), namePrefix(groupIndex), 2}},
-      envelopeParams{EnvelopeParams{idPrefix(groupIndex), namePrefix(groupIndex), 0},
-                     EnvelopeParams{idPrefix(groupIndex), namePrefix(groupIndex), 1}},
-      filterParams{FilterParams{idPrefix(groupIndex), namePrefix(groupIndex), 0},
-                   FilterParams{idPrefix(groupIndex), namePrefix(groupIndex), 1}},
-      modEnvParams{ModEnvParams{idPrefix(groupIndex), namePrefix(groupIndex), 0},
-                   ModEnvParams{idPrefix(groupIndex), namePrefix(groupIndex), 1},
-                   ModEnvParams{idPrefix(groupIndex), namePrefix(groupIndex), 2}},
-      delayParams{idPrefix(groupIndex), namePrefix(groupIndex)},
-      masterParams{idPrefix(groupIndex), namePrefix(groupIndex)} {}
+MainParams::MainParams()
+    : oscParams{OscParams{0}, OscParams{1}, OscParams{2}},
+      envelopeParams{EnvelopeParams{0}, EnvelopeParams{1}},
+      filterParams{FilterParams{0}, FilterParams{1}},
+      modEnvParams{ModEnvParams{0}, ModEnvParams{1}, ModEnvParams{2}},
+      delayParams{},
+      masterParams{} {}
 void MainParams::addAllParameters(juce::AudioProcessor& processor) {
     for (auto& params : envelopeParams) {
         params.addAllParameters(processor);
@@ -432,62 +426,21 @@ void MainParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-AllParams::AllParams() : globalParams{}, voiceParams{} {
-    mainParamList.reserve(129);
-    for (int i = 0; i < 129; i++) {
-        mainParamList.push_back(MainParams{i});
-    }
-}
+AllParams::AllParams() : globalParams{}, voiceParams{}, mainParams{} {}
 void AllParams::addAllParameters(juce::AudioProcessor& processor) {
     globalParams.addAllParameters(processor);
     voiceParams.addAllParameters(processor);
-    for (int i = 0; i < 129; i++) {
-        mainParamList[i].addAllParameters(processor);
-    }
+    mainParams.addAllParameters(processor);
 }
 void AllParams::saveParameters(juce::XmlElement& xml) {
     globalParams.saveParameters(xml);
     voiceParams.saveParameters(xml);
-    for (int i = 0; i < 129; i++) {
-        auto enabled = mainParamList[i].isEnabled();
-        xml.setAttribute(juce::String("MAIN_PARAMS_" + std::to_string(i) + "_ENABLED"), enabled);
-        if (enabled) {
-            mainParamList[i].saveParameters(xml);
-        }
-    }
+    mainParams.saveParameters(xml);
 }
 void AllParams::loadParameters(juce::XmlElement& xml) {
     globalParams.loadParameters(xml);
     voiceParams.loadParameters(xml);
-    for (int i = 0; i < 129; i++) {
-        auto enabled = xml.getBoolAttribute(juce::String("MAIN_PARAMS_" + std::to_string(i) + "_ENABLED"), i == 128);
-        if (enabled) {
-            mainParamList[i].loadParameters(xml);
-        }
-    }
+    mainParams.loadParameters(xml);
 }
-void replaceAttributeNames(juce::XmlElement& xml, juce::StringRef before, juce::StringRef after) {
-    auto newAttrs = std::map<juce::String, juce::String>{};
-    for (auto i = 0; i < xml.getNumAttributes(); i++) {
-        auto attrName = xml.getAttributeName(i);
-        attrName = attrName.replace(before, after);
-        newAttrs[attrName] = xml.getAttributeValue(i);
-    }
-    xml.removeAllAttributes();
-    for (auto const& [attrName, value] : newAttrs) {
-        xml.setAttribute(attrName, value);
-    }
-}
-void AllParams::saveParametersToClipboard(juce::XmlElement& xml) {
-    auto index = 128;
-    mainParamList[index].saveParameters(xml);
-
-    replaceAttributeNames(xml, "G" + std::to_string(index) + "_", "GROUP_");
-}
-void AllParams::loadParametersFromClipboard(juce::XmlElement& xml) {
-    auto index = 128;
-
-    replaceAttributeNames(xml, "GROUP_", "G" + std::to_string(index) + "_");
-
-    mainParamList[index].loadParameters(xml);
-}
+void AllParams::saveParametersToClipboard(juce::XmlElement& xml) { mainParams.saveParameters(xml); }
+void AllParams::loadParametersFromClipboard(juce::XmlElement& xml) { mainParams.loadParameters(xml); }

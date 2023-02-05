@@ -183,7 +183,7 @@ void IncDecButton::sliderValueChanged(juce::Slider* _slider) {
 
 //==============================================================================
 VoiceComponent::VoiceComponent(AllParams& allParams)
-    : params(allParams.voiceParams), mainParamList(allParams.mainParamList), pitchBendRangeButton() {
+    : params(allParams.voiceParams), mainParams(allParams.mainParams), pitchBendRangeButton() {
     initIncDec(pitchBendRangeButton, params.PitchBendRange, this, *this);
     initLabel(pitchBendRangeLabel, "PB Range", *this);
 
@@ -971,11 +971,11 @@ void AnalyserToggle::toggleItemSelected(AnalyserToggleItem* toggleItem) {
 AnalyserWindow::AnalyserWindow(ANALYSER_MODE* analyserMode,
                                LatestDataProvider* latestDataProvider,
                                VoiceParams& voiceParams,
-                               std::vector<MainParams>& mainParamList)
+                               MainParams& mainParams)
     : analyserMode(analyserMode),
       latestDataProvider(latestDataProvider),
       voiceParams(voiceParams),
-      mainParamList(mainParamList),
+      mainParams(mainParams),
       forwardFFT(fftOrder),
       window(fftSize, juce::dsp::WindowingFunction<float>::hann),
       lastAmpEnvParams{SimpleAmpEnvParams(), SimpleAmpEnvParams()},

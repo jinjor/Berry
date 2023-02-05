@@ -7,13 +7,13 @@ BerryVoice::BerryVoice(CurrentPositionInfo *currentPositionInfo,
                        std::vector<std::unique_ptr<juce::AudioBuffer<float>>> &buffers,
                        GlobalParams &globalParams,
                        VoiceParams &voiceParams,
-                       std::vector<MainParams> &mainParamList)
+                       MainParams &mainParams)
     : perf(juce::PerformanceCounter("voice cycle", 100000)),
       currentPositionInfo(currentPositionInfo),
       buffers(buffers),
       globalParams(globalParams),
       voiceParams(voiceParams),
-      mainParamList(mainParamList),
+      mainParams(mainParams),
       oscs{MultiOsc(), MultiOsc(), MultiOsc()},
       adsr{Adsr(), Adsr()},
       filters{Filter(), Filter()},
@@ -32,13 +32,8 @@ void BerryVoice::startNote(int midiNoteNumber,
     DBG("startNote() midiNoteNumber:" << midiNoteNumber);
     noteNumberAtStart = midiNoteNumber;
     if (BerrySound *playingSound = dynamic_cast<BerrySound *>(sound)) {
-        jassert(mainParamList.size() == 129);
         auto sampleRate = getSampleRate();
         auto &mainParams = getMainParams();
-        if (!mainParams.isEnabled()) {
-            clearCurrentNote();
-            return;
-        }
         smoothNote.init(midiNoteNumber);
         if (stolen) {
             smoothVelocity.exponentialInfinite(0.01, velocity, sampleRate);

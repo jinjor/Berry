@@ -24,7 +24,7 @@ BerryAudioProcessor::BerryAudioProcessor()
     for (auto i = 0; i < 129; i++) {
         buffers.push_back(std::make_unique<juce::AudioBuffer<float>>(2, 0));
     }
-    *allParams.mainParamList[128].oscParams[0].Enabled = true;
+    *allParams.mainParams.oscParams[0].Enabled = true;
 
     allParams.addAllParameters(*this);
 }
@@ -136,7 +136,7 @@ void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& _buffer, juce::
         synth.clearVoices();
         for (auto i = 0; i < numVoices; ++i) {
             synth.addVoice(new BerryVoice(
-                &currentPositionInfo, buffers, allParams.globalParams, allParams.voiceParams, allParams.mainParamList));
+                &currentPositionInfo, buffers, allParams.globalParams, allParams.voiceParams, allParams.mainParams));
         }
     }
     auto buffer = *busBuffers[0];

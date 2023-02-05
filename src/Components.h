@@ -384,7 +384,7 @@ private:
     virtual void timerCallback() override;
 
     VoiceParams& params;
-    std::vector<MainParams>& mainParamList;
+    MainParams& mainParams;
 
     IncDecButton pitchBendRangeButton;
 
@@ -468,7 +468,7 @@ private:
     juce::Label panLabel;
     juce::Label volumeLabel;
 
-    MasterParams& getSelectedOscParams() { return allParams.getCurrentMainParams().masterParams; }
+    MasterParams& getSelectedOscParams() { return allParams.mainParams.masterParams; }
 };
 
 //==============================================================================
@@ -516,7 +516,7 @@ private:
     juce::Label spreadLabel;
     juce::Label gainLabel;
 
-    OscParams& getSelectedOscParams() { return allParams.getCurrentMainParams().oscParams[index]; }
+    OscParams& getSelectedOscParams() { return allParams.mainParams.oscParams[index]; }
 };
 
 //==============================================================================
@@ -549,7 +549,7 @@ private:
     juce::Label sustainLabel;
     juce::Label releaseLabel;
 
-    EnvelopeParams& getSelectedEnvelopeParams() { return allParams.getCurrentMainParams().envelopeParams[index]; }
+    EnvelopeParams& getSelectedEnvelopeParams() { return allParams.mainParams.envelopeParams[index]; }
 };
 
 //==============================================================================
@@ -592,7 +592,7 @@ private:
     juce::Label qLabel;
     juce::Label gainLabel;
 
-    FilterParams& getSelectedFilterParams() { return allParams.getCurrentMainParams().filterParams[index]; }
+    FilterParams& getSelectedFilterParams() { return allParams.mainParams.filterParams[index]; }
 };
 
 //==============================================================================
@@ -638,7 +638,7 @@ private:
     juce::Label attackLabel;
     juce::Label decayLabel;
 
-    ModEnvParams& getSelectedModEnvParams() { return allParams.getCurrentMainParams().modEnvParams[index]; }
+    ModEnvParams& getSelectedModEnvParams() { return allParams.mainParams.modEnvParams[index]; }
 };
 
 //==============================================================================
@@ -684,7 +684,7 @@ private:
     juce::Label feedbackLabel;
     juce::Label mixLabel;
 
-    DelayParams& getSelectedDelayParams() { return allParams.getCurrentMainParams().delayParams; }
+    DelayParams& getSelectedDelayParams() { return allParams.mainParams.delayParams; }
 };
 
 //==============================================================================
@@ -742,7 +742,7 @@ public:
     AnalyserWindow(ANALYSER_MODE* analyserMode,
                    LatestDataProvider* latestDataProvider,
                    VoiceParams& voiceParams,
-                   std::vector<MainParams>& mainParamList);
+                   MainParams& mainParams);
     virtual ~AnalyserWindow();
     AnalyserWindow(const AnalyserWindow&) = delete;
 
@@ -754,7 +754,7 @@ private:
     ANALYSER_MODE* analyserMode;
     LatestDataProvider* latestDataProvider;
     VoiceParams& voiceParams;
-    std::vector<MainParams>& mainParamList;
+    MainParams& mainParams;
     ANALYSER_MODE lastAnalyserMode = ANALYSER_MODE::Spectrum;
 
     // FFT
