@@ -373,14 +373,24 @@ OscComponent::OscComponent(int index, AllParams& allParams)
       allParams(allParams),
       envelopeSelector("Envelope"),
       gainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                 juce::Slider::TextEntryBoxPosition::NoTextBox) {
+                 juce::Slider::TextEntryBoxPosition::NoTextBox),
+      noiseGainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                      juce::Slider::TextEntryBoxPosition::NoTextBox),
+      noiseQSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                   juce::Slider::TextEntryBoxPosition::NoTextBox) {
     auto& params = getSelectedOscParams();
 
     initChoice(envelopeSelector, params.Envelope, this, *this);
     auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
     initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
+    auto formatGain2 = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
+    initSkewFromMid(noiseGainSlider, params.NoiseGain, 0.01f, nullptr, std::move(formatGain2), this, *this);
+    initSkewFromMid(noiseQSlider, params.NoiseQ, 0.01, nullptr, nullptr, this, *this);
+
     initLabel(envelopeLabel, "Env", *this);
     initLabel(gainLabel, "Gain", *this);
+    initLabel(noiseGainLabel, "Noise Gain", *this);
+    initLabel(noiseQLabel, "Noise Q", *this);
 
     startTimerHz(30.0f);
 }
@@ -393,6 +403,8 @@ void OscComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
     consumeLabeledComboBox(bounds, 60, envelopeLabel, envelopeSelector);
     consumeLabeledKnob(bounds, gainLabel, gainSlider);
+    consumeLabeledKnob(bounds, noiseGainLabel, noiseGainSlider);
+    consumeLabeledKnob(bounds, noiseQLabel, noiseQSlider);
 }
 void OscComponent::comboBoxChanged(juce::ComboBox* comboBox) {
     auto& params = getSelectedOscParams();
@@ -404,12 +416,18 @@ void OscComponent::sliderValueChanged(juce::Slider* slider) {
     auto& params = getSelectedOscParams();
     if (slider == &gainSlider) {
         *params.Gain = (float)gainSlider.getValue();
+    } else if (slider == &noiseGainSlider) {
+        *params.NoiseGain = (float)noiseGainSlider.getValue();
+    } else if (slider == &noiseQSlider) {
+        *params.NoiseQ = (float)noiseQSlider.getValue();
     }
 }
 void OscComponent::timerCallback() {
     auto& params = getSelectedOscParams();
     envelopeSelector.setSelectedItemIndex(params.Envelope->getIndex(), juce::dontSendNotification);
     gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
+    noiseGainSlider.setValue(params.NoiseGain->get(), juce::dontSendNotification);
+    noiseQSlider.setValue(params.NoiseQ->get(), juce::dontSendNotification);
 
     gainSlider.setLookAndFeel(&berryLookAndFeel);
 }

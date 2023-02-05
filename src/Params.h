@@ -95,6 +95,9 @@ public:
     juce::AudioParameterBool* Enabled;
     juce::AudioParameterFloat* Gain;
     juce::AudioParameterChoice* Envelope;
+    juce::AudioParameterFloat* NoiseGain;
+    // juce::AudioParameterChoice* NoiseEnvelope;
+    juce::AudioParameterFloat* NoiseQ;
 
     OscParams(int index);
     OscParams(const OscParams&) = delete;
@@ -107,10 +110,17 @@ public:
     bool enabled;
     float gain;
     int envelope;
+    float noiseGain;
+    // int noiseEnvelope;
+    float noiseQ;
+
     void freeze() {
         enabled = Enabled->get();
         gain = Gain->get();
         envelope = Envelope->getIndex();
+        noiseGain = NoiseGain->get();
+        // noiseEnvelope = NoiseEnvelope->getIndex();
+        noiseQ = NoiseQ->get();
     }
 
 private:

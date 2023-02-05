@@ -496,9 +496,13 @@ private:
 
     juce::ComboBox envelopeSelector;
     juce::Slider gainSlider;
+    juce::Slider noiseGainSlider;
+    juce::Slider noiseQSlider;
 
     juce::Label envelopeLabel;
     juce::Label gainLabel;
+    juce::Label noiseGainLabel;
+    juce::Label noiseQLabel;
 
     OscParams& getSelectedOscParams() { return allParams.mainParams.oscParams[index]; }
 };

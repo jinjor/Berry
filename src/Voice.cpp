@@ -133,7 +133,6 @@ void BerryVoice::applyParamsBeforeLoop(double sampleRate) {
     auto &mainParams = getMainParams();
     for (int i = 0; i < NUM_OSC; ++i) {
         oscs[i].setSampleRate(sampleRate);
-        oscs[i].setWaveform(WAVEFORM::Sine, true);
     }
     for (int i = 0; i < NUM_ENVELOPE; ++i) {
         auto &params = mainParams.envelopeParams[i];
@@ -200,10 +199,10 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         jassert(pan <= 1);
 
         double o[2]{0, 0};
-        oscs[oscIndex].step(pan, freq, 0.0, o);
-        auto oscGain = adsr[envelopeIndex].getValue() * p.gain;
-        o[0] *= oscGain;
-        o[1] *= oscGain;
+        auto sineGain = adsr[envelopeIndex].getValue() * p.gain;
+        auto noiseGain = adsr[envelopeIndex].getValue() * p.noiseGain;
+
+        oscs[oscIndex].step(pan, freq, 0.0, sineGain, noiseGain, o);
 
         out[0] += o[0];
         out[1] += o[1];
