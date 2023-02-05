@@ -133,7 +133,6 @@ public:
     juce::AudioParameterFloat* AttackCurve;
     juce::AudioParameterFloat* Attack;
     juce::AudioParameterFloat* Decay;
-    juce::AudioParameterFloat* Sustain;
     juce::AudioParameterFloat* Release;
 
     EnvelopeParams(int index);
@@ -147,13 +146,11 @@ public:
     float attackCurve;
     float attack;
     float decay;
-    float sustain;
     float release;
     void freeze() {
         attackCurve = AttackCurve->get();
         attack = Attack->get();
         decay = Decay->get();
-        sustain = Sustain->get();
         release = Release->get();
     }
 

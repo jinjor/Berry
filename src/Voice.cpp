@@ -51,7 +51,7 @@ void BerryVoice::startNote(int midiNoteNumber,
         }
         for (int i = 0; i < NUM_ENVELOPE; ++i) {
             auto &params = mainParams.envelopeParams[i];
-            adsr[i].setParams(params.attackCurve, params.attack, 0.0, params.decay, params.sustain, params.release);
+            adsr[i].setParams(params.attackCurve, params.attack, 0.0, params.decay, 0.0, params.release);
             adsr[i].doAttack(fixedSampleRate);
         }
         for (int i = 0; i < NUM_FILTER; ++i) {
@@ -137,7 +137,7 @@ void BerryVoice::applyParamsBeforeLoop(double sampleRate) {
     }
     for (int i = 0; i < NUM_ENVELOPE; ++i) {
         auto &params = mainParams.envelopeParams[i];
-        adsr[i].setParams(params.attackCurve, params.attack, 0.0, params.decay, params.sustain, params.release);
+        adsr[i].setParams(params.attackCurve, params.attack, 0.0, params.decay, 0.0, params.release);
     }
     for (int i = 0; i < NUM_FILTER; ++i) {
         filters[i].setSampleRate(sampleRate);

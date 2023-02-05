@@ -524,13 +524,11 @@ private:
     juce::Slider attackCurveSlider;
     juce::Slider attackSlider;
     juce::Slider decaySlider;
-    juce::Slider sustainSlider;
     juce::Slider releaseSlider;
 
     juce::Label attackCurveLabel;
     juce::Label attackLabel;
     juce::Label decayLabel;
-    juce::Label sustainLabel;
     juce::Label releaseLabel;
 
     EnvelopeParams& getSelectedEnvelopeParams() { return allParams.mainParams.envelopeParams[index]; }
@@ -763,24 +761,6 @@ private:
     // Envelope
     Adsr ampEnvs[NUM_ENVELOPE];
     Adsr modEnvs[NUM_MODENV];
-    class SimpleAmpEnvParams {
-    public:
-        SimpleAmpEnvParams() {}
-        SimpleAmpEnvParams(EnvelopeParams& envelopeParams) {
-            ac = envelopeParams.AttackCurve->get();
-            a = envelopeParams.Attack->get();
-            d = envelopeParams.Decay->get();
-            s = envelopeParams.Sustain->get();
-            r = envelopeParams.Release->get();
-        }
-        SimpleAmpEnvParams(const SimpleAmpEnvParams&) = delete;
-        float ac = 0;
-        float a = 0;
-        float d = 0;
-        float s = 0;
-        float r = 0;
-        bool equals(SimpleAmpEnvParams& p) { return ac == p.ac && a == p.a && d == p.d && s == p.s && r == p.r; }
-    };
     class SimpleModEnvParams {
     public:
         SimpleModEnvParams() {}
@@ -804,7 +784,6 @@ private:
                    fadeIn == p.fadeIn;
         }
     };
-    SimpleAmpEnvParams lastAmpEnvParams[NUM_ENVELOPE];
     SimpleModEnvParams lastModEnvParams[NUM_MODENV];
     float scopeDataForAmpEnv[NUM_ENVELOPE][scopeSize]{};
     float scopeDataForModEnv[NUM_MODENV][scopeSize]{};

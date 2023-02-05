@@ -427,8 +427,6 @@ EnvelopeComponent::EnvelopeComponent(int index, AllParams& allParams)
                    juce::Slider::TextEntryBoxPosition::NoTextBox),
       decaySlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                   juce::Slider::TextEntryBoxPosition::NoTextBox),
-      sustainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                    juce::Slider::TextEntryBoxPosition::NoTextBox),
       releaseSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                     juce::Slider::TextEntryBoxPosition::NoTextBox) {
     auto& params = getSelectedEnvelopeParams();
@@ -436,12 +434,10 @@ EnvelopeComponent::EnvelopeComponent(int index, AllParams& allParams)
     initLinear(attackCurveSlider, params.AttackCurve, 0.01, this, *this);
     initSkewFromMid(attackSlider, params.Attack, 0.001, " sec", nullptr, this, *this);
     initSkewFromMid(decaySlider, params.Decay, 0.01, " sec", nullptr, this, *this);
-    initLinearPercent(sustainSlider, params.Sustain, 0.01, this, *this);
     initSkewFromMid(releaseSlider, params.Release, 0.01, " sec", nullptr, this, *this);
     initLabel(attackCurveLabel, "A. Curve", *this);
     initLabel(attackLabel, "Attack", *this);
     initLabel(decayLabel, "Decay", *this);
-    initLabel(sustainLabel, "Sustain", *this);
     initLabel(releaseLabel, "Release", *this);
 
     startTimerHz(30.0f);
@@ -457,7 +453,6 @@ void EnvelopeComponent::resized() {
     consumeLabeledKnob(bounds, attackCurveLabel, attackCurveSlider);
     consumeLabeledKnob(bounds, attackLabel, attackSlider);
     consumeLabeledKnob(bounds, decayLabel, decaySlider);
-    consumeLabeledKnob(bounds, sustainLabel, sustainSlider);
     consumeLabeledKnob(bounds, releaseLabel, releaseSlider);
 }
 void EnvelopeComponent::sliderValueChanged(juce::Slider* slider) {
@@ -468,8 +463,6 @@ void EnvelopeComponent::sliderValueChanged(juce::Slider* slider) {
         *params.Attack = (float)attackSlider.getValue();
     } else if (slider == &decaySlider) {
         *params.Decay = (float)decaySlider.getValue();
-    } else if (slider == &sustainSlider) {
-        *params.Sustain = (float)sustainSlider.getValue();
     } else if (slider == &releaseSlider) {
         *params.Release = (float)releaseSlider.getValue();
     }
@@ -479,7 +472,6 @@ void EnvelopeComponent::timerCallback() {
     attackCurveSlider.setValue(params.AttackCurve->get(), juce::dontSendNotification);
     attackSlider.setValue(params.Attack->get(), juce::dontSendNotification);
     decaySlider.setValue(params.Decay->get(), juce::dontSendNotification);
-    sustainSlider.setValue(params.Sustain->get(), juce::dontSendNotification);
     releaseSlider.setValue(params.Release->get(), juce::dontSendNotification);
 }
 
@@ -901,7 +893,6 @@ AnalyserWindow::AnalyserWindow(ANALYSER_MODE* analyserMode,
       mainParams(mainParams),
       forwardFFT(fftOrder),
       window(fftSize, juce::dsp::WindowingFunction<float>::hann),
-      lastAmpEnvParams{SimpleAmpEnvParams(), SimpleAmpEnvParams()},
       lastModEnvParams{SimpleModEnvParams(), SimpleModEnvParams(), SimpleModEnvParams()} {
     latestDataProvider->addConsumer(&fftConsumer);
     latestDataProvider->addConsumer(&levelConsumer);
