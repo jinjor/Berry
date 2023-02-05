@@ -6,14 +6,9 @@
 
 static void doStepLoop(benchmark::State& state, AllParams& p) {
     CurrentPositionInfo currentPositionInfo{};
-    juce::AudioBuffer<float> buf{};
+    juce::AudioBuffer<float> buffer{2, 0};
 
-    std::vector<std::unique_ptr<juce::AudioBuffer<float>>> buffers{};
-    buffers.reserve(129);
-    for (int i = 0; i < 129; i++) {
-        buffers.push_back(std::make_unique<juce::AudioBuffer<float>>(2, 0));
-    }
-    BerryVoice voice{&currentPositionInfo, buffers, p.globalParams, p.voiceParams, p.mainParams};
+    BerryVoice voice{&currentPositionInfo, buffer, p.globalParams, p.voiceParams, p.mainParams};
     auto numChannels = 2;
     auto sampleRate = 48000;
     double out[2]{0, 0};

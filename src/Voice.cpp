@@ -4,13 +4,13 @@
 
 //==============================================================================
 BerryVoice::BerryVoice(CurrentPositionInfo *currentPositionInfo,
-                       std::vector<std::unique_ptr<juce::AudioBuffer<float>>> &buffers,
+                       juce::AudioBuffer<float> &buffer,
                        GlobalParams &globalParams,
                        VoiceParams &voiceParams,
                        MainParams &mainParams)
     : perf(juce::PerformanceCounter("voice cycle", 100000)),
       currentPositionInfo(currentPositionInfo),
-      buffers(buffers),
+      buffer(buffer),
       globalParams(globalParams),
       voiceParams(voiceParams),
       mainParams(mainParams),
@@ -119,7 +119,7 @@ void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int sta
             double out[2]{0, 0};
             auto active = step(out, sampleRate, numChannels);
             for (auto ch = 0; ch < numChannels; ++ch) {
-                buffer->addSample(ch, startSample, out[ch]);
+                buffer.addSample(ch, startSample, out[ch]);
             }
             ++startSample;
             if (!active) {

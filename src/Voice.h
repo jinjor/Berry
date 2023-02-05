@@ -78,7 +78,7 @@ struct Modifiers {
 class BerryVoice : public juce::SynthesiserVoice {
 public:
     BerryVoice(CurrentPositionInfo *currentPositionInfo,
-               std::vector<std::unique_ptr<juce::AudioBuffer<float>>> &buffers,
+               juce::AudioBuffer<float> &buffer,
                GlobalParams &globalParams,
                VoiceParams &voiceParams,
                MainParams &mainParamList);
@@ -104,7 +104,7 @@ private:
     GlobalParams &globalParams;
     VoiceParams &voiceParams;
     MainParams &mainParams;
-    std::vector<std::unique_ptr<juce::AudioBuffer<float>>> &buffers;
+    juce::AudioBuffer<float> &buffer;
 
     MultiOsc oscs[NUM_OSC];
     Adsr adsr[NUM_ENVELOPE];
@@ -122,9 +122,9 @@ private:
         jassert(noteNumberAtStart >= 0);
         return mainParams;
     }
-    std::unique_ptr<juce::AudioBuffer<float>> &getBuffer() {
+    juce::AudioBuffer<float> &getBuffer() {
         jassert(noteNumberAtStart >= 0);
-        return buffers[128];
+        return buffer;
     }
     double getMidiNoteInHertzDouble(double noteNumber) {
         return 440.0 * std::pow(2.0, (noteNumber - 69) * A);
@@ -137,15 +137,9 @@ private:
 //==============================================================================
 class BerrySynthesiser : public juce::Synthesiser {
 public:
-    BerrySynthesiser(CurrentPositionInfo *currentPositionInfo,
-                     std::vector<std::unique_ptr<juce::AudioBuffer<float>>> &buffers,
-                     std::vector<std::optional<juce::AudioBuffer<float>>> &busBuffers,
-                     AllParams &allParams)
-        : currentPositionInfo(currentPositionInfo), buffers(buffers), busBuffers(busBuffers), allParams(allParams) {
+    BerrySynthesiser(CurrentPositionInfo *currentPositionInfo, juce::AudioBuffer<float> &buffer, AllParams &allParams)
+        : currentPositionInfo(currentPositionInfo), buffer(buffer), allParams(allParams) {
         addSound(new BerrySound(allParams.voiceParams, allParams.mainParams));
-        for (auto i = 0; i < 129; i++) {
-            stereoDelays.push_back(std::unique_ptr<StereoDelay>(nullptr));
-        }
     }
     ~BerrySynthesiser() {}
     virtual void renderNextBlock(AudioBuffer<float> &outputAudio,
@@ -153,9 +147,8 @@ public:
                                  int startSample,
                                  int numSamples) {
         allParams.freeze();
-        auto i = 128;
-        buffers[i]->setSize(2, startSample + numSamples, false, false, true);
-        buffers[i]->clear();
+        buffer.setSize(2, startSample + numSamples, false, false, true);
+        buffer.clear();
 
         juce::Synthesiser::renderNextBlock(outputAudio, inputMidi, startSample, numSamples);
     }
@@ -174,39 +167,29 @@ public:
             pitchWheelMoved(wheelValue);
         }
     }
-    void renderVoices(juce::AudioBuffer<float> &_buffer, int startSample, int numSamples) override {
-        juce::Synthesiser::renderVoices(_buffer, startSample, numSamples);
+    void renderVoices(juce::AudioBuffer<float> &outBuffer, int startSample, int numSamples) override {
+        juce::Synthesiser::renderVoices(outBuffer, startSample, numSamples);
 
-        auto n = 128;
-
-        auto &buffer = buffers[n];
         auto &mainParams = allParams.mainParams;
         auto &delayParams = mainParams.delayParams;
-        auto &stereoDelay = stereoDelays[n];
 
         auto busIndex = 0;
-        auto &outBuffer = busBuffers[busIndex];
         if (delayParams.enabled) {
-            if (!stereoDelay) {
-                stereoDelay.reset(new StereoDelay());
-            }
-            stereoDelay->setParams(getSampleRate(),
-                                   currentPositionInfo->bpm,
-                                   delayParams.type,
-                                   delayParams.sync,
-                                   delayParams.timeL,
-                                   delayParams.timeR,
-                                   delayParams.timeSyncL,
-                                   delayParams.timeSyncR,
-                                   delayParams.lowFreq,
-                                   delayParams.highFreq,
-                                   delayParams.feedback,
-                                   delayParams.mix);
-        } else {
-            stereoDelay.reset();
+            stereoDelay.setParams(getSampleRate(),
+                                  currentPositionInfo->bpm,
+                                  delayParams.type,
+                                  delayParams.sync,
+                                  delayParams.timeL,
+                                  delayParams.timeR,
+                                  delayParams.timeSyncL,
+                                  delayParams.timeSyncR,
+                                  delayParams.lowFreq,
+                                  delayParams.highFreq,
+                                  delayParams.feedback,
+                                  delayParams.mix);
         }
-        auto *leftIn = buffer->getReadPointer(0, startSample);
-        auto *rightIn = buffer->getReadPointer(1, startSample);
+        auto *leftIn = buffer.getReadPointer(0, startSample);
+        auto *rightIn = buffer.getReadPointer(1, startSample);
 
         auto delayEnabled = delayParams.enabled;
         auto expression = allParams.globalParams.expression;
@@ -216,16 +199,14 @@ public:
 
             // Delay
             if (delayEnabled) {
-                stereoDelay->step(sample);
+                stereoDelay.step(sample);
             }
 
             // Master Volume
             sample[0] *= masterVolume;
             sample[1] *= masterVolume;
-            if (outBuffer) {
-                outBuffer->addSample(0, startSample + i, sample[0]);
-                outBuffer->addSample(1, startSample + i, sample[1]);
-            }
+            outBuffer.addSample(0, startSample + i, sample[0]);
+            outBuffer.addSample(1, startSample + i, sample[1]);
         }
     }
     void controllerMoved(int number, int value) {
@@ -255,9 +236,8 @@ public:
 
 private:
     CurrentPositionInfo *currentPositionInfo;
-    std::vector<std::unique_ptr<juce::AudioBuffer<float>>> &buffers;
-    std::vector<std::optional<juce::AudioBuffer<float>>> &busBuffers;
+    juce::AudioBuffer<float> &buffer;
     AllParams &allParams;
 
-    std::vector<std::unique_ptr<StereoDelay>> stereoDelays{};
+    StereoDelay stereoDelay{};
 };

@@ -18,12 +18,8 @@ BerryAudioProcessor::BerryAudioProcessor()
 #endif
       ,
       allParams{},
-      synth(&currentPositionInfo, buffers, busBuffers, allParams) {
-
-    buffers.reserve(129);
-    for (auto i = 0; i < 129; i++) {
-        buffers.push_back(std::make_unique<juce::AudioBuffer<float>>(2, 0));
-    }
+      buffer{2, 0},
+      synth(&currentPositionInfo, buffer, allParams) {
     *allParams.mainParams.oscParams[0].Enabled = true;
 
     allParams.addAllParameters(*this);
@@ -114,18 +110,9 @@ bool BerryAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) con
 }
 #endif
 
-void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& _buffer, juce::MidiBuffer& midiMessages) {
+void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
     auto busCount = getBusCount(false);
-    busBuffers.clear();
-    for (int i = 0; i < busCount; i++) {
-        auto enabled = getBus(false, i)->isEnabled();
-        if (enabled) {
-            busBuffers.push_back(getBusBuffer(_buffer, false, i));
-            busBuffers[i]->clear();
-        } else {
-            busBuffers.push_back(nullopt);
-        }
-    }
+    buffer.clear();
     if (auto* playHead = getPlayHead()) {
         if (auto positionInfo = playHead->getPosition()) {
             currentPositionInfo.bpm = *positionInfo->getBpm();
@@ -136,10 +123,9 @@ void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& _buffer, juce::
         synth.clearVoices();
         for (auto i = 0; i < numVoices; ++i) {
             synth.addVoice(new BerryVoice(
-                &currentPositionInfo, buffers, allParams.globalParams, allParams.voiceParams, allParams.mainParams));
+                &currentPositionInfo, buffer, allParams.globalParams, allParams.voiceParams, allParams.mainParams));
         }
     }
-    auto buffer = *busBuffers[0];
     auto numSamples = buffer.getNumSamples();
 
     keyboardState.processNextMidiBuffer(midiMessages, 0, numSamples, true);

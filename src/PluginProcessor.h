@@ -147,8 +147,7 @@ public:
 
     AllParams allParams;
 
-    std::vector<std::unique_ptr<juce::AudioBuffer<float>>> buffers{};
-    std::vector<std::optional<juce::AudioBuffer<float>>> busBuffers{};
+    juce::AudioBuffer<float> buffer;
     BerrySynthesiser synth;
 
 private:
