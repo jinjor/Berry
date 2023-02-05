@@ -476,7 +476,6 @@ class OscComponent : public juce::Component,
                      juce::ComboBox::Listener,
                      juce::Slider::Listener,
                      private juce::Timer,
-                     IncDecButton::Listener,
                      ComponentHelper {
 public:
     OscComponent(int index, AllParams& allParams);
@@ -490,20 +489,15 @@ public:
 private:
     virtual void comboBoxChanged(juce::ComboBox* comboBox) override;
     virtual void sliderValueChanged(juce::Slider* slider) override;
-    virtual void incDecValueChanged(IncDecButton* button) override;
     virtual void timerCallback() override;
     int index;
 
     AllParams& allParams;
 
     juce::ComboBox envelopeSelector;
-    IncDecButton octaveButton;
-    IncDecButton semitoneButton;
     juce::Slider gainSlider;
 
     juce::Label envelopeLabel;
-    juce::Label octaveLabel;
-    juce::Label coarseLabel;
     juce::Label gainLabel;
 
     OscParams& getSelectedOscParams() { return allParams.mainParams.oscParams[index]; }

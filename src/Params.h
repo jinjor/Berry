@@ -103,8 +103,6 @@ private:
 class OscParams : public SynthParametersBase {
 public:
     juce::AudioParameterBool* Enabled;
-    juce::AudioParameterInt* Octave;
-    juce::AudioParameterInt* Coarse;
     juce::AudioParameterFloat* Gain;
     juce::AudioParameterChoice* Envelope;
 
@@ -117,15 +115,10 @@ public:
     virtual void loadParameters(juce::XmlElement& xml) override;
 
     bool enabled;
-    float edge;
-    int octave;
-    int coarse;
     float gain;
     int envelope;
     void freeze() {
         enabled = Enabled->get();
-        octave = Octave->get();
-        coarse = Coarse->get();
         gain = Gain->get();
         envelope = Envelope->getIndex();
     }

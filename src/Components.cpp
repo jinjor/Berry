@@ -372,20 +372,14 @@ OscComponent::OscComponent(int index, AllParams& allParams)
     : index(index),
       allParams(allParams),
       envelopeSelector("Envelope"),
-      octaveButton(),
-      semitoneButton(),
       gainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                  juce::Slider::TextEntryBoxPosition::NoTextBox) {
     auto& params = getSelectedOscParams();
 
     initChoice(envelopeSelector, params.Envelope, this, *this);
-    initIncDec(octaveButton, params.Octave, this, *this);
-    initIncDec(semitoneButton, params.Coarse, this, *this);
     auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
     initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
     initLabel(envelopeLabel, "Env", *this);
-    initLabel(octaveLabel, "Oct", *this);
-    initLabel(coarseLabel, "Semi", *this);
     initLabel(gainLabel, "Gain", *this);
 
     startTimerHz(30.0f);
@@ -402,8 +396,6 @@ void OscComponent::resized() {
     auto& lowerArea = bounds;
     consumeLabeledComboBox(upperArea, 60, envelopeLabel, envelopeSelector);
     consumeLabeledKnob(upperArea, gainLabel, gainSlider);
-    consumeLabeledIncDecButton(lowerArea, 35, octaveLabel, octaveButton);
-    consumeLabeledIncDecButton(lowerArea, 35, coarseLabel, semitoneButton);
 }
 void OscComponent::comboBoxChanged(juce::ComboBox* comboBox) {
     auto& params = getSelectedOscParams();
@@ -417,19 +409,9 @@ void OscComponent::sliderValueChanged(juce::Slider* slider) {
         *params.Gain = (float)gainSlider.getValue();
     }
 }
-void OscComponent::incDecValueChanged(IncDecButton* button) {
-    auto& params = getSelectedOscParams();
-    if (button == &octaveButton) {
-        *params.Octave = octaveButton.getValue();
-    } else if (button == &semitoneButton) {
-        *params.Coarse = semitoneButton.getValue();
-    }
-}
 void OscComponent::timerCallback() {
     auto& params = getSelectedOscParams();
     envelopeSelector.setSelectedItemIndex(params.Envelope->getIndex(), juce::dontSendNotification);
-    octaveButton.setValue(params.Octave->get(), juce::dontSendNotification);
-    semitoneButton.setValue(params.Coarse->get(), juce::dontSendNotification);
     gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
 
     gainSlider.setLookAndFeel(&berryLookAndFeel);

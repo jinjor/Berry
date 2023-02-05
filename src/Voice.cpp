@@ -163,7 +163,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         if (!mainParams.oscParams[i].enabled) {
             continue;
         }
-        shiftedNoteNumbers[i] += mainParams.oscParams[i].octave * 12 + mainParams.oscParams[i].coarse;
+        // shiftedNoteNumbers[i] += mainParams.oscParams[i].octave * 12 + mainParams.oscParams[i].coarse;
     }
 
     if (stepCounter == 0) {
