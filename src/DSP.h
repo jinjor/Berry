@@ -34,8 +34,8 @@ const juce::StringArray MODENV_TARGET_TYPE_NAMES = juce::StringArray("OSC", "Fil
 const juce::StringArray MODENV_TARGET_OSC_NAMES = juce::StringArray("1", "2", "3", "All");
 const juce::StringArray MODENV_TARGET_FILTER_NAMES = juce::StringArray("1", "2", "All");
 
-enum class MODENV_TARGET_OSC_PARAM { Freq, Edge, Detune, Spread };
-const juce::StringArray MODENV_TARGET_OSC_PARAM_NAMES = juce::StringArray("Freq", "Edge", "Detune", "Spread");
+enum class MODENV_TARGET_OSC_PARAM { Freq, Dummy };                                          // TODO
+const juce::StringArray MODENV_TARGET_OSC_PARAM_NAMES = juce::StringArray("Freq", "Dummy");  // TODO
 
 enum class MODENV_TARGET_FILTER_PARAM { Freq, Q };
 const juce::StringArray MODENV_TARGET_FILTER_PARAM_NAMES = juce::StringArray("Freq", "Q");
@@ -631,7 +631,7 @@ public:
     }
     void setSampleRate(double sampleRate) { reciprocal_sampleRate = 1.0 / sampleRate; }
     void setNormalizedAngle(double normalizedAngle) { currentNormalizedAngle = normalizedAngle; }
-    double step(double freq, double normalizedAngleShift, double edge) {
+    double step(double freq, double normalizedAngleShift) {
         if (reciprocal_sampleRate <= 0.0) {
             return 0.0;
         }
@@ -708,18 +708,17 @@ public:
               double spread,
               double freq,
               double normalizedAngleShift,
-              double edge,
               double *outout) {
         setUnison(numOsc, pan, detune, spread);
         if (numOsc == 1) {
-            auto value = oscs[0].step(freq, normalizedAngleShift, edge);
+            auto value = oscs[0].step(freq, normalizedAngleShift);
             outout[0] = value * pans[0][0];
             outout[1] = value * pans[0][1];
         } else {
             outout[0] = 0;
             outout[1] = 0;
             for (int i = 0; i < currentNumOsc; ++i) {
-                auto value = oscs[i].step(freq * detunes[i], normalizedAngleShifts[i] + normalizedAngleShift, edge);
+                auto value = oscs[i].step(freq * detunes[i], normalizedAngleShifts[i] + normalizedAngleShift);
                 outout[0] += value * pans[i][0];
                 outout[1] += value * pans[i][1];
             }

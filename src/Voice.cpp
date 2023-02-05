@@ -133,7 +133,7 @@ void BerryVoice::applyParamsBeforeLoop(double sampleRate) {
     auto &mainParams = getMainParams();
     for (int i = 0; i < NUM_OSC; ++i) {
         oscs[i].setSampleRate(sampleRate);
-        oscs[i].setWaveform(mainParams.oscParams[i].waveform, true);
+        oscs[i].setWaveform(WAVEFORM::Sine, true);
     }
     for (int i = 0; i < NUM_ENVELOPE; ++i) {
         auto &params = mainParams.envelopeParams[i];
@@ -203,15 +203,14 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         active = true;
 
         auto freq = getMidiNoteInHertzDouble(shiftedNoteNumbers[oscIndex] + modifiers.octShift[oscIndex] * 12);
-        auto edge = p.edge * modifiers.edgeRatio[oscIndex];
         auto pan = panBase + panModAmp * modifiers.panMod[oscIndex];
-        auto detune = p.detune * modifiers.detuneRatio[oscIndex];
-        auto spread = p.spread * modifiers.spreadRatio[oscIndex];
+        auto detune = 0;
+        auto spread = 0;
         jassert(pan >= -1);
         jassert(pan <= 1);
 
         double o[2]{0, 0};
-        oscs[oscIndex].step(p.unison, pan, detune, spread, freq, modifiers.normalizedAngleShift[oscIndex], edge, o);
+        oscs[oscIndex].step(1, pan, detune, spread, freq, modifiers.normalizedAngleShift[oscIndex], o);
         auto oscGain = adsr[envelopeIndex].getValue() * modifiers.gain[oscIndex] * p.gain;
         o[0] *= oscGain;
         o[1] *= oscGain;
@@ -307,39 +306,6 @@ void BerryVoice::updateModifiersByModEnv(Modifiers &modifiers, double sampleRate
                             }
                         } else {
                             modifiers.octShift[targetIndex] += v;
-                        }
-                        break;
-                    }
-                    case MODENV_TARGET_OSC_PARAM::Edge: {
-                        auto v = modEnvValue;
-                        if (targetIndex == NUM_OSC) {
-                            for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
-                                modifiers.edgeRatio[oscIndex] *= v;
-                            }
-                        } else {
-                            modifiers.edgeRatio[targetIndex] *= v;
-                        }
-                        break;
-                    }
-                    case MODENV_TARGET_OSC_PARAM::Detune: {
-                        auto v = params.fadeIn ? 1 - modEnvValue : modEnvValue;
-                        if (targetIndex == NUM_OSC) {
-                            for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
-                                modifiers.detuneRatio[oscIndex] *= v;
-                            }
-                        } else {
-                            modifiers.detuneRatio[targetIndex] *= v;
-                        }
-                        break;
-                    }
-                    case MODENV_TARGET_OSC_PARAM::Spread: {
-                        auto v = params.fadeIn ? 1 - modEnvValue : modEnvValue;
-                        if (targetIndex == NUM_OSC) {
-                            for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
-                                modifiers.spreadRatio[oscIndex] *= v;
-                            }
-                        } else {
-                            modifiers.spreadRatio[targetIndex] *= v;
                         }
                         break;
                     }

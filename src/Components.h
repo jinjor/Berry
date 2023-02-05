@@ -497,23 +497,13 @@ private:
     AllParams& allParams;
 
     juce::ComboBox envelopeSelector;
-    juce::ComboBox waveformSelector;
-    juce::Slider edgeSlider;
     IncDecButton octaveButton;
     IncDecButton semitoneButton;
-    IncDecButton unisonButton;
-    juce::Slider detuneSlider;
-    juce::Slider spreadSlider;
     juce::Slider gainSlider;
 
     juce::Label envelopeLabel;
-    juce::Label waveformLabel;
-    juce::Label edgeLabel;
     juce::Label octaveLabel;
     juce::Label coarseLabel;
-    juce::Label unisonLabel;
-    juce::Label detuneLabel;
-    juce::Label spreadLabel;
     juce::Label gainLabel;
 
     OscParams& getSelectedOscParams() { return allParams.mainParams.oscParams[index]; }

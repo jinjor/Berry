@@ -86,14 +86,8 @@ OscParams::OscParams(int index) {
     auto idPrefix = "OSC" + std::to_string(index) + "_";
     auto namePrefix = "OSC" + std::to_string(index) + " ";
     Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
-    Waveform = new juce::AudioParameterChoice(
-        idPrefix + "WAVEFORM", namePrefix + "Waveform", OSC_WAVEFORM_NAMES, OSC_WAVEFORM_NAMES.indexOf("Sine"));
-    Edge = new juce::AudioParameterFloat(idPrefix + "EDGE", namePrefix + "Edge", 0.0f, 1.0f, 0.0f);
     Octave = new juce::AudioParameterInt(idPrefix + "OCTAVE", namePrefix + "Octave", -2, 2, 0);
     Coarse = new juce::AudioParameterInt(idPrefix + "COARSE", namePrefix + "Coarse", -12, 12, 0);
-    Unison = new juce::AudioParameterInt(idPrefix + "UNISON", namePrefix + "Unison", 1, 4, 1);
-    Detune = new juce::AudioParameterFloat(idPrefix + "DETUNE", namePrefix + "Detune", 0.0f, 1.0f, 0.0f);
-    Spread = new juce::AudioParameterFloat(idPrefix + "SPREAD", namePrefix + "Spread", 0.0f, 1.0f, 0.0f);
     Gain = new juce::AudioParameterFloat(
         idPrefix + "GAIN", namePrefix + "Gain", rangeWithSkewForCentre(0.0f, 4.0f, 1.0f), 1.0f);
     Envelope = new juce::AudioParameterChoice(
@@ -102,37 +96,22 @@ OscParams::OscParams(int index) {
 }
 void OscParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Enabled);
-    processor.addParameter(Waveform);
-    processor.addParameter(Edge);
     processor.addParameter(Octave);
     processor.addParameter(Coarse);
-    processor.addParameter(Unison);
-    processor.addParameter(Detune);
-    processor.addParameter(Spread);
     processor.addParameter(Gain);
     processor.addParameter(Envelope);
 }
 void OscParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(Enabled->paramID, Enabled->get());
-    xml.setAttribute(Waveform->paramID, Waveform->getIndex());
-    xml.setAttribute(Edge->paramID, Edge->get());
     xml.setAttribute(Octave->paramID, Octave->get());
     xml.setAttribute(Coarse->paramID, Coarse->get());
-    xml.setAttribute(Unison->paramID, Unison->get());
-    xml.setAttribute(Detune->paramID, (double)Detune->get());
-    xml.setAttribute(Spread->paramID, (double)Spread->get());
     xml.setAttribute(Gain->paramID, (double)Gain->get());
     xml.setAttribute(Envelope->paramID, Envelope->getIndex());
 }
 void OscParams::loadParameters(juce::XmlElement& xml) {
     *Enabled = xml.getIntAttribute(Enabled->paramID, 0);
-    *Waveform = xml.getIntAttribute(Waveform->paramID, 0);
-    *Edge = (float)xml.getDoubleAttribute(Edge->paramID, 0.0);
     *Octave = xml.getIntAttribute(Octave->paramID, 0);
     *Coarse = xml.getIntAttribute(Coarse->paramID, 0);
-    *Unison = xml.getIntAttribute(Unison->paramID, 1);
-    *Detune = (float)xml.getDoubleAttribute(Detune->paramID, 0);
-    *Spread = (float)xml.getDoubleAttribute(Spread->paramID, 0);
     *Gain = (float)xml.getDoubleAttribute(Gain->paramID, 0);
     *Envelope = xml.getIntAttribute(Envelope->paramID, 0);
 }

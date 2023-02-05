@@ -372,38 +372,20 @@ OscComponent::OscComponent(int index, AllParams& allParams)
     : index(index),
       allParams(allParams),
       envelopeSelector("Envelope"),
-      waveformSelector("Waveform"),
-      edgeSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                 juce::Slider::TextEntryBoxPosition::NoTextBox),
       octaveButton(),
       semitoneButton(),
-      unisonButton(),
-      detuneSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                   juce::Slider::TextEntryBoxPosition::NoTextBox),
-      spreadSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                   juce::Slider::TextEntryBoxPosition::NoTextBox),
       gainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                  juce::Slider::TextEntryBoxPosition::NoTextBox) {
     auto& params = getSelectedOscParams();
 
     initChoice(envelopeSelector, params.Envelope, this, *this);
-    initChoice(waveformSelector, params.Waveform, this, *this);
-    initLinear(edgeSlider, params.Edge, 0.01, this, *this);
     initIncDec(octaveButton, params.Octave, this, *this);
     initIncDec(semitoneButton, params.Coarse, this, *this);
-    initIncDec(unisonButton, params.Unison, this, *this);
-    initLinear(detuneSlider, params.Detune, 0.01, this, *this);
-    initLinear(spreadSlider, params.Spread, 0.01, this, *this);
     auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
     initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
     initLabel(envelopeLabel, "Env", *this);
-    initLabel(waveformLabel, "Waveform", *this);
-    initLabel(edgeLabel, "Edge", *this);
     initLabel(octaveLabel, "Oct", *this);
     initLabel(coarseLabel, "Semi", *this);
-    initLabel(unisonLabel, "Unis", *this);
-    initLabel(detuneLabel, "Detune", *this);
-    initLabel(spreadLabel, "Spread", *this);
     initLabel(gainLabel, "Gain", *this);
 
     startTimerHz(30.0f);
@@ -419,32 +401,19 @@ void OscComponent::resized() {
     auto upperArea = bounds.removeFromTop(bodyHeight / 2);
     auto& lowerArea = bounds;
     consumeLabeledComboBox(upperArea, 60, envelopeLabel, envelopeSelector);
-    consumeLabeledComboBox(upperArea, 105, waveformLabel, waveformSelector);
-    consumeLabeledKnob(upperArea, edgeLabel, edgeSlider);
     consumeLabeledKnob(upperArea, gainLabel, gainSlider);
     consumeLabeledIncDecButton(lowerArea, 35, octaveLabel, octaveButton);
     consumeLabeledIncDecButton(lowerArea, 35, coarseLabel, semitoneButton);
-    consumeLabeledIncDecButton(lowerArea, 35, unisonLabel, unisonButton);
-    consumeLabeledKnob(lowerArea, detuneLabel, detuneSlider);
-    consumeLabeledKnob(lowerArea, spreadLabel, spreadSlider);
 }
 void OscComponent::comboBoxChanged(juce::ComboBox* comboBox) {
     auto& params = getSelectedOscParams();
     if (comboBox == &envelopeSelector) {
         *params.Envelope = envelopeSelector.getSelectedItemIndex();
-    } else if (comboBox == &waveformSelector) {
-        *params.Waveform = waveformSelector.getSelectedItemIndex();
     }
 }
 void OscComponent::sliderValueChanged(juce::Slider* slider) {
     auto& params = getSelectedOscParams();
-    if (slider == &edgeSlider) {
-        *params.Edge = edgeSlider.getValue();
-    } else if (slider == &detuneSlider) {
-        *params.Detune = (float)detuneSlider.getValue();
-    } else if (slider == &spreadSlider) {
-        *params.Spread = (float)spreadSlider.getValue();
-    } else if (slider == &gainSlider) {
+    if (slider == &gainSlider) {
         *params.Gain = (float)gainSlider.getValue();
     }
 }
@@ -454,37 +423,15 @@ void OscComponent::incDecValueChanged(IncDecButton* button) {
         *params.Octave = octaveButton.getValue();
     } else if (button == &semitoneButton) {
         *params.Coarse = semitoneButton.getValue();
-    } else if (button == &unisonButton) {
-        *params.Unison = unisonButton.getValue();
     }
 }
 void OscComponent::timerCallback() {
     auto& params = getSelectedOscParams();
     envelopeSelector.setSelectedItemIndex(params.Envelope->getIndex(), juce::dontSendNotification);
-    waveformSelector.setSelectedItemIndex(params.Waveform->getIndex(), juce::dontSendNotification);
-    edgeSlider.setValue(params.Edge->get(), juce::dontSendNotification);
     octaveButton.setValue(params.Octave->get(), juce::dontSendNotification);
     semitoneButton.setValue(params.Coarse->get(), juce::dontSendNotification);
-    unisonButton.setValue(params.Unison->get(), juce::dontSendNotification);
-    detuneSlider.setValue(params.Detune->get(), juce::dontSendNotification);
-    spreadSlider.setValue(params.Spread->get(), juce::dontSendNotification);
     gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
 
-    auto hasEdge = params.hasEdge();
-    edgeLabel.setEnabled(hasEdge);
-    edgeSlider.setEnabled(hasEdge);
-
-    auto isNoise = params.isNoise();
-    unisonLabel.setEnabled(!isNoise);
-    unisonButton.setEnabled(!isNoise);
-    detuneLabel.setEnabled(!isNoise);
-    detuneSlider.setEnabled(!isNoise);
-    spreadLabel.setEnabled(!isNoise);
-    spreadSlider.setEnabled(!isNoise);
-
-    edgeSlider.setLookAndFeel(&berryLookAndFeel);
-    detuneSlider.setLookAndFeel(&berryLookAndFeel);
-    spreadSlider.setLookAndFeel(&berryLookAndFeel);
     gainSlider.setLookAndFeel(&berryLookAndFeel);
 }
 

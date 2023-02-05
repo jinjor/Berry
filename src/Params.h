@@ -103,13 +103,8 @@ private:
 class OscParams : public SynthParametersBase {
 public:
     juce::AudioParameterBool* Enabled;
-    juce::AudioParameterChoice* Waveform;
-    juce::AudioParameterFloat* Edge;
     juce::AudioParameterInt* Octave;
     juce::AudioParameterInt* Coarse;
-    juce::AudioParameterInt* Unison;
-    juce::AudioParameterFloat* Detune;
-    juce::AudioParameterFloat* Spread;
     juce::AudioParameterFloat* Gain;
     juce::AudioParameterChoice* Envelope;
 
@@ -121,37 +116,16 @@ public:
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
 
-    WAVEFORM getWaveForm() { return OSC_WAVEFORM_VALUES[Waveform->getIndex()]; }
-    bool hasEdge() { return false; }
-    bool isNoise() {
-        switch (getWaveForm()) {
-            case WAVEFORM::White:
-            case WAVEFORM::Pink:
-                return true;
-            default:
-                return false;
-        }
-    }
-
     bool enabled;
-    WAVEFORM waveform;
     float edge;
     int octave;
     int coarse;
-    int unison;
-    float detune;
-    float spread;
     float gain;
     int envelope;
     void freeze() {
         enabled = Enabled->get();
-        waveform = getWaveForm();
-        edge = Edge->get();
         octave = Octave->get();
         coarse = Coarse->get();
-        unison = Unison->get();
-        detune = Detune->get();
-        spread = Spread->get();
         gain = Gain->get();
         envelope = Envelope->getIndex();
     }
