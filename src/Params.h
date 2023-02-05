@@ -165,7 +165,6 @@ private:
 class FilterParams : public SynthParametersBase {
 public:
     juce::AudioParameterBool* Enabled;
-    juce::AudioParameterChoice* Target;
     juce::AudioParameterChoice* Type;
     juce::AudioParameterChoice* FreqType;
     juce::AudioParameterFloat* Hz;
@@ -197,7 +196,6 @@ public:
     bool isFreqAbsolute() { return getFreqType() == FILTER_FREQ_TYPE::Absolute; }
 
     bool enabled;
-    int target;
     FILTER_TYPE type;
     bool isFreqAbsoluteFreezed;
     float hz;
@@ -206,7 +204,6 @@ public:
     float gain;
     void freeze() {
         enabled = Enabled->get();
-        target = Target->getIndex();
         type = getType();
         isFreqAbsoluteFreezed = isFreqAbsolute();
         hz = Hz->get();

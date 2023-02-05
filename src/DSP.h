@@ -19,8 +19,6 @@ const WAVEFORM OSC_WAVEFORM_VALUES[3] = {WAVEFORM::Sine, WAVEFORM::Pink, WAVEFOR
 
 const juce::StringArray OSC_ENV_NAMES = juce::StringArray("1", "2");
 
-const juce::StringArray FILTER_TARGET_NAMES = juce::StringArray("1", "2", "3", "All");
-
 enum class FILTER_TYPE { Lowpass, Highpass, Bandpass1, Bandpass2, Notch, Peaking, LowShelf, HighShelf };
 const juce::StringArray FILTER_TYPE_NAMES =
     juce::StringArray("Lowpass", "Highpass", "Bandpass1", "Bandpass2", "Notch", "Peaking", "LowShelf", "HighShelf");

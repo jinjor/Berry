@@ -561,7 +561,6 @@ private:
 
     AllParams& allParams;
 
-    juce::ComboBox targetSelector;
     juce::ComboBox typeSelector;
     juce::ToggleButton freqTypeToggle;
     juce::Slider hzSlider;

@@ -148,8 +148,6 @@ FilterParams::FilterParams(int index) {
     auto idPrefix = "FILTER" + std::to_string(index) + "_";
     auto namePrefix = "Filter" + std::to_string(index) + " ";
     Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
-    Target = new juce::AudioParameterChoice(
-        idPrefix + "TARGET", namePrefix + "Target", FILTER_TARGET_NAMES, FILTER_TARGET_NAMES.indexOf("All"));
     Type = new juce::AudioParameterChoice(
         idPrefix + "TYPE", namePrefix + "Type", FILTER_TYPE_NAMES, FILTER_TYPE_NAMES.indexOf("Lowpass"));
     FreqType = new juce::AudioParameterChoice(idPrefix + "FREQ_TYPE",
@@ -166,7 +164,6 @@ FilterParams::FilterParams(int index) {
 }
 void FilterParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Enabled);
-    processor.addParameter(Target);
     processor.addParameter(Type);
     processor.addParameter(FreqType);
     processor.addParameter(Hz);
@@ -176,7 +173,6 @@ void FilterParams::addAllParameters(juce::AudioProcessor& processor) {
 }
 void FilterParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(Enabled->paramID, Enabled->get());
-    xml.setAttribute(Target->paramID, Target->getIndex());
     xml.setAttribute(Type->paramID, Type->getIndex());
     xml.setAttribute(FreqType->paramID, FreqType->getIndex());
     xml.setAttribute(Hz->paramID, (double)Hz->get());
@@ -186,7 +182,6 @@ void FilterParams::saveParameters(juce::XmlElement& xml) {
 }
 void FilterParams::loadParameters(juce::XmlElement& xml) {
     *Enabled = xml.getIntAttribute(Enabled->paramID, 0);
-    *Target = xml.getIntAttribute(Target->paramID, NUM_OSC);
     *Type = xml.getIntAttribute(Type->paramID, 0);
     *FreqType = xml.getIntAttribute(FreqType->paramID, 0);
     *Hz = (float)xml.getDoubleAttribute(Hz->paramID, 0);

@@ -213,33 +213,6 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         o[0] *= oscGain;
         o[1] *= oscGain;
 
-        for (int filterIndex = 0; filterIndex < NUM_FILTER; ++filterIndex) {
-            auto &fp = mainParams.filterParams[filterIndex];
-            if (!fp.enabled) {
-                continue;
-            }
-            if (fp.target == oscIndex) {
-                auto filterType = fp.type;
-                double freq;
-                if (fp.isFreqAbsoluteFreezed) {
-                    double noteShift = modifiers.filterOctShift[filterIndex] * 12;
-                    freq = shiftHertsByNotes(fp.hz, noteShift);
-                } else {
-                    double shiftedNoteNumber = shiftedNoteNumbers[oscIndex];
-                    shiftedNoteNumber += fp.semitone;
-                    shiftedNoteNumber += modifiers.filterOctShift[filterIndex] * 12;
-                    freq = getMidiNoteInHertzDouble(shiftedNoteNumber);
-                }
-                auto q = fp.q;
-                if (modifiers.filterQExp[filterIndex] != 1.0) {
-                    q = std::pow(q, modifiers.filterQExp[filterIndex]);
-                }
-                auto gain = fp.gain;
-                for (auto ch = 0; ch < numChannels; ++ch) {
-                    o[ch] = filters[filterIndex].step(filterType, freq, q, gain, ch, o[ch]);
-                }
-            }
-        }
         out[0] += o[0];
         out[1] += o[1];
     }
@@ -248,7 +221,8 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         if (!fp.enabled) {
             continue;
         }
-        if (fp.target == NUM_OSC) {  // All
+        // TODO
+        if (false) {
             auto filterType = fp.type;
             double freq;
             if (fp.isFreqAbsoluteFreezed) {

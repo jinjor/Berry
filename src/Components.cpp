@@ -487,7 +487,6 @@ void EnvelopeComponent::timerCallback() {
 FilterComponent::FilterComponent(int index, AllParams& allParams)
     : index(index),
       allParams(allParams),
-      targetSelector("Target"),
       typeSelector("Type"),
       freqTypeToggle("Freq Type"),
       hzSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag, juce::Slider::TextEntryBoxPosition::NoTextBox),
@@ -498,7 +497,6 @@ FilterComponent::FilterComponent(int index, AllParams& allParams)
                  juce::Slider::TextEntryBoxPosition::NoTextBox) {
     auto& params = getSelectedFilterParams();
 
-    initChoice(targetSelector, params.Target, this, *this);
     initChoice(typeSelector, params.Type, this, *this);
     initChoiceToggle(freqTypeToggle, FILTER_FREQ_TYPE_NAMES.indexOf("Rel"), params.FreqType, this, *this);
     initSkewFromMid(hzSlider, params.Hz, 0.01f, " Hz", nullptr, this, *this);
@@ -531,7 +529,6 @@ void FilterComponent::resized() {
     auto bodyHeight = bounds.getHeight();
     auto upperArea = bounds.removeFromTop(bodyHeight / 2);
     auto& lowerArea = bounds;
-    consumeLabeledComboBox(upperArea, 70, targetLabel, targetSelector);
     consumeLabeledComboBox(upperArea, 120, typeLabel, typeSelector);
     consumeLabeledToggle(lowerArea, 35, freqTypeLabel, freqTypeToggle);
     consumeLabeledKnob(lowerArea, freqLabel, hzSlider, semitoneSlider);
@@ -547,9 +544,7 @@ void FilterComponent::buttonClicked(juce::Button* button) {
 }
 void FilterComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) {
     auto& params = getSelectedFilterParams();
-    if (comboBoxThatHasChanged == &targetSelector) {
-        *params.Target = targetSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &typeSelector) {
+    if (comboBoxThatHasChanged == &typeSelector) {
         *params.Type = typeSelector.getSelectedItemIndex();
     }
 }
@@ -568,7 +563,6 @@ void FilterComponent::sliderValueChanged(juce::Slider* slider) {
 void FilterComponent::timerCallback() {
     auto& params = getSelectedFilterParams();
 
-    targetSelector.setSelectedItemIndex(params.Target->getIndex(), juce::dontSendNotification);
     typeSelector.setSelectedItemIndex(params.Type->getIndex(), juce::dontSendNotification);
     freqTypeToggle.setToggleState(params.FreqType->getIndex() == FILTER_FREQ_TYPE_NAMES.indexOf("Rel"),
                                   juce::dontSendNotification);
