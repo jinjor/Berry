@@ -684,98 +684,33 @@ private:
 };
 
 //==============================================================================
-namespace {
-constexpr int MAX_NUM_OSC = 4;
-}  // namespace
 class MultiOsc {
 public:
     MultiOsc() {}
     ~MultiOsc() { DBG("MultiOsc's destructor called."); }
     MultiOsc(const MultiOsc &) = delete;
-    void setWaveform(WAVEFORM waveform, bool useWavetable) {
-        for (int i = 0; i < MAX_NUM_OSC; ++i) {
-            oscs[i].setWaveform(waveform, useWavetable);
-        }
-    }
-    void setSampleRate(double sampleRate) {
-        for (int i = 0; i < MAX_NUM_OSC; ++i) {
-            oscs[i].setSampleRate(sampleRate);
-        }
-    }
-    void step(double numOsc,
-              double pan,
-              double detune,
-              double spread,
-              double freq,
-              double normalizedAngleShift,
-              double *outout) {
-        setUnison(numOsc, pan, detune, spread);
-        if (numOsc == 1) {
-            auto value = oscs[0].step(freq, normalizedAngleShift);
-            outout[0] = value * pans[0][0];
-            outout[1] = value * pans[0][1];
-        } else {
-            outout[0] = 0;
-            outout[1] = 0;
-            for (int i = 0; i < currentNumOsc; ++i) {
-                auto value = oscs[i].step(freq * detunes[i], normalizedAngleShifts[i] + normalizedAngleShift);
-                outout[0] += value * pans[i][0];
-                outout[1] += value * pans[i][1];
-            }
-        }
+    void setWaveform(WAVEFORM waveform, bool useWavetable) { oscs.setWaveform(waveform, useWavetable); }
+    void setSampleRate(double sampleRate) { oscs.setSampleRate(sampleRate); }
+    void step(double pan, double freq, double normalizedAngleShift, double *outout) {
+        calcPan(1, pan, 0, 0);
+        auto value = oscs.step(freq, normalizedAngleShift);
+        outout[0] = value * pans[0];
+        outout[1] = value * pans[1];
     }
 
 private:
-    Osc oscs[MAX_NUM_OSC];
-    double pans[MAX_NUM_OSC][2]{};
-    double detunes[MAX_NUM_OSC]{};
-    double normalizedAngleShifts[MAX_NUM_OSC]{};
-    int currentNumOsc = 1;
+    Osc oscs;
+    double pans[2]{};
     double currentPan = 0.0;
-    double currentDetune = 1;
-    double currentSpread = 1;
-    void setUnison(int numOsc, double pan, double detune, double spread) {
-        if (detune != currentDetune || numOsc != currentNumOsc) {
-            if (numOsc > 1) {
-                auto reciprocal_intervals = 1.0 / (numOsc - 1);
-                for (int i = 0; i < numOsc; ++i) {
-                    double detuneValue = numOsc == 1 ? 0 : -detune + (detune * 2) * reciprocal_intervals * i;
-                    detunes[i] = std::pow(2, detuneValue * 0.05);  // TODO: ?
-                }
-            }
+    void calcPan(int numOsc, double pan, double detune, double spread) {
+        if (pan != currentPan) {
+            jassert(pan >= -1);
+            jassert(pan <= 1);
+            double theta = (pan + 1) * 0.5 * HALF_PI;
+            pans[0] = std::cos(theta);
+            pans[1] = std::sin(theta);
         }
-        if (pan != currentPan || spread != currentSpread || numOsc != currentNumOsc) {
-            if (numOsc == 1) {
-                jassert(pan >= -1);
-                jassert(pan <= 1);
-                double theta = (pan + 1) * 0.5 * HALF_PI;
-                pans[0][0] = std::cos(theta);
-                pans[0][1] = std::sin(theta);
-            } else {
-                auto panMax = std::min(1.0, pan + spread);
-                auto panMin = std::max(-1.0, pan - spread);
-                auto reciprocal_intervals = 1.0 / (numOsc - 1);
-                for (int i = 0; i < numOsc; ++i) {
-                    double p = panMin * (numOsc - 1 - i) * reciprocal_intervals + panMax * i * reciprocal_intervals;
-                    jassert(p >= -1);
-                    jassert(p <= 1);
-                    double theta = (p + 1) * 0.5 * HALF_PI;
-                    pans[i][0] = std::cos(theta);
-                    pans[i][1] = std::sin(theta);
-                }
-            }
-        }
-        if (numOsc != currentNumOsc) {
-            if (numOsc > 1) {
-                for (int i = 0; i < numOsc; ++i) {
-                    normalizedAngleShifts[i] = 0.5 * i / numOsc;
-                }
-            }
-        }
-        currentNumOsc = numOsc;
         currentPan = pan;
-        currentDetune = detune;
-        currentSpread = spread;
     }
 };
 

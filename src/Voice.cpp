@@ -204,13 +204,11 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
 
         auto freq = getMidiNoteInHertzDouble(shiftedNoteNumbers[oscIndex] + modifiers.octShift[oscIndex] * 12);
         auto pan = panBase + panModAmp * modifiers.panMod[oscIndex];
-        auto detune = 0;
-        auto spread = 0;
         jassert(pan >= -1);
         jassert(pan <= 1);
 
         double o[2]{0, 0};
-        oscs[oscIndex].step(1, pan, detune, spread, freq, modifiers.normalizedAngleShift[oscIndex], o);
+        oscs[oscIndex].step(pan, freq, modifiers.normalizedAngleShift[oscIndex], o);
         auto oscGain = adsr[envelopeIndex].getValue() * modifiers.gain[oscIndex] * p.gain;
         o[0] *= oscGain;
         o[1] *= oscGain;
