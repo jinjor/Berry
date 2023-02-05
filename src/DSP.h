@@ -11,7 +11,7 @@ enum class WAVEFORM { Sine, Pink, White };
 const juce::StringArray OSC_WAVEFORM_NAMES = juce::StringArray("Sine", "Pink", "White");
 const WAVEFORM OSC_WAVEFORM_VALUES[3] = {WAVEFORM::Sine, WAVEFORM::Pink, WAVEFORM::White};
 
-const juce::StringArray OSC_ENV_NAMES = juce::StringArray("1", "2");
+const juce::StringArray OSC_ENV_NAMES = juce::StringArray("1", "2", "3");
 
 enum class FILTER_TYPE { Lowpass, Highpass, Bandpass1, Bandpass2, Notch, Peaking, LowShelf, HighShelf };
 const juce::StringArray FILTER_TYPE_NAMES =
@@ -632,8 +632,8 @@ public:
         auto normalizedAngle = currentNormalizedAngle + normalizedAngleShift;
         switch (waveform) {
             case WAVEFORM::Sine:
-                //                return std::sin(angle);
-                return wavetable.getSineValue(normalizedAngle);
+                return std::sin(normalizedAngle * TWO_PI);
+                // return wavetable.getSineValue(normalizedAngle);
             case WAVEFORM::Pink: {
                 auto white = (whiteNoise.nextDouble() * 2.0 - 1.0) * 0.5;
                 bool eco = true;

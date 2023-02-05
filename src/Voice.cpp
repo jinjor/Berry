@@ -14,7 +14,7 @@ BerryVoice::BerryVoice(CurrentPositionInfo *currentPositionInfo,
       globalParams(globalParams),
       voiceParams(voiceParams),
       mainParams(mainParams),
-      oscs{MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc()},
+      oscs{MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc()},
       adsr{Adsr(), Adsr()},
       filters{Filter(), Filter()},
       modEnvs{Adsr(), Adsr(), Adsr()} {}
@@ -157,14 +157,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
     smoothVelocity.step();
 
     double midiNoteNumber = smoothNote.value + globalParams.pitch * voiceParams.pitchBendRange;
-
-    double shiftedNoteNumbers[NUM_OSC]{midiNoteNumber, midiNoteNumber, midiNoteNumber};
-    for (int i = 0; i < NUM_OSC; ++i) {
-        if (!mainParams.oscParams[i].enabled) {
-            continue;
-        }
-        // shiftedNoteNumbers[i] += mainParams.oscParams[i].octave * 12 + mainParams.oscParams[i].coarse;
-    }
+    auto baseFreq = getMidiNoteInHertzDouble(midiNoteNumber);
 
     if (stepCounter == 0) {
         auto fixedSampleRate = sampleRate * CONTROL_RATE;
@@ -201,8 +194,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
             continue;
         }
         active = true;
-
-        auto freq = getMidiNoteInHertzDouble(shiftedNoteNumbers[oscIndex]);
+        auto freq = baseFreq * (oscIndex + 1);
         auto pan = panBase + panModAmp * modifiers.panMod[oscIndex];
         jassert(pan >= -1);
         jassert(pan <= 1);
