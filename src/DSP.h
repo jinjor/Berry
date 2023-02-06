@@ -7,9 +7,7 @@
 using namespace math_constants;
 
 namespace {
-enum class WAVEFORM { Sine, Pink, White };
-const juce::StringArray OSC_WAVEFORM_NAMES = juce::StringArray("Sine", "Pink", "White");
-const WAVEFORM OSC_WAVEFORM_VALUES[3] = {WAVEFORM::Sine, WAVEFORM::Pink, WAVEFORM::White};
+enum class WAVEFORM { Sine, Saw, Pink, White };
 
 const juce::StringArray OSC_ENV_NAMES = juce::StringArray("1", "2", "3");
 
@@ -77,13 +75,20 @@ const double DELAY_TIME_SYNC_VALUES[18] = {1.0,
 //==============================================================================
 class Wavetable {
 public:
+    const int *lookup = reinterpret_cast<const int *>(BinaryData::lookup);
     const float *sine = reinterpret_cast<const float *>(BinaryData::sine);
+    const float *saw = reinterpret_cast<const float *>(BinaryData::saw);  // 128 variations
     Wavetable(){};
     ~Wavetable(){};
     Wavetable(const Wavetable &) = delete;
     double getSineValue(double normalizedAngle) {
         normalizedAngle = std::fmod(normalizedAngle, 1.0);
         return getValue(sine, normalizedAngle);
+    }
+    double getSawDownValue(double freq, double normalizedAngle) {
+        normalizedAngle = std::fmod(normalizedAngle, 1.0);
+        const float *partial = getPartial(saw, freq);
+        return getValue(partial, normalizedAngle);
     }
 
 private:
@@ -92,6 +97,10 @@ private:
         int index = indexFloat;
         float fragment = indexFloat - index;
         return partial[index] * (1 - fragment) + partial[index + 1] * fragment;
+    }
+    const float *getPartial(const float *data, double freq) {
+        int partialIndex = lookup[freq >= 22000 ? 21999 : (int)freq];
+        return &data[partialIndex * 4096];
     }
 };
 
@@ -634,6 +643,13 @@ public:
             case WAVEFORM::Sine:
                 return std::sin(normalizedAngle * TWO_PI);
                 // return wavetable.getSineValue(normalizedAngle);
+            case WAVEFORM::Saw:
+                if (useWavetable) {
+                    return wavetable.getSawDownValue(freq, normalizedAngle);
+                } else {
+                    normalizedAngle = std::fmod(normalizedAngle, 1.0);
+                    return normalizedAngle * -2.0 + 1.0;
+                }
             case WAVEFORM::Pink: {
                 auto white = (whiteNoise.nextDouble() * 2.0 - 1.0) * 0.5;
                 bool eco = true;
@@ -675,7 +691,7 @@ class MultiOsc {
 public:
     MultiOsc() {
         sine.setWaveform(WAVEFORM::Sine, true);
-        noise.setWaveform(WAVEFORM::White, true);
+        noise.setWaveform(WAVEFORM::Saw, true);
     }
     ~MultiOsc() { DBG("MultiOsc's destructor called."); }
     MultiOsc(const MultiOsc &) = delete;
