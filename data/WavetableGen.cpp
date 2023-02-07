@@ -6,6 +6,7 @@
 namespace {
 const int NUM_DIVISIONS = 4095;
 const int NUM_SAMPLES = NUM_DIVISIONS + 1;
+const int MIN_PARTIAL = 8;  // 第{MIN_PARTIAL}倍音以降のみ足し合わせる
 const float BASE_FREQ = 440.0f;
 const float MAX_FREQ = 22000.0f;
 const float PI = 3.141592f;
@@ -58,7 +59,7 @@ int main() {
                 float angle = 2.0 * PI / NUM_DIVISIONS * i;
                 float value = 0.0f;
                 int numPartials = MAX_FREQ / freq;
-                for (int n = 1; n <= numPartials; n++) {
+                for (int n = MIN_PARTIAL; n <= numPartials; n++) {
                     float k = (PI / 2) / numPartials;
                     float gibbsFix = std::pow(std::cos((n - 1) * k), 2);
                     value += std::sin(n * angle) / n * gibbsFix;

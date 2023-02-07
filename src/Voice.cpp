@@ -14,7 +14,14 @@ BerryVoice::BerryVoice(CurrentPositionInfo *currentPositionInfo,
       globalParams(globalParams),
       voiceParams(voiceParams),
       mainParams(mainParams),
-      oscs{MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc(), MultiOsc()},
+      oscs{MultiOsc(false),
+           MultiOsc(false),
+           MultiOsc(false),
+           MultiOsc(false),
+           MultiOsc(false),
+           MultiOsc(false),
+           MultiOsc(false),
+           MultiOsc(true)},
       adsr{Adsr(), Adsr()},
       filters{Filter(), Filter()},
       modEnvs{Adsr(), Adsr(), Adsr()} {}
@@ -47,7 +54,6 @@ void BerryVoice::startNote(int midiNoteNumber,
         for (int i = 0; i < NUM_OSC; ++i) {
             if (!stolen) {
                 //                oscs[i].setAngle(0.0);
-                oscs[i].initializePastData();
             }
             auto &params = mainParams.envelopeParams[i];
             adsr[i].setParams(params.attackCurve, params.attack, 0.0, params.decay, 0.0, params.release);
@@ -197,7 +203,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
             continue;
         }
         active = true;
-        auto freq = baseFreq * (oscIndex + 1);
+        auto freq = oscIndex == NUM_OSC - 1 ? baseFreq : baseFreq * (oscIndex + 1);
         auto pan = panBase + panModAmp * modifiers.panMod[oscIndex];
         jassert(pan >= -1);
         jassert(pan <= 1);

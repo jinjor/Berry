@@ -691,22 +691,20 @@ private:
 //==============================================================================
 class MultiOsc {
 public:
-    MultiOsc() { sine.setWaveform(WAVEFORM::Sine, true); }
+    MultiOsc(bool saw) { osc.setWaveform(saw ? WAVEFORM::Saw : WAVEFORM::Sine, true); }
     ~MultiOsc() { DBG("MultiOsc's destructor called."); }
     MultiOsc(const MultiOsc &) = delete;
-    void setSampleRate(double sampleRate) { sine.setSampleRate(sampleRate); }
-    void initializePastData() { filter.initializePastData(); }
-    void step(double pan, double freq, double normalizedAngleShift, double sineGain, double *outout) {
+    void setSampleRate(double sampleRate) { osc.setSampleRate(sampleRate); }
+    void step(double pan, double freq, double normalizedAngleShift, double gain, double *outout) {
         calcPan(1, pan, 0, 0);
-        auto value = sine.step(freq, normalizedAngleShift) * sineGain;
+        auto value = osc.step(freq, normalizedAngleShift) * gain;
         for (int ch = 0; ch < 2; ch++) {
             outout[ch] = value * pans[ch];
         }
     }
 
 private:
-    Osc sine;
-    Filter filter;
+    Osc osc;
     double pans[2]{std::cos(0.5 * HALF_PI), std::sin(0.5 * HALF_PI)};
     double currentPan = 0.0;
     void calcPan(int numOsc, double pan, double detune, double spread) {
