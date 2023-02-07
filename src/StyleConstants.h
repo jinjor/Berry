@@ -5,21 +5,26 @@
 namespace styles {
 namespace colour {
 // text
-const juce::Colour TEXT = juce::Colour(200, 200, 200);
-const juce::Colour WARNING = juce::Colour(190, 190, 80);
-const juce::Colour ERROR = juce::Colour(190, 40, 80);
+const juce::Colour TEXT = juce::Colour(40, 40, 40);
+const juce::Colour WARNING = juce::Colour(80, 80, 40);
+const juce::Colour ERROR = juce::Colour(100, 40, 60);
+const juce::Colour POPUP_SELECTED_TEXT = juce::Colour(40, 40, 40);
+
 // background
-const juce::Colour BORDER = juce::Colour(30, 30, 30);
-const juce::Colour BACKGROUND = juce::Colour(40, 40, 40);
-const juce::Colour PANEL_NAME_BACKGROUND = juce::Colour(50, 50, 50);
-const juce::Colour POPUP_BACKGROUND = juce::Colour(30, 30, 30);
+const juce::Colour BORDER = juce::Colour(100, 100, 100);
+const juce::Colour BACKGROUND = juce::Colour(230, 230, 230);
+const juce::Colour PANEL_NAME_BACKGROUND = juce::Colour(220, 220, 220);
+const juce::Colour POPUP_BACKGROUND = juce::Colour(220, 220, 220);
+const juce::Colour POPUP_SELECTED_BACKGROUND = juce::Colour(220, 180, 190);
+
 // components
-const juce::Colour UNDERLINE = juce::Colour(0, 0, 0);
-const juce::Colour SELECT = juce::Colour(170, 100, 210);
+const juce::Colour UNDERLINE = juce::Colour(100, 100, 100);
+const juce::Colour SELECT = juce::Colour(190, 40, 70);
 const juce::Colour CONTROLLED = juce::Colour(170, 170, 170);
-const juce::Colour ANALYSER_LINE = juce::Colour(100, 190, 140);
-const juce::Colour ANALYSER_LINE2 = juce::Colour(60, 100, 150);
-const juce::Colour PIT = juce::Colour(0, 0, 0);
+const juce::Colour ANALYSER_BACKGROUND = juce::Colour(200, 200, 200);
+const juce::Colour ANALYSER_BORDER = juce::Colour(150, 150, 150);
+const juce::Colour ANALYSER_LINE = juce::Colour(20, 40, 70);
+const juce::Colour PIT = juce::Colour(180, 180, 180);
 }  // namespace colour
 // font
 constexpr float PANEL_NAME_FONT_SIZE = 15.0f;
