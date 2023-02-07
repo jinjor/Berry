@@ -8,8 +8,10 @@ BerryLookAndFeel::BerryLookAndFeel(bool controlled) : controlled(controlled) {
     setColour(juce::ComboBox::textColourId, colour::TEXT);
     setColour(juce::ComboBox::arrowColourId, colour::TEXT);
     setColour(juce::ComboBox::outlineColourId, colour::BORDER);
+    setColour(juce::PopupMenu::textColourId, colour::TEXT);
+    setColour(juce::PopupMenu::highlightedTextColourId, colour::POPUP_SELECTED_TEXT);
     setColour(juce::PopupMenu::backgroundColourId, colour::POPUP_BACKGROUND);
-    setColour(juce::PopupMenu::highlightedBackgroundColourId, colour::SELECT.withBrightness(0.4));
+    setColour(juce::PopupMenu::highlightedBackgroundColourId, colour::POPUP_SELECTED_BACKGROUND);
     setColour(juce::BubbleComponent::outlineColourId, colour::BORDER);
     setColour(juce::BubbleComponent::backgroundColourId, colour::PIT);
     setColour(juce::TextButton::textColourOnId, colour::TEXT);

@@ -962,7 +962,7 @@ bool AnalyserWindow::drawNextFrameOfLevel() {
     return hasData;
 }
 void AnalyserWindow::paint(juce::Graphics& g) {
-    g.fillAll(juce::Colours::black);
+    g.fillAll(colour::ANALYSER_BACKGROUND);
 
     juce::Rectangle<int> bounds = getLocalBounds();
 
@@ -986,7 +986,7 @@ void AnalyserWindow::paint(juce::Graphics& g) {
             }
         }
     }
-    g.setColour(juce::Colour(30, 30, 30));
+    g.setColour(colour::ANALYSER_BORDER);
     g.drawRect(bounds, 2.0f);
 }
 void AnalyserWindow::paintSpectrum(
