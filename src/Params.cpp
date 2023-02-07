@@ -66,14 +66,13 @@ void VoiceParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-OscParams::OscParams(int index) {
+OscParams::OscParams(int index) : index(index) {
     auto idPrefix = "OSC" + std::to_string(index) + "_";
     auto namePrefix = "OSC" + std::to_string(index) + " ";
     Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
     Gain = new juce::AudioParameterFloat(
         idPrefix + "GAIN", namePrefix + "Gain", rangeWithSkewForCentre(0.0f, 4.0f, 1.0f), 1.0f);
-    Envelope = new juce::AudioParameterChoice(
-        idPrefix + "ENVELOPE", namePrefix + "Envelope", OSC_ENV_NAMES, OSC_ENV_NAMES.indexOf("1"));
+    SyncEnvelope = new juce::AudioParameterBool(idPrefix + "SYNC_ENVELOPE", namePrefix + "Envelope", index != 0);
     NoiseGain = new juce::AudioParameterFloat(
         idPrefix + "NOISE_GAIN", namePrefix + "Noise Gain", rangeWithSkewForCentre(0.0f, 4.0f, 1.0f), 1.0f);
     NoiseQ = new juce::AudioParameterFloat(
@@ -83,21 +82,21 @@ OscParams::OscParams(int index) {
 void OscParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Enabled);
     processor.addParameter(Gain);
-    processor.addParameter(Envelope);
+    processor.addParameter(SyncEnvelope);
     processor.addParameter(NoiseGain);
     processor.addParameter(NoiseQ);
 }
 void OscParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(Enabled->paramID, Enabled->get());
     xml.setAttribute(Gain->paramID, (double)Gain->get());
-    xml.setAttribute(Envelope->paramID, Envelope->getIndex());
+    xml.setAttribute(SyncEnvelope->paramID, SyncEnvelope->get());
     xml.setAttribute(NoiseGain->paramID, (double)NoiseGain->get());
     xml.setAttribute(NoiseQ->paramID, (double)NoiseQ->get());
 }
 void OscParams::loadParameters(juce::XmlElement& xml) {
     *Enabled = xml.getIntAttribute(Enabled->paramID, 0);
     *Gain = (float)xml.getDoubleAttribute(Gain->paramID, 0);
-    *Envelope = xml.getIntAttribute(Envelope->paramID, 0);
+    *SyncEnvelope = xml.getIntAttribute(SyncEnvelope->paramID, index != 0);
     *NoiseGain = (float)xml.getDoubleAttribute(NoiseGain->paramID, 0);
     *NoiseQ = (float)xml.getDoubleAttribute(NoiseQ->paramID, 0);
 }
@@ -321,7 +320,15 @@ MainParams::MainParams()
                 OscParams{6},
                 OscParams{7},
                 OscParams{8}},
-      envelopeParams{EnvelopeParams{0}, EnvelopeParams{1}, EnvelopeParams{2}},
+      envelopeParams{EnvelopeParams{0},
+                     EnvelopeParams{1},
+                     EnvelopeParams{2},
+                     EnvelopeParams{3},
+                     EnvelopeParams{4},
+                     EnvelopeParams{5},
+                     EnvelopeParams{6},
+                     EnvelopeParams{7},
+                     EnvelopeParams{8}},
       filterParams{FilterParams{0}, FilterParams{1}},
       modEnvParams{ModEnvParams{0}, ModEnvParams{1}, ModEnvParams{2}},
       delayParams{},

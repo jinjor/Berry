@@ -101,7 +101,7 @@ private:
     juce::AudioBuffer<float> &buffer;
 
     MultiOsc oscs[NUM_OSC];
-    Adsr adsr[NUM_ENVELOPE];
+    Adsr adsr[NUM_OSC];
     Filter filters[NUM_FILTER];
     Adsr modEnvs[NUM_MODENV];
 

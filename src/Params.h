@@ -94,7 +94,7 @@ class OscParams : public SynthParametersBase {
 public:
     juce::AudioParameterBool* Enabled;
     juce::AudioParameterFloat* Gain;
-    juce::AudioParameterChoice* Envelope;
+    juce::AudioParameterBool* SyncEnvelope;
     juce::AudioParameterFloat* NoiseGain;
     // juce::AudioParameterChoice* NoiseEnvelope;
     juce::AudioParameterFloat* NoiseQ;
@@ -109,7 +109,7 @@ public:
 
     bool enabled;
     float gain;
-    int envelope;
+    bool syncEnvelope;
     float noiseGain;
     // int noiseEnvelope;
     float noiseQ;
@@ -117,13 +117,14 @@ public:
     void freeze() {
         enabled = Enabled->get();
         gain = Gain->get();
-        envelope = Envelope->getIndex();
+        syncEnvelope = SyncEnvelope->get();
         noiseGain = NoiseGain->get();
         // noiseEnvelope = NoiseEnvelope->getIndex();
         noiseQ = NoiseQ->get();
     }
 
 private:
+    int index;
     OscParams(){};
 };
 
@@ -334,7 +335,7 @@ public:
     MainParams(MainParams&&) noexcept = default;
 
     std::array<OscParams, NUM_OSC> oscParams;
-    std::array<EnvelopeParams, NUM_ENVELOPE> envelopeParams;
+    std::array<EnvelopeParams, NUM_OSC> envelopeParams;
     std::array<FilterParams, NUM_FILTER> filterParams;
     std::array<ModEnvParams, NUM_MODENV> modEnvParams;
     DelayParams delayParams;
@@ -343,8 +344,6 @@ public:
     void freeze() {
         for (int i = 0; i < NUM_OSC; ++i) {
             oscParams[i].freeze();
-        }
-        for (int i = 0; i < NUM_ENVELOPE; ++i) {
             envelopeParams[i].freeze();
         }
         for (int i = 0; i < NUM_FILTER; ++i) {

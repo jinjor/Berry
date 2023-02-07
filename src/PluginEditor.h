@@ -26,7 +26,6 @@ private:
     StatusComponent statusComponent;
     SectionComponent utilComponent;
     SectionComponent oscComponents[NUM_OSC];
-    SectionComponent envelopeComponents[NUM_ENVELOPE];
     SectionComponent filterComponents[NUM_FILTER];
     SectionComponent modEnvComponents[NUM_MODENV];
     SectionComponent delayComponent;

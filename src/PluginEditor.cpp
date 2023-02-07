@@ -27,10 +27,6 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
           SectionComponent{"OSC 8", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(7, p.allParams)},
           SectionComponent{"OSC 9", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(8, p.allParams)},
       },
-      envelopeComponents{
-          SectionComponent{"ENV 1", HEADER_CHECK::Hidden, std::make_unique<EnvelopeComponent>(0, p.allParams)},
-          SectionComponent{"ENV 2", HEADER_CHECK::Hidden, std::make_unique<EnvelopeComponent>(1, p.allParams)},
-          SectionComponent{"ENV 3", HEADER_CHECK::Hidden, std::make_unique<EnvelopeComponent>(2, p.allParams)}},
       filterComponents{
           SectionComponent{"FILTER 1", HEADER_CHECK::Enabled, std::make_unique<FilterComponent>(0, p.allParams)},
           SectionComponent{"FILTER 2", HEADER_CHECK::Enabled, std::make_unique<FilterComponent>(1, p.allParams)}},
@@ -52,11 +48,6 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
         auto &params = audioProcessor.allParams.mainParams.oscParams[i];
         auto &component = oscComponents[i];
         component.setEnabled(params.Enabled->get());
-        component.addListener(this);
-        addAndMakeVisible(component);
-    }
-    for (auto i = 0; i < NUM_ENVELOPE; i++) {
-        auto &component = envelopeComponents[i];
         component.addListener(this);
         addAndMakeVisible(component);
     }
@@ -141,43 +132,31 @@ void BerryAudioProcessorEditor::resized() {
     }
     {
         auto middleArea = bounds.removeFromTop(middleHeight).reduced(AREA_PADDING_X, AREA_PADDING_Y);
-        auto leftWidth = (width - PANEL_MARGIN_X * 2) * 0.35;
-        auto centreWidth = (width - PANEL_MARGIN_X * 2) * 0.35;
+        auto leftWidth = (width - PANEL_MARGIN_X * 2) * 0.5;
 
         auto middleHeight = middleArea.getHeight();
         auto halfPanelHeight = (middleHeight - PANEL_MARGIN_Y) * 0.5;
         auto quarterPanelHeight = (halfPanelHeight - PANEL_MARGIN_Y) * 0.5;
         {
             auto area = middleArea.removeFromLeft(leftWidth);
-            envelopeComponents[0].setBounds(area.removeFromTop(quarterPanelHeight));
+            oscComponents[0].setBounds(area.removeFromTop(quarterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
-            envelopeComponents[1].setBounds(area.removeFromTop(quarterPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            envelopeComponents[2].setBounds(area.removeFromTop(quarterPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            oscComponents[0].setBounds(area);
-        }
-        middleArea.removeFromLeft(PANEL_MARGIN_X);
-        {
-            auto area = middleArea.removeFromLeft(centreWidth);
             oscComponents[1].setBounds(area.removeFromTop(quarterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
             oscComponents[2].setBounds(area.removeFromTop(quarterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
-            oscComponents[3].setBounds(area.removeFromTop(quarterPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            oscComponents[4].setBounds(area);
+            oscComponents[3].setBounds(area);
         }
         middleArea.removeFromLeft(PANEL_MARGIN_X);
         {
             auto &area = middleArea;
+            oscComponents[4].setBounds(area.removeFromTop(quarterPanelHeight));
+            area.removeFromTop(PANEL_MARGIN_Y);
             oscComponents[5].setBounds(area.removeFromTop(quarterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
             oscComponents[6].setBounds(area.removeFromTop(quarterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
-            oscComponents[7].setBounds(area.removeFromTop(quarterPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            oscComponents[8].setBounds(area);
+            oscComponents[7].setBounds(area);
         }
     }
     {

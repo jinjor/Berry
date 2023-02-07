@@ -49,8 +49,6 @@ void BerryVoice::startNote(int midiNoteNumber,
                 //                oscs[i].setAngle(0.0);
                 oscs[i].initializePastData();
             }
-        }
-        for (int i = 0; i < NUM_ENVELOPE; ++i) {
             auto &params = mainParams.envelopeParams[i];
             adsr[i].setParams(params.attackCurve, params.attack, 0.0, params.decay, 0.0, params.release);
             adsr[i].doAttack(fixedSampleRate);
@@ -76,7 +74,7 @@ void BerryVoice::stopNote(float velocity, bool allowTailOff) {
         if (allowTailOff) {
             auto sampleRate = getSampleRate();
             auto fixedSampleRate = sampleRate * CONTROL_RATE;  // for control
-            for (int i = 0; i < NUM_ENVELOPE; ++i) {
+            for (int i = 0; i < NUM_OSC; ++i) {
                 if (adsr[i].isReleasing()) {
                     continue;
                 }
@@ -87,7 +85,7 @@ void BerryVoice::stopNote(float velocity, bool allowTailOff) {
             for (int i = 0; i < NUM_OSC; ++i) {
                 oscs[i].setSampleRate(0.0);  // stop
             }
-            for (int i = 0; i < NUM_ENVELOPE; ++i) {
+            for (int i = 0; i < NUM_OSC; ++i) {
                 adsr[i].forceStop();
             }
             clearCurrentNote();
@@ -98,7 +96,7 @@ void BerryVoice::mute(double duration) {
     DBG("mute()");
     auto sampleRate = getSampleRate();
     auto fixedSampleRate = sampleRate * CONTROL_RATE;  // for control
-    for (int i = 0; i < NUM_ENVELOPE; ++i) {
+    for (int i = 0; i < NUM_OSC; ++i) {
         adsr[i].doRelease(fixedSampleRate, duration);
     }
 }
@@ -134,8 +132,6 @@ void BerryVoice::applyParamsBeforeLoop(double sampleRate) {
     auto &mainParams = getMainParams();
     for (int i = 0; i < NUM_OSC; ++i) {
         oscs[i].setSampleRate(sampleRate);
-    }
-    for (int i = 0; i < NUM_ENVELOPE; ++i) {
         auto &params = mainParams.envelopeParams[i];
         adsr[i].setParams(params.attackCurve, params.attack, 0.0, params.decay, 0.0, params.release);
     }
@@ -161,7 +157,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
 
     if (stepCounter == 0) {
         auto fixedSampleRate = sampleRate * CONTROL_RATE;
-        for (int i = 0; i < NUM_ENVELOPE; ++i) {
+        for (int i = 0; i < NUM_OSC; ++i) {
             adsr[i].step(fixedSampleRate);
         }
         controlModifiers = Modifiers{};
@@ -189,7 +185,13 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         if (!p.enabled) {
             continue;
         }
-        int envelopeIndex = p.envelope;
+        int envelopeIndex = 0;
+        for (int i = oscIndex; i >= 1; i--) {
+            auto &p = mainParams.oscParams[i];
+            if (!p.syncEnvelope) {
+                envelopeIndex = i;
+            }
+        }
         if (!adsr[envelopeIndex].isActive()) {
             continue;
         }

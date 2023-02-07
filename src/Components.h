@@ -473,8 +473,8 @@ private:
 
 //==============================================================================
 class OscComponent : public juce::Component,
-                     juce::ComboBox::Listener,
                      juce::Slider::Listener,
+                     juce::Button::Listener,
                      private juce::Timer,
                      ComponentHelper {
 public:
@@ -483,59 +483,39 @@ public:
     OscComponent(const OscComponent&) = delete;
 
     virtual void paint(juce::Graphics& g) override;
-
     virtual void resized() override;
 
 private:
-    virtual void comboBoxChanged(juce::ComboBox* comboBox) override;
     virtual void sliderValueChanged(juce::Slider* slider) override;
+    virtual void buttonClicked(juce::Button* button) override;
     virtual void timerCallback() override;
     int index;
 
     AllParams& allParams;
 
-    juce::ComboBox envelopeSelector;
+    juce::ToggleButton syncEnvelopeToggle;
     juce::Slider gainSlider;
     juce::Slider noiseGainSlider;
     juce::Slider noiseQSlider;
-
-    juce::Label envelopeLabel;
-    juce::Label gainLabel;
-    juce::Label noiseGainLabel;
-    juce::Label noiseQLabel;
-
-    OscParams& getSelectedOscParams() { return allParams.mainParams.oscParams[index]; }
-};
-
-//==============================================================================
-class EnvelopeComponent : public juce::Component, juce::Slider::Listener, private juce::Timer, ComponentHelper {
-public:
-    EnvelopeComponent(int index, AllParams& allParams);
-    virtual ~EnvelopeComponent();
-    EnvelopeComponent(const EnvelopeComponent&) = delete;
-
-    virtual void paint(juce::Graphics& g) override;
-
-    virtual void resized() override;
-
-private:
-    virtual void sliderValueChanged(juce::Slider* slider) override;
-    virtual void timerCallback() override;
-    int index;
-
-    AllParams& allParams;
-
     juce::Slider attackCurveSlider;
     juce::Slider attackSlider;
     juce::Slider decaySlider;
     juce::Slider releaseSlider;
 
+    juce::Label syncEnvelopeLabel;
+    juce::Label gainLabel;
+    juce::Label noiseGainLabel;
+    juce::Label noiseQLabel;
     juce::Label attackCurveLabel;
     juce::Label attackLabel;
     juce::Label decayLabel;
     juce::Label releaseLabel;
 
-    EnvelopeParams& getSelectedEnvelopeParams() { return allParams.mainParams.envelopeParams[index]; }
+    OscParams& getSelectedOscParams() { return allParams.mainParams.oscParams[index]; }
+    EnvelopeParams& getSelectedEnvelopeParams() {
+        // sync 先を表示した方がいいかもしれない
+        return allParams.mainParams.envelopeParams[index];
+    }
 };
 
 //==============================================================================
@@ -759,36 +739,6 @@ private:
     float overflowedLevelR = 0;
     int overflowWarningL = 0;
     int overflowWarningR = 0;
-
-    // Envelope
-    Adsr ampEnvs[NUM_ENVELOPE];
-    Adsr modEnvs[NUM_MODENV];
-    class SimpleModEnvParams {
-    public:
-        SimpleModEnvParams() {}
-        SimpleModEnvParams(ModEnvParams& modEnvParams) {
-            w = modEnvParams.Wait->get();
-            a = modEnvParams.Attack->get();
-            d = modEnvParams.Decay->get();
-            enabled = modEnvParams.Enabled->get();
-            isTargetFreq = modEnvParams.isTargetFreq();
-            fadeIn = static_cast<MODENV_FADE>(modEnvParams.Fade->getIndex()) == MODENV_FADE::In;
-        }
-        SimpleModEnvParams(const SimpleModEnvParams&) = delete;
-        float w = 0;
-        float a = 0;
-        float d = 0;
-        bool enabled = false;
-        bool isTargetFreq = false;
-        bool fadeIn = false;
-        bool equals(SimpleModEnvParams& p) {
-            return w == p.w && a == p.a && d == p.d && enabled == p.enabled && isTargetFreq == p.isTargetFreq &&
-                   fadeIn == p.fadeIn;
-        }
-    };
-    SimpleModEnvParams lastModEnvParams[NUM_MODENV];
-    float scopeDataForAmpEnv[NUM_ENVELOPE][scopeSize]{};
-    float scopeDataForModEnv[NUM_MODENV][scopeSize]{};
 
     // Filter
     Filter filters[NUM_FILTER];
