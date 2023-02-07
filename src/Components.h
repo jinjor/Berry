@@ -493,14 +493,14 @@ private:
 
     AllParams& allParams;
 
-    juce::ToggleButton syncEnvelopeToggle;
+    juce::ToggleButton newEnvelopeToggle;
     juce::Slider gainSlider;
     juce::Slider attackCurveSlider;
     juce::Slider attackSlider;
     juce::Slider decaySlider;
     juce::Slider releaseSlider;
 
-    juce::Label syncEnvelopeLabel;
+    juce::Label newEnvelopeLabel;
     juce::Label gainLabel;
     juce::Label attackCurveLabel;
     juce::Label attackLabel;

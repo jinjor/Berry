@@ -72,23 +72,23 @@ OscParams::OscParams(int index) : index(index) {
     Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
     Gain = new juce::AudioParameterFloat(
         idPrefix + "GAIN", namePrefix + "Gain", rangeWithSkewForCentre(0.0f, 4.0f, 1.0f), 1.0f);
-    SyncEnvelope = new juce::AudioParameterBool(idPrefix + "SYNC_ENVELOPE", namePrefix + "Envelope", index != 0);
+    NewEnvelope = new juce::AudioParameterBool(idPrefix + "SYNC_ENVELOPE", namePrefix + "Envelope", index == 0);
     freeze();
 }
 void OscParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Enabled);
     processor.addParameter(Gain);
-    processor.addParameter(SyncEnvelope);
+    processor.addParameter(NewEnvelope);
 }
 void OscParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(Enabled->paramID, Enabled->get());
     xml.setAttribute(Gain->paramID, (double)Gain->get());
-    xml.setAttribute(SyncEnvelope->paramID, SyncEnvelope->get());
+    xml.setAttribute(NewEnvelope->paramID, NewEnvelope->get());
 }
 void OscParams::loadParameters(juce::XmlElement& xml) {
     *Enabled = xml.getIntAttribute(Enabled->paramID, 0);
     *Gain = (float)xml.getDoubleAttribute(Gain->paramID, 0);
-    *SyncEnvelope = xml.getIntAttribute(SyncEnvelope->paramID, index != 0);
+    *NewEnvelope = xml.getIntAttribute(NewEnvelope->paramID, index == 0);
 }
 
 //==============================================================================

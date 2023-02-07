@@ -94,7 +94,7 @@ class OscParams : public SynthParametersBase {
 public:
     juce::AudioParameterBool* Enabled;
     juce::AudioParameterFloat* Gain;
-    juce::AudioParameterBool* SyncEnvelope;
+    juce::AudioParameterBool* NewEnvelope;
     juce::AudioParameterFloat* NoiseGain;
     // juce::AudioParameterChoice* NoiseEnvelope;
     juce::AudioParameterFloat* NoiseQ;
@@ -109,12 +109,12 @@ public:
 
     bool enabled;
     float gain;
-    bool syncEnvelope;
+    bool newEnvelope;
 
     void freeze() {
         enabled = Enabled->get();
         gain = Gain->get();
-        syncEnvelope = SyncEnvelope->get();
+        newEnvelope = NewEnvelope->get();
     }
 
 private:

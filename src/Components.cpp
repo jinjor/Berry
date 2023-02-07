@@ -371,7 +371,7 @@ void MasterComponent::timerCallback() {
 OscComponent::OscComponent(int index, AllParams& allParams)
     : index(index),
       allParams(allParams),
-      syncEnvelopeToggle(),
+      newEnvelopeToggle(),
       gainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                  juce::Slider::TextEntryBoxPosition::NoTextBox),
       attackCurveSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
@@ -388,22 +388,22 @@ OscComponent::OscComponent(int index, AllParams& allParams)
     auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
     initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
     auto formatGain2 = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
-    initChoiceToggle(syncEnvelopeToggle, params.SyncEnvelope, this, *this);
+    initChoiceToggle(newEnvelopeToggle, params.NewEnvelope, this, *this);
     initLinear(attackCurveSlider, envParams.AttackCurve, 0.01, this, *this);
     initSkewFromMid(attackSlider, envParams.Attack, 0.001, " sec", nullptr, this, *this);
     initSkewFromMid(decaySlider, envParams.Decay, 0.01, " sec", nullptr, this, *this);
     initSkewFromMid(releaseSlider, envParams.Release, 0.01, " sec", nullptr, this, *this);
 
     initLabel(gainLabel, "Gain", *this);
-    initLabel(syncEnvelopeLabel, "Sync Env", *this);
+    initLabel(newEnvelopeLabel, "New Env", *this);
     initLabel(attackCurveLabel, "A. Curve", *this);
     initLabel(attackLabel, "Attack", *this);
     initLabel(decayLabel, "Decay", *this);
     initLabel(releaseLabel, "Release", *this);
 
     if (index == 0) {
-        syncEnvelopeToggle.setEnabled(false);
-        syncEnvelopeLabel.setEnabled(false);
+        newEnvelopeToggle.setEnabled(false);
+        newEnvelopeLabel.setEnabled(false);
     }
 
     startTimerHz(30.0f);
@@ -417,7 +417,7 @@ void OscComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
 
     consumeLabeledKnob(bounds, gainLabel, gainSlider);
-    consumeLabeledToggle(bounds, 45, syncEnvelopeLabel, syncEnvelopeToggle);
+    consumeLabeledToggle(bounds, 45, newEnvelopeLabel, newEnvelopeToggle);
     consumeLabeledKnob(bounds, attackCurveLabel, attackCurveSlider);
     consumeLabeledKnob(bounds, attackLabel, attackSlider);
     consumeLabeledKnob(bounds, decayLabel, decaySlider);
@@ -440,24 +440,24 @@ void OscComponent::sliderValueChanged(juce::Slider* slider) {
 }
 void OscComponent::buttonClicked(juce::Button* button) {
     auto& params = getSelectedOscParams();
-    if (button == &syncEnvelopeToggle) {
-        *params.SyncEnvelope = syncEnvelopeToggle.getToggleState();
+    if (button == &newEnvelopeToggle) {
+        *params.NewEnvelope = newEnvelopeToggle.getToggleState();
     }
 }
 void OscComponent::timerCallback() {
     auto& params = getSelectedOscParams();
     gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
 
-    auto syncEnvelope = params.SyncEnvelope->get();
-    syncEnvelopeToggle.setToggleState(syncEnvelope, juce::dontSendNotification);
-    attackCurveSlider.setEnabled(!syncEnvelope);
-    attackSlider.setEnabled(!syncEnvelope);
-    decaySlider.setEnabled(!syncEnvelope);
-    releaseSlider.setEnabled(!syncEnvelope);
-    attackCurveLabel.setEnabled(!syncEnvelope);
-    attackLabel.setEnabled(!syncEnvelope);
-    decayLabel.setEnabled(!syncEnvelope);
-    releaseLabel.setEnabled(!syncEnvelope);
+    auto newEnvelope = params.NewEnvelope->get();
+    newEnvelopeToggle.setToggleState(newEnvelope, juce::dontSendNotification);
+    attackCurveSlider.setEnabled(newEnvelope);
+    attackSlider.setEnabled(newEnvelope);
+    decaySlider.setEnabled(newEnvelope);
+    releaseSlider.setEnabled(newEnvelope);
+    attackCurveLabel.setEnabled(newEnvelope);
+    attackLabel.setEnabled(newEnvelope);
+    decayLabel.setEnabled(newEnvelope);
+    releaseLabel.setEnabled(newEnvelope);
 
     auto& envParams = getSelectedEnvelopeParams();
     attackCurveSlider.setValue(envParams.AttackCurve->get(), juce::dontSendNotification);
