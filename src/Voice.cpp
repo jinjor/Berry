@@ -190,6 +190,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
             auto &p = mainParams.oscParams[i];
             if (!p.syncEnvelope) {
                 envelopeIndex = i;
+                break;
             }
         }
         if (!adsr[envelopeIndex].isActive()) {
