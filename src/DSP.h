@@ -10,6 +10,8 @@ namespace {
 enum class WAVEFORM { Sine, Saw, Pink, White };
 
 const juce::StringArray OSC_ENV_NAMES = juce::StringArray("1", "2", "3");
+const juce::StringArray NOISE_WAVEFORM_NAMES = juce::StringArray("White", "Pink");
+const WAVEFORM NOISE_WAVEFORM_VALUES[2] = {WAVEFORM::White, WAVEFORM::Pink};
 
 enum class FILTER_TYPE { Lowpass, Highpass, Bandpass1, Bandpass2, Notch, Peaking, LowShelf, HighShelf };
 const juce::StringArray FILTER_TYPE_NAMES =
@@ -689,30 +691,14 @@ private:
 //==============================================================================
 class MultiOsc {
 public:
-    MultiOsc() {
-        sine.setWaveform(WAVEFORM::Sine, true);
-        noise.setWaveform(WAVEFORM::Saw, true);
-    }
+    MultiOsc() { sine.setWaveform(WAVEFORM::Sine, true); }
     ~MultiOsc() { DBG("MultiOsc's destructor called."); }
     MultiOsc(const MultiOsc &) = delete;
-    void setSampleRate(double sampleRate) {
-        sine.setSampleRate(sampleRate);
-        noise.setSampleRate(sampleRate);
-        filter.setSampleRate(sampleRate);
-    }
+    void setSampleRate(double sampleRate) { sine.setSampleRate(sampleRate); }
     void initializePastData() { filter.initializePastData(); }
-    void step(double pan,
-              double freq,
-              double normalizedAngleShift,
-              double sineGain,
-              double noiseGain,
-              double noiseQ,
-              double *outout) {
+    void step(double pan, double freq, double normalizedAngleShift, double sineGain, double *outout) {
         calcPan(1, pan, 0, 0);
-        auto sineValue = sine.step(freq, normalizedAngleShift) * sineGain;
-        auto noiseValue = noise.step(freq, normalizedAngleShift) * noiseGain;
-        noiseValue = filter.step(FILTER_TYPE::Bandpass2, freq, noiseQ, 0.0, 0, noiseValue);
-        auto value = sineValue + noiseValue;
+        auto value = sine.step(freq, normalizedAngleShift) * sineGain;
         for (int ch = 0; ch < 2; ch++) {
             outout[ch] = value * pans[ch];
         }
@@ -720,7 +706,6 @@ public:
 
 private:
     Osc sine;
-    Osc noise;
     Filter filter;
     double pans[2]{std::cos(0.5 * HALF_PI), std::sin(0.5 * HALF_PI)};
     double currentPan = 0.0;

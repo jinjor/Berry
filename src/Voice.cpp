@@ -203,9 +203,8 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
 
         double o[2]{0, 0};
         auto sineGain = adsr[envelopeIndex].getValue() * p.gain;
-        auto noiseGain = adsr[envelopeIndex].getValue() * p.noiseGain;
 
-        oscs[oscIndex].step(pan, freq, 0.0, sineGain, noiseGain, p.noiseQ, o);
+        oscs[oscIndex].step(pan, freq, 0.0, sineGain, o);
 
         out[0] += o[0];
         out[1] += o[1];

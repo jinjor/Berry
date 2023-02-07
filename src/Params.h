@@ -110,22 +110,47 @@ public:
     bool enabled;
     float gain;
     bool syncEnvelope;
-    float noiseGain;
-    // int noiseEnvelope;
-    float noiseQ;
 
     void freeze() {
         enabled = Enabled->get();
         gain = Gain->get();
         syncEnvelope = SyncEnvelope->get();
-        noiseGain = NoiseGain->get();
-        // noiseEnvelope = NoiseEnvelope->getIndex();
-        noiseQ = NoiseQ->get();
     }
 
 private:
     int index;
     OscParams(){};
+};
+
+//==============================================================================
+class NoiseParams : public SynthParametersBase {
+public:
+    juce::AudioParameterBool* Enabled;
+    juce::AudioParameterFloat* Gain;
+    juce::AudioParameterChoice* Type;
+
+    NoiseParams(int index);
+    NoiseParams(const NoiseParams&) = delete;
+    NoiseParams(NoiseParams&&) noexcept = default;
+
+    virtual void addAllParameters(juce::AudioProcessor& processor) override;
+    virtual void saveParameters(juce::XmlElement& xml) override;
+    virtual void loadParameters(juce::XmlElement& xml) override;
+
+    WAVEFORM getWaveForm() { return NOISE_WAVEFORM_VALUES[Type->getIndex()]; }
+
+    bool enabled;
+    float gain;
+    WAVEFORM waveform;
+
+    void freeze() {
+        enabled = Enabled->get();
+        gain = Gain->get();
+        waveform = getWaveForm();
+    }
+
+private:
+    NoiseParams(){};
 };
 
 //==============================================================================

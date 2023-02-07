@@ -495,8 +495,6 @@ private:
 
     juce::ToggleButton syncEnvelopeToggle;
     juce::Slider gainSlider;
-    juce::Slider noiseGainSlider;
-    juce::Slider noiseQSlider;
     juce::Slider attackCurveSlider;
     juce::Slider attackSlider;
     juce::Slider decaySlider;
@@ -504,8 +502,6 @@ private:
 
     juce::Label syncEnvelopeLabel;
     juce::Label gainLabel;
-    juce::Label noiseGainLabel;
-    juce::Label noiseQLabel;
     juce::Label attackCurveLabel;
     juce::Label attackLabel;
     juce::Label decayLabel;

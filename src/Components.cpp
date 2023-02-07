@@ -374,10 +374,6 @@ OscComponent::OscComponent(int index, AllParams& allParams)
       syncEnvelopeToggle(),
       gainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                  juce::Slider::TextEntryBoxPosition::NoTextBox),
-      noiseGainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                      juce::Slider::TextEntryBoxPosition::NoTextBox),
-      noiseQSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                   juce::Slider::TextEntryBoxPosition::NoTextBox),
       attackCurveSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                         juce::Slider::TextEntryBoxPosition::NoTextBox),
       attackSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
@@ -392,8 +388,6 @@ OscComponent::OscComponent(int index, AllParams& allParams)
     auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
     initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
     auto formatGain2 = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
-    initSkewFromMid(noiseGainSlider, params.NoiseGain, 0.01f, nullptr, std::move(formatGain2), this, *this);
-    initSkewFromMid(noiseQSlider, params.NoiseQ, 0.01, nullptr, nullptr, this, *this);
     initChoiceToggle(syncEnvelopeToggle, params.SyncEnvelope, this, *this);
     initLinear(attackCurveSlider, envParams.AttackCurve, 0.01, this, *this);
     initSkewFromMid(attackSlider, envParams.Attack, 0.001, " sec", nullptr, this, *this);
@@ -401,8 +395,6 @@ OscComponent::OscComponent(int index, AllParams& allParams)
     initSkewFromMid(releaseSlider, envParams.Release, 0.01, " sec", nullptr, this, *this);
 
     initLabel(gainLabel, "Gain", *this);
-    initLabel(noiseGainLabel, "Noise Gain", *this);
-    initLabel(noiseQLabel, "Noise Q", *this);
     initLabel(syncEnvelopeLabel, "Sync Env", *this);
     initLabel(attackCurveLabel, "A. Curve", *this);
     initLabel(attackLabel, "Attack", *this);
@@ -425,8 +417,6 @@ void OscComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
 
     consumeLabeledKnob(bounds, gainLabel, gainSlider);
-    consumeLabeledKnob(bounds, noiseGainLabel, noiseGainSlider);
-    consumeLabeledKnob(bounds, noiseQLabel, noiseQSlider);
     consumeLabeledToggle(bounds, 45, syncEnvelopeLabel, syncEnvelopeToggle);
     consumeLabeledKnob(bounds, attackCurveLabel, attackCurveSlider);
     consumeLabeledKnob(bounds, attackLabel, attackSlider);
@@ -438,10 +428,6 @@ void OscComponent::sliderValueChanged(juce::Slider* slider) {
     auto& envParams = getSelectedEnvelopeParams();
     if (slider == &gainSlider) {
         *params.Gain = (float)gainSlider.getValue();
-    } else if (slider == &noiseGainSlider) {
-        *params.NoiseGain = (float)noiseGainSlider.getValue();
-    } else if (slider == &noiseQSlider) {
-        *params.NoiseQ = (float)noiseQSlider.getValue();
     } else if (slider == &attackCurveSlider) {
         *envParams.AttackCurve = (float)attackCurveSlider.getValue();
     } else if (slider == &attackSlider) {
@@ -461,8 +447,6 @@ void OscComponent::buttonClicked(juce::Button* button) {
 void OscComponent::timerCallback() {
     auto& params = getSelectedOscParams();
     gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
-    noiseGainSlider.setValue(params.NoiseGain->get(), juce::dontSendNotification);
-    noiseQSlider.setValue(params.NoiseQ->get(), juce::dontSendNotification);
 
     auto syncEnvelope = params.SyncEnvelope->get();
     syncEnvelopeToggle.setToggleState(syncEnvelope, juce::dontSendNotification);
