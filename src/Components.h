@@ -372,7 +372,11 @@ private:
 };
 
 //==============================================================================
-class VoiceComponent : public juce::Component, IncDecButton::Listener, private juce::Timer, ComponentHelper {
+class VoiceComponent : public juce::Component,
+                       IncDecButton::Listener,
+                       juce::ComboBox::Listener,
+                       private juce::Timer,
+                       ComponentHelper {
 public:
     VoiceComponent(AllParams& allParams);
     virtual ~VoiceComponent();
@@ -383,13 +387,16 @@ public:
 
 private:
     virtual void incDecValueChanged(IncDecButton* button) override;
+    virtual void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
     virtual void timerCallback() override;
 
     AllParams& allParams;
 
     IncDecButton pitchBendRangeButton;
+    juce::ComboBox timberSelector;
 
     juce::Label pitchBendRangeLabel;
+    juce::Label timberLabel;
 };
 
 //==============================================================================

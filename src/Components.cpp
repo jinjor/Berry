@@ -184,7 +184,9 @@ void IncDecButton::sliderValueChanged(juce::Slider* _slider) {
 //==============================================================================
 VoiceComponent::VoiceComponent(AllParams& allParams) : allParams(allParams), pitchBendRangeButton() {
     initIncDec(pitchBendRangeButton, allParams.voiceParams.PitchBendRange, this, *this);
+    initChoice(timberSelector, TIMBER_NAMES, allParams.editingTimbreIndex, this, *this);
     initLabel(pitchBendRangeLabel, "PB Range", *this);
+    initLabel(timberLabel, "Timber", *this);
 
     startTimerHz(30.0f);
 }
@@ -197,10 +199,16 @@ void VoiceComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.reduce(0, 10);
     consumeLabeledIncDecButton(bounds, 60, pitchBendRangeLabel, pitchBendRangeButton);
+    consumeLabeledComboBox(bounds, 60, timberLabel, timberSelector);
 }
 void VoiceComponent::incDecValueChanged(IncDecButton* button) {
     if (button == &pitchBendRangeButton) {
         *allParams.voiceParams.PitchBendRange = pitchBendRangeButton.getValue();
+    }
+}
+void VoiceComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) {
+    if (comboBoxThatHasChanged == &timberSelector) {
+        allParams.editingTimbreIndex = timberSelector.getSelectedItemIndex();
     }
 }
 void VoiceComponent::timerCallback() {
