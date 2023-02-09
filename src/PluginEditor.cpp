@@ -17,14 +17,14 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
       statusComponent(&p.polyphony, &p.timeConsumptionState, &p.latestDataProvider),
       utilComponent{SectionComponent{"UTILITY", HEADER_CHECK::Hidden, std::make_unique<UtilComponent>(p)}},
       oscComponents{
-          SectionComponent{"1st", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(0, p.allParams)},
-          SectionComponent{"2nd", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(1, p.allParams)},
-          SectionComponent{"3rd", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(2, p.allParams)},
-          SectionComponent{"4th", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(3, p.allParams)},
-          SectionComponent{"5th", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(4, p.allParams)},
-          SectionComponent{"6th", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(5, p.allParams)},
-          SectionComponent{"7th", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(6, p.allParams)},
-          SectionComponent{"8..", HEADER_CHECK::Enabled, std::make_unique<OscComponent>(7, p.allParams)},
+          SectionComponent{"1st", HEADER_CHECK::Hidden, std::make_unique<OscComponent>(0, p.allParams)},
+          SectionComponent{"2nd", HEADER_CHECK::Hidden, std::make_unique<OscComponent>(1, p.allParams)},
+          SectionComponent{"3rd", HEADER_CHECK::Hidden, std::make_unique<OscComponent>(2, p.allParams)},
+          SectionComponent{"4th", HEADER_CHECK::Hidden, std::make_unique<OscComponent>(3, p.allParams)},
+          SectionComponent{"5th", HEADER_CHECK::Hidden, std::make_unique<OscComponent>(4, p.allParams)},
+          SectionComponent{"6th", HEADER_CHECK::Hidden, std::make_unique<OscComponent>(5, p.allParams)},
+          SectionComponent{"7th", HEADER_CHECK::Hidden, std::make_unique<OscComponent>(6, p.allParams)},
+          SectionComponent{"8th...", HEADER_CHECK::Hidden, std::make_unique<OscComponent>(7, p.allParams)},
       },
       filterComponents{
           SectionComponent{"FILTER 1", HEADER_CHECK::Enabled, std::make_unique<FilterComponent>(0, p.allParams)},
@@ -47,7 +47,6 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     for (auto i = 0; i < NUM_OSC; i++) {
         auto &params = mainParams.oscParams[i];
         auto &component = oscComponents[i];
-        component.setEnabled(params.Enabled->get());
         component.addListener(this);
         addAndMakeVisible(component);
     }
@@ -192,9 +191,6 @@ void BerryAudioProcessorEditor::resized() {
 }
 void BerryAudioProcessorEditor::timerCallback() {
     auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
-    for (auto i = 0; i < NUM_OSC; i++) {
-        oscComponents[i].setEnabled(mainParams.oscParams[i].Enabled->get());
-    }
     for (auto i = 0; i < NUM_FILTER; i++) {
         filterComponents[i].setEnabled(audioProcessor.allParams.filterParams[i].Enabled->get());
     }
@@ -204,14 +200,6 @@ void BerryAudioProcessorEditor::timerCallback() {
     delayComponent.setEnabled(audioProcessor.allParams.delayParams.Enabled->get());
 }
 void BerryAudioProcessorEditor::enabledChanged(SectionComponent *section) {
-    auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
-    for (auto i = 0; i < NUM_OSC; i++) {
-        if (&oscComponents[i] == section) {
-            auto &params = mainParams.oscParams[i];
-            *params.Enabled = section->getEnabled();
-            return;
-        }
-    }
     for (auto i = 0; i < NUM_FILTER; i++) {
         if (&filterComponents[i] == section) {
             auto &params = audioProcessor.allParams.filterParams[i];

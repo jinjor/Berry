@@ -181,9 +181,6 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
     // ---------------- OSC with Envelope and Filter ----------------
     for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
         auto &p = mainParams.oscParams[oscIndex];
-        if (!p.enabled) {
-            continue;
-        }
         int envelopeIndex = 0;
         for (int i = oscIndex; i >= 1; i--) {
             auto &p = mainParams.oscParams[i];

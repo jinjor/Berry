@@ -31,23 +31,18 @@ BENCHMARK(BM_VoiceStep_empty);
 
 static void BM_VoiceStep_single_sine(benchmark::State& state) {
     AllParams p{};
-    *p.mainParams[0].oscParams[0].Enabled = true;
     doStepLoop(state, p);
 }
 BENCHMARK(BM_VoiceStep_single_sine);
 
 static void BM_VoiceStep_multiple_sine(benchmark::State& state) {
     AllParams p{};
-    *p.mainParams[0].oscParams[0].Enabled = true;
-    *p.mainParams[0].oscParams[1].Enabled = true;
-    *p.mainParams[0].oscParams[2].Enabled = true;
     doStepLoop(state, p);
 }
 BENCHMARK(BM_VoiceStep_multiple_sine);
 
 static void BM_VoiceStep_single_abs_filter(benchmark::State& state) {
     AllParams p{};
-    *p.mainParams[0].oscParams[0].Enabled = true;
     *p.filterParams[0].Enabled = true;
     doStepLoop(state, p);
 }
@@ -55,7 +50,6 @@ BENCHMARK(BM_VoiceStep_single_abs_filter);
 
 static void BM_VoiceStep_single_rel_filter(benchmark::State& state) {
     AllParams p{};
-    *p.mainParams[0].oscParams[0].Enabled = true;
     *p.filterParams[0].Enabled = true;
     *p.filterParams[0].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
     doStepLoop(state, p);
@@ -64,7 +58,6 @@ BENCHMARK(BM_VoiceStep_single_rel_filter);
 
 static void BM_VoiceStep_multiple_abs_filter(benchmark::State& state) {
     AllParams p{};
-    *p.mainParams[0].oscParams[0].Enabled = true;
     *p.filterParams[0].Enabled = true;
     *p.filterParams[1].Enabled = true;
     doStepLoop(state, p);
@@ -73,7 +66,6 @@ BENCHMARK(BM_VoiceStep_multiple_abs_filter);
 
 static void BM_VoiceStep_multiple_rel_filter(benchmark::State& state) {
     AllParams p{};
-    *p.mainParams[0].oscParams[0].Enabled = true;
     *p.filterParams[0].Enabled = true;
     *p.filterParams[0].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
     *p.filterParams[1].Enabled = true;
@@ -84,9 +76,6 @@ BENCHMARK(BM_VoiceStep_multiple_rel_filter);
 
 static void BM_VoiceStep_full(benchmark::State& state) {
     AllParams p{};
-    *p.mainParams[0].oscParams[0].Enabled = true;
-    *p.mainParams[0].oscParams[1].Enabled = true;
-    *p.mainParams[0].oscParams[2].Enabled = true;
     *p.filterParams[0].Enabled = true;
     *p.filterParams[1].Enabled = true;
     *p.filterParams[1].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");

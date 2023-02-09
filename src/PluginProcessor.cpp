@@ -20,9 +20,6 @@ BerryAudioProcessor::BerryAudioProcessor()
       allParams{},
       buffer{2, 0},
       synth(&currentPositionInfo, buffer, allParams) {
-    for (auto& params : allParams.mainParams) {
-        *params.oscParams[0].Enabled = true;
-    }
     allParams.addAllParameters(*this);
 }
 
