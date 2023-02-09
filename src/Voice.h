@@ -43,14 +43,10 @@ private:
 //==============================================================================
 class BerrySound : public juce::SynthesiserSound {
 public:
-    BerrySound(VoiceParams &voiceParams, MainParams &mainParams) : voiceParams(voiceParams), mainParams(mainParams) {}
+    BerrySound() {}
     ~BerrySound(){};
     bool appliesToNote(int noteNumber) override { return true; };
     bool appliesToChannel(int) override { return true; };
-
-private:
-    VoiceParams &voiceParams;
-    MainParams &mainParams;
 };
 
 //==============================================================================
@@ -69,13 +65,18 @@ struct Modifiers {
 };
 
 //==============================================================================
+struct CalculatedParams {
+    double gain[NUM_OSC]{};
+    double attackCurve[NUM_OSC]{};
+    double attack[NUM_OSC]{};
+    double decay[NUM_OSC]{};
+    double release[NUM_OSC]{};
+};
+
+//==============================================================================
 class BerryVoice : public juce::SynthesiserVoice {
 public:
-    BerryVoice(CurrentPositionInfo *currentPositionInfo,
-               juce::AudioBuffer<float> &buffer,
-               GlobalParams &globalParams,
-               VoiceParams &voiceParams,
-               MainParams &mainParamList);
+    BerryVoice(CurrentPositionInfo *currentPositionInfo, juce::AudioBuffer<float> &buffer, AllParams &allParams);
     ~BerryVoice();
     bool canPlaySound(juce::SynthesiserSound *sound) override;
     void startNote(int midiNoteNumber,
@@ -87,17 +88,16 @@ public:
     virtual void pitchWheelMoved(int) override{};
     virtual void controllerMoved(int, int) override{};
     void renderNextBlock(juce::AudioSampleBuffer &outputBuffer, int startSample, int numSamples) override;
-    void applyParamsBeforeLoop(double sampleRate);
-    bool step(double *out, double sampleRate, int numChannels);
+    void calculateParamsBeforeLoop(CalculatedParams &params);
+    void applyParamsBeforeLoop(double sampleRate, CalculatedParams &params);
+    bool step(double *out, double sampleRate, int numChannels, CalculatedParams &params);
     int noteNumberAtStart = -1;
 
 private:
     juce::PerformanceCounter perf;
     CurrentPositionInfo *currentPositionInfo;
 
-    GlobalParams &globalParams;
-    VoiceParams &voiceParams;
-    MainParams &mainParams;
+    AllParams &allParams;
     juce::AudioBuffer<float> &buffer;
 
     MultiOsc oscs[NUM_OSC];
@@ -112,14 +112,6 @@ private:
 
     Modifiers controlModifiers = Modifiers{};
     SparseLog sparseLog = SparseLog(10000);
-    MainParams &getMainParams() {
-        jassert(noteNumberAtStart >= 0);
-        return mainParams;
-    }
-    juce::AudioBuffer<float> &getBuffer() {
-        jassert(noteNumberAtStart >= 0);
-        return buffer;
-    }
     double getMidiNoteInHertzDouble(double noteNumber) {
         return 440.0 * std::pow(2.0, (noteNumber - 69) * A);
         //        return Y * std::pow(X, noteNumber);// こっちの方がパフォーマンス悪かった
@@ -133,7 +125,7 @@ class BerrySynthesiser : public juce::Synthesiser {
 public:
     BerrySynthesiser(CurrentPositionInfo *currentPositionInfo, juce::AudioBuffer<float> &buffer, AllParams &allParams)
         : currentPositionInfo(currentPositionInfo), buffer(buffer), allParams(allParams) {
-        addSound(new BerrySound(allParams.voiceParams, allParams.mainParams));
+        addSound(new BerrySound());
     }
     ~BerrySynthesiser() {}
     virtual void renderNextBlock(AudioBuffer<float> &outputAudio,
@@ -165,7 +157,7 @@ public:
         juce::Synthesiser::renderVoices(outBuffer, startSample, numSamples);
 
         auto &mainParams = allParams.mainParams;
-        auto &delayParams = mainParams.delayParams;
+        auto &delayParams = allParams.delayParams;
 
         auto busIndex = 0;
         if (delayParams.enabled) {
@@ -187,7 +179,7 @@ public:
 
         auto delayEnabled = delayParams.enabled;
         auto expression = allParams.globalParams.expression;
-        auto masterVolume = mainParams.masterParams.masterVolume * allParams.globalParams.midiVolume;
+        auto masterVolume = allParams.masterParams.masterVolume * allParams.globalParams.midiVolume;
         for (int i = 0; i < numSamples; ++i) {
             double sample[2]{leftIn[i] * expression, rightIn[i] * expression};
 

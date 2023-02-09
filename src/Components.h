@@ -105,26 +105,28 @@ protected:
         parent.addAndMakeVisible(label);
     }
     void initChoice(juce::ComboBox& box,
-                    juce::AudioParameterChoice* param,
+                    const juce::StringArray& allValueStrings,
+                    int selectedIndex,
                     juce::ComboBox::Listener* listener,
                     juce::Component& parent) {
         box.setLookAndFeel(&berryLookAndFeel);
-        box.addItemList(param->getAllValueStrings(), 1);
-        box.setSelectedItemIndex(param->getIndex(), juce::dontSendNotification);
+        box.addItemList(allValueStrings, 1);
+        box.setSelectedItemIndex(selectedIndex, juce::dontSendNotification);
         box.setJustificationType(juce::Justification::centred);
         box.addListener(listener);
         parent.addAndMakeVisible(box);
     }
     void initChoice(juce::ComboBox& box,
+                    juce::AudioParameterChoice* param,
+                    juce::ComboBox::Listener* listener,
+                    juce::Component& parent) {
+        initChoice(box, param->getAllValueStrings(), param->getIndex(), listener, parent);
+    }
+    void initChoice(juce::ComboBox& box,
                     juce::AudioParameterBool* param,
                     juce::ComboBox::Listener* listener,
                     juce::Component& parent) {
-        box.setLookAndFeel(&berryLookAndFeel);
-        box.addItemList(param->getAllValueStrings(), 1);
-        box.setSelectedItemIndex(param->get(), juce::dontSendNotification);
-        box.setJustificationType(juce::Justification::centred);
-        box.addListener(listener);
-        parent.addAndMakeVisible(box);
+        initChoice(box, param->getAllValueStrings(), param->get(), listener, parent);
     }
     void initChoiceToggle(juce::ToggleButton& toggle,
                           int checkIndex,
@@ -370,7 +372,11 @@ private:
 };
 
 //==============================================================================
-class VoiceComponent : public juce::Component, IncDecButton::Listener, private juce::Timer, ComponentHelper {
+class VoiceComponent : public juce::Component,
+                       IncDecButton::Listener,
+                       juce::ComboBox::Listener,
+                       private juce::Timer,
+                       ComponentHelper {
 public:
     VoiceComponent(AllParams& allParams);
     virtual ~VoiceComponent();
@@ -381,14 +387,16 @@ public:
 
 private:
     virtual void incDecValueChanged(IncDecButton* button) override;
+    virtual void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
     virtual void timerCallback() override;
 
-    VoiceParams& params;
-    MainParams& mainParams;
+    AllParams& allParams;
 
     IncDecButton pitchBendRangeButton;
+    juce::ComboBox timberSelector;
 
     juce::Label pitchBendRangeLabel;
+    juce::Label timberLabel;
 };
 
 //==============================================================================
@@ -468,7 +476,7 @@ private:
     juce::Label panLabel;
     juce::Label volumeLabel;
 
-    MasterParams& getSelectedOscParams() { return allParams.mainParams.masterParams; }
+    MasterParams& getSelectedOscParams() { return allParams.masterParams; }
 };
 
 //==============================================================================
@@ -507,10 +515,10 @@ private:
     juce::Label decayLabel;
     juce::Label releaseLabel;
 
-    OscParams& getSelectedOscParams() { return allParams.mainParams.oscParams[index]; }
+    OscParams& getSelectedOscParams() { return allParams.getCurrentMainParams().oscParams[index]; }
     EnvelopeParams& getSelectedEnvelopeParams() {
         // sync 先を表示した方がいいかもしれない
-        return allParams.mainParams.envelopeParams[index];
+        return allParams.getCurrentMainParams().envelopeParams[index];
     }
 };
 
@@ -553,7 +561,7 @@ private:
     juce::Label qLabel;
     juce::Label gainLabel;
 
-    FilterParams& getSelectedFilterParams() { return allParams.mainParams.filterParams[index]; }
+    FilterParams& getSelectedFilterParams() { return allParams.filterParams[index]; }
 };
 
 //==============================================================================
@@ -597,7 +605,7 @@ private:
     juce::Label attackLabel;
     juce::Label decayLabel;
 
-    ModEnvParams& getSelectedModEnvParams() { return allParams.mainParams.modEnvParams[index]; }
+    ModEnvParams& getSelectedModEnvParams() { return allParams.modEnvParams[index]; }
 };
 
 //==============================================================================
@@ -643,7 +651,7 @@ private:
     juce::Label feedbackLabel;
     juce::Label mixLabel;
 
-    DelayParams& getSelectedDelayParams() { return allParams.mainParams.delayParams; }
+    DelayParams& getSelectedDelayParams() { return allParams.delayParams; }
 };
 
 //==============================================================================
@@ -698,10 +706,7 @@ private:
 //==============================================================================
 class AnalyserWindow : public juce::Component, private juce::Timer {
 public:
-    AnalyserWindow(ANALYSER_MODE* analyserMode,
-                   LatestDataProvider* latestDataProvider,
-                   VoiceParams& voiceParams,
-                   MainParams& mainParams);
+    AnalyserWindow(ANALYSER_MODE* analyserMode, LatestDataProvider* latestDataProvider);
     virtual ~AnalyserWindow();
     AnalyserWindow(const AnalyserWindow&) = delete;
 
@@ -712,8 +717,6 @@ private:
     enum { scopeSize = 512 };
     ANALYSER_MODE* analyserMode;
     LatestDataProvider* latestDataProvider;
-    VoiceParams& voiceParams;
-    MainParams& mainParams;
     ANALYSER_MODE lastAnalyserMode = ANALYSER_MODE::Spectrum;
 
     // FFT

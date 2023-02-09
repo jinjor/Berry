@@ -92,14 +92,10 @@ private:
 //==============================================================================
 class OscParams : public SynthParametersBase {
 public:
-    juce::AudioParameterBool* Enabled;
     juce::AudioParameterFloat* Gain;
     juce::AudioParameterBool* NewEnvelope;
-    juce::AudioParameterFloat* NoiseGain;
-    // juce::AudioParameterChoice* NoiseEnvelope;
-    juce::AudioParameterFloat* NoiseQ;
 
-    OscParams(int index);
+    OscParams(int timbreIndex, int index);
     OscParams(const OscParams&) = delete;
     OscParams(OscParams&&) noexcept = default;
 
@@ -107,12 +103,10 @@ public:
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
 
-    bool enabled;
     float gain;
     bool newEnvelope;
 
     void freeze() {
-        enabled = Enabled->get();
         gain = Gain->get();
         newEnvelope = NewEnvelope->get();
     }
@@ -161,7 +155,7 @@ public:
     juce::AudioParameterFloat* Decay;
     juce::AudioParameterFloat* Release;
 
-    EnvelopeParams(int index);
+    EnvelopeParams(int timbreIndex, int index);
     EnvelopeParams(const EnvelopeParams&) = delete;
     EnvelopeParams(EnvelopeParams&&) noexcept = default;
 
@@ -355,30 +349,18 @@ public:
     virtual void addAllParameters(juce::AudioProcessor& processor) override;
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
-    MainParams();
+    MainParams(int index);
     MainParams(const MainParams&) = delete;
     MainParams(MainParams&&) noexcept = default;
 
     std::array<OscParams, NUM_OSC> oscParams;
     std::array<EnvelopeParams, NUM_OSC> envelopeParams;
-    std::array<FilterParams, NUM_FILTER> filterParams;
-    std::array<ModEnvParams, NUM_MODENV> modEnvParams;
-    DelayParams delayParams;
-    MasterParams masterParams;
 
     void freeze() {
         for (int i = 0; i < NUM_OSC; ++i) {
             oscParams[i].freeze();
             envelopeParams[i].freeze();
         }
-        for (int i = 0; i < NUM_FILTER; ++i) {
-            filterParams[i].freeze();
-        }
-        for (int i = 0; i < NUM_MODENV; ++i) {
-            modEnvParams[i].freeze();
-        }
-        delayParams.freeze();
-        masterParams.freeze();
     }
 };
 
@@ -387,7 +369,13 @@ class AllParams : public SynthParametersBase {
 public:
     GlobalParams globalParams;
     VoiceParams voiceParams;
-    MainParams mainParams;
+    std::array<MainParams, NUM_TIMBRES> mainParams;
+    std::array<FilterParams, NUM_FILTER> filterParams;
+    std::array<ModEnvParams, NUM_MODENV> modEnvParams;
+    DelayParams delayParams;
+    MasterParams masterParams;
+    // UI の状態
+    int editingTimbreIndex = 0;
 
     AllParams();
     AllParams(const AllParams&) = delete;
@@ -400,8 +388,19 @@ public:
     void freeze() {
         globalParams.freeze();
         voiceParams.freeze();
-        mainParams.freeze();
+        for (int i = 0; i < NUM_TIMBRES; ++i) {
+            mainParams[i].freeze();
+        }
+        for (int i = 0; i < NUM_FILTER; ++i) {
+            filterParams[i].freeze();
+        }
+        for (int i = 0; i < NUM_MODENV; ++i) {
+            modEnvParams[i].freeze();
+        }
+        delayParams.freeze();
+        masterParams.freeze();
     }
+    MainParams& getCurrentMainParams() { return mainParams[editingTimbreIndex]; }
 
 private:
 };

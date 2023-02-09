@@ -20,8 +20,6 @@ BerryAudioProcessor::BerryAudioProcessor()
       allParams{},
       buffer{2, 0},
       synth(&currentPositionInfo, buffer, allParams) {
-    *allParams.mainParams.oscParams[0].Enabled = true;
-
     allParams.addAllParameters(*this);
 }
 
@@ -122,8 +120,7 @@ void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     if (synth.getNumVoices() != numVoices) {
         synth.clearVoices();
         for (auto i = 0; i < numVoices; ++i) {
-            synth.addVoice(new BerryVoice(
-                &currentPositionInfo, buffer, allParams.globalParams, allParams.voiceParams, allParams.mainParams));
+            synth.addVoice(new BerryVoice(&currentPositionInfo, buffer, allParams));
         }
     }
     auto numSamples = buffer.getNumSamples();
