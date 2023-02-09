@@ -468,7 +468,7 @@ private:
     juce::Label panLabel;
     juce::Label volumeLabel;
 
-    MasterParams& getSelectedOscParams() { return allParams.mainParams.masterParams; }
+    MasterParams& getSelectedOscParams() { return allParams.masterParams; }
 };
 
 //==============================================================================
@@ -553,7 +553,7 @@ private:
     juce::Label qLabel;
     juce::Label gainLabel;
 
-    FilterParams& getSelectedFilterParams() { return allParams.mainParams.filterParams[index]; }
+    FilterParams& getSelectedFilterParams() { return allParams.filterParams[index]; }
 };
 
 //==============================================================================
@@ -597,7 +597,7 @@ private:
     juce::Label attackLabel;
     juce::Label decayLabel;
 
-    ModEnvParams& getSelectedModEnvParams() { return allParams.mainParams.modEnvParams[index]; }
+    ModEnvParams& getSelectedModEnvParams() { return allParams.modEnvParams[index]; }
 };
 
 //==============================================================================
@@ -643,7 +643,7 @@ private:
     juce::Label feedbackLabel;
     juce::Label mixLabel;
 
-    DelayParams& getSelectedDelayParams() { return allParams.mainParams.delayParams; }
+    DelayParams& getSelectedDelayParams() { return allParams.delayParams; }
 };
 
 //==============================================================================

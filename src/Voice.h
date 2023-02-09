@@ -71,11 +71,7 @@ struct Modifiers {
 //==============================================================================
 class BerryVoice : public juce::SynthesiserVoice {
 public:
-    BerryVoice(CurrentPositionInfo *currentPositionInfo,
-               juce::AudioBuffer<float> &buffer,
-               GlobalParams &globalParams,
-               VoiceParams &voiceParams,
-               MainParams &mainParamList);
+    BerryVoice(CurrentPositionInfo *currentPositionInfo, juce::AudioBuffer<float> &buffer, AllParams &allParams);
     ~BerryVoice();
     bool canPlaySound(juce::SynthesiserSound *sound) override;
     void startNote(int midiNoteNumber,
@@ -95,9 +91,7 @@ private:
     juce::PerformanceCounter perf;
     CurrentPositionInfo *currentPositionInfo;
 
-    GlobalParams &globalParams;
-    VoiceParams &voiceParams;
-    MainParams &mainParams;
+    AllParams &allParams;
     juce::AudioBuffer<float> &buffer;
 
     MultiOsc oscs[NUM_OSC];
@@ -114,7 +108,7 @@ private:
     SparseLog sparseLog = SparseLog(10000);
     MainParams &getMainParams() {
         jassert(noteNumberAtStart >= 0);
-        return mainParams;
+        return allParams.mainParams;
     }
     juce::AudioBuffer<float> &getBuffer() {
         jassert(noteNumberAtStart >= 0);
@@ -165,7 +159,7 @@ public:
         juce::Synthesiser::renderVoices(outBuffer, startSample, numSamples);
 
         auto &mainParams = allParams.mainParams;
-        auto &delayParams = mainParams.delayParams;
+        auto &delayParams = allParams.delayParams;
 
         auto busIndex = 0;
         if (delayParams.enabled) {
@@ -187,7 +181,7 @@ public:
 
         auto delayEnabled = delayParams.enabled;
         auto expression = allParams.globalParams.expression;
-        auto masterVolume = mainParams.masterParams.masterVolume * allParams.globalParams.midiVolume;
+        auto masterVolume = allParams.masterParams.masterVolume * allParams.globalParams.midiVolume;
         for (int i = 0; i < numSamples; ++i) {
             double sample[2]{leftIn[i] * expression, rightIn[i] * expression};
 

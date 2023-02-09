@@ -51,21 +51,21 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
         addAndMakeVisible(component);
     }
     for (auto i = 0; i < NUM_FILTER; i++) {
-        auto &params = audioProcessor.allParams.mainParams.filterParams[i];
+        auto &params = audioProcessor.allParams.filterParams[i];
         auto &component = filterComponents[i];
         component.setEnabled(params.Enabled->get());
         component.addListener(this);
         addAndMakeVisible(component);
     }
     for (auto i = 0; i < NUM_MODENV; i++) {
-        auto &params = audioProcessor.allParams.mainParams.modEnvParams[i];
+        auto &params = audioProcessor.allParams.modEnvParams[i];
         auto &component = modEnvComponents[i];
         component.setEnabled(params.Enabled->get());
         component.addListener(this);
         addAndMakeVisible(component);
     }
     {
-        auto &params = audioProcessor.allParams.mainParams.delayParams;
+        auto &params = audioProcessor.allParams.delayParams;
         delayComponent.setEnabled(params.Enabled->get());
         delayComponent.addListener(this);
         addAndMakeVisible(delayComponent);
@@ -195,12 +195,12 @@ void BerryAudioProcessorEditor::timerCallback() {
         oscComponents[i].setEnabled(mainParams.oscParams[i].Enabled->get());
     }
     for (auto i = 0; i < NUM_FILTER; i++) {
-        filterComponents[i].setEnabled(mainParams.filterParams[i].Enabled->get());
+        filterComponents[i].setEnabled(audioProcessor.allParams.filterParams[i].Enabled->get());
     }
     for (auto i = 0; i < NUM_MODENV; i++) {
-        modEnvComponents[i].setEnabled(mainParams.modEnvParams[i].Enabled->get());
+        modEnvComponents[i].setEnabled(audioProcessor.allParams.modEnvParams[i].Enabled->get());
     }
-    delayComponent.setEnabled(mainParams.delayParams.Enabled->get());
+    delayComponent.setEnabled(audioProcessor.allParams.delayParams.Enabled->get());
 }
 void BerryAudioProcessorEditor::enabledChanged(SectionComponent *section) {
     for (auto i = 0; i < NUM_OSC; i++) {
@@ -212,20 +212,20 @@ void BerryAudioProcessorEditor::enabledChanged(SectionComponent *section) {
     }
     for (auto i = 0; i < NUM_FILTER; i++) {
         if (&filterComponents[i] == section) {
-            auto &params = audioProcessor.allParams.mainParams.filterParams[i];
+            auto &params = audioProcessor.allParams.filterParams[i];
             *params.Enabled = section->getEnabled();
             return;
         }
     }
     for (auto i = 0; i < NUM_MODENV; i++) {
         if (&modEnvComponents[i] == section) {
-            auto &params = audioProcessor.allParams.mainParams.modEnvParams[i];
+            auto &params = audioProcessor.allParams.modEnvParams[i];
             *params.Enabled = section->getEnabled();
             return;
         }
     }
     if (&delayComponent == section) {
-        auto &params = audioProcessor.allParams.mainParams.delayParams;
+        auto &params = audioProcessor.allParams.delayParams;
         *params.Enabled = section->getEnabled();
     }
 }

@@ -361,24 +361,12 @@ public:
 
     std::array<OscParams, NUM_OSC> oscParams;
     std::array<EnvelopeParams, NUM_OSC> envelopeParams;
-    std::array<FilterParams, NUM_FILTER> filterParams;
-    std::array<ModEnvParams, NUM_MODENV> modEnvParams;
-    DelayParams delayParams;
-    MasterParams masterParams;
 
     void freeze() {
         for (int i = 0; i < NUM_OSC; ++i) {
             oscParams[i].freeze();
             envelopeParams[i].freeze();
         }
-        for (int i = 0; i < NUM_FILTER; ++i) {
-            filterParams[i].freeze();
-        }
-        for (int i = 0; i < NUM_MODENV; ++i) {
-            modEnvParams[i].freeze();
-        }
-        delayParams.freeze();
-        masterParams.freeze();
     }
 };
 
@@ -388,6 +376,10 @@ public:
     GlobalParams globalParams;
     VoiceParams voiceParams;
     MainParams mainParams;
+    std::array<FilterParams, NUM_FILTER> filterParams;
+    std::array<ModEnvParams, NUM_MODENV> modEnvParams;
+    DelayParams delayParams;
+    MasterParams masterParams;
 
     AllParams();
     AllParams(const AllParams&) = delete;
@@ -401,6 +393,14 @@ public:
         globalParams.freeze();
         voiceParams.freeze();
         mainParams.freeze();
+        for (int i = 0; i < NUM_FILTER; ++i) {
+            filterParams[i].freeze();
+        }
+        for (int i = 0; i < NUM_MODENV; ++i) {
+            modEnvParams[i].freeze();
+        }
+        delayParams.freeze();
+        masterParams.freeze();
     }
 
 private:

@@ -316,11 +316,7 @@ MainParams::MainParams()
                      EnvelopeParams{4},
                      EnvelopeParams{5},
                      EnvelopeParams{6},
-                     EnvelopeParams{7}},
-      filterParams{FilterParams{0}, FilterParams{1}},
-      modEnvParams{ModEnvParams{0}, ModEnvParams{1}, ModEnvParams{2}},
-      delayParams{},
-      masterParams{} {}
+                     EnvelopeParams{7}} {}
 void MainParams::addAllParameters(juce::AudioProcessor& processor) {
     for (auto& params : envelopeParams) {
         params.addAllParameters(processor);
@@ -328,6 +324,37 @@ void MainParams::addAllParameters(juce::AudioProcessor& processor) {
     for (auto& params : oscParams) {
         params.addAllParameters(processor);
     }
+}
+void MainParams::saveParameters(juce::XmlElement& xml) {
+    for (auto& param : envelopeParams) {
+        param.saveParameters(xml);
+    }
+    for (auto& param : oscParams) {
+        param.saveParameters(xml);
+    }
+}
+void MainParams::loadParameters(juce::XmlElement& xml) {
+    for (auto& param : envelopeParams) {
+        param.loadParameters(xml);
+    }
+    for (auto& param : oscParams) {
+        param.loadParameters(xml);
+    }
+}
+
+//==============================================================================
+AllParams::AllParams()
+    : globalParams{},
+      voiceParams{},
+      mainParams{},
+      filterParams{FilterParams{0}, FilterParams{1}},
+      modEnvParams{ModEnvParams{0}, ModEnvParams{1}, ModEnvParams{2}},
+      delayParams{},
+      masterParams{} {}
+void AllParams::addAllParameters(juce::AudioProcessor& processor) {
+    globalParams.addAllParameters(processor);
+    voiceParams.addAllParameters(processor);
+    mainParams.addAllParameters(processor);
     for (auto& params : filterParams) {
         params.addAllParameters(processor);
     }
@@ -337,13 +364,10 @@ void MainParams::addAllParameters(juce::AudioProcessor& processor) {
     delayParams.addAllParameters(processor);
     masterParams.addAllParameters(processor);
 }
-void MainParams::saveParameters(juce::XmlElement& xml) {
-    for (auto& param : envelopeParams) {
-        param.saveParameters(xml);
-    }
-    for (auto& param : oscParams) {
-        param.saveParameters(xml);
-    }
+void AllParams::saveParameters(juce::XmlElement& xml) {
+    globalParams.saveParameters(xml);
+    voiceParams.saveParameters(xml);
+    mainParams.saveParameters(xml);
     for (auto& param : filterParams) {
         param.saveParameters(xml);
     }
@@ -353,13 +377,10 @@ void MainParams::saveParameters(juce::XmlElement& xml) {
     delayParams.saveParameters(xml);
     masterParams.saveParameters(xml);
 }
-void MainParams::loadParameters(juce::XmlElement& xml) {
-    for (auto& param : envelopeParams) {
-        param.loadParameters(xml);
-    }
-    for (auto& param : oscParams) {
-        param.loadParameters(xml);
-    }
+void AllParams::loadParameters(juce::XmlElement& xml) {
+    globalParams.loadParameters(xml);
+    voiceParams.loadParameters(xml);
+    mainParams.loadParameters(xml);
     for (auto& param : filterParams) {
         param.loadParameters(xml);
     }
@@ -368,24 +389,6 @@ void MainParams::loadParameters(juce::XmlElement& xml) {
     }
     delayParams.loadParameters(xml);
     masterParams.loadParameters(xml);
-}
-
-//==============================================================================
-AllParams::AllParams() : globalParams{}, voiceParams{}, mainParams{} {}
-void AllParams::addAllParameters(juce::AudioProcessor& processor) {
-    globalParams.addAllParameters(processor);
-    voiceParams.addAllParameters(processor);
-    mainParams.addAllParameters(processor);
-}
-void AllParams::saveParameters(juce::XmlElement& xml) {
-    globalParams.saveParameters(xml);
-    voiceParams.saveParameters(xml);
-    mainParams.saveParameters(xml);
-}
-void AllParams::loadParameters(juce::XmlElement& xml) {
-    globalParams.loadParameters(xml);
-    voiceParams.loadParameters(xml);
-    mainParams.loadParameters(xml);
 }
 void AllParams::saveParametersToClipboard(juce::XmlElement& xml) { mainParams.saveParameters(xml); }
 void AllParams::loadParametersFromClipboard(juce::XmlElement& xml) { mainParams.loadParameters(xml); }

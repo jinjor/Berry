@@ -3,17 +3,11 @@
 #include "Params.h"
 
 //==============================================================================
-BerryVoice::BerryVoice(CurrentPositionInfo *currentPositionInfo,
-                       juce::AudioBuffer<float> &buffer,
-                       GlobalParams &globalParams,
-                       VoiceParams &voiceParams,
-                       MainParams &mainParams)
+BerryVoice::BerryVoice(CurrentPositionInfo *currentPositionInfo, juce::AudioBuffer<float> &buffer, AllParams &allParams)
     : perf(juce::PerformanceCounter("voice cycle", 100000)),
       currentPositionInfo(currentPositionInfo),
       buffer(buffer),
-      globalParams(globalParams),
-      voiceParams(voiceParams),
-      mainParams(mainParams),
+      allParams(allParams),
       oscs{MultiOsc(false),
            MultiOsc(false),
            MultiOsc(false),
@@ -63,7 +57,7 @@ void BerryVoice::startNote(int midiNoteNumber,
             filters[i].initializePastData();
         }
         for (int i = 0; i < NUM_MODENV; ++i) {
-            auto &params = mainParams.modEnvParams[i];
+            auto &params = allParams.modEnvParams[i];
             if (params.shouldUseHold()) {
                 modEnvs[i].setParams(0.5, 0.0, params.wait, params.decay, 0.0, 0.0);
             } else {
@@ -145,7 +139,7 @@ void BerryVoice::applyParamsBeforeLoop(double sampleRate) {
         filters[i].setSampleRate(sampleRate);
     }
     for (int i = 0; i < NUM_MODENV; ++i) {
-        auto &params = mainParams.modEnvParams[i];
+        auto &params = allParams.modEnvParams[i];
         if (params.shouldUseHold()) {
             modEnvs[i].setParams(0.5, 0.0, params.wait, params.decay, 0.0, 0.0);
         } else {
@@ -158,7 +152,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
     smoothNote.step();
     smoothVelocity.step();
 
-    double midiNoteNumber = smoothNote.value + globalParams.pitch * voiceParams.pitchBendRange;
+    double midiNoteNumber = smoothNote.value + allParams.globalParams.pitch * allParams.voiceParams.pitchBendRange;
     auto baseFreq = getMidiNoteInHertzDouble(midiNoteNumber);
 
     if (stepCounter == 0) {
@@ -177,11 +171,11 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
     auto modifiers = controlModifiers;  // copy;
 
     bool active = false;
-    auto panBase = mainParams.masterParams.pan;
-    if (globalParams.pan >= 0) {
-        panBase = (1 - panBase) * globalParams.pan + panBase;
+    auto panBase = allParams.masterParams.pan;
+    if (allParams.globalParams.pan >= 0) {
+        panBase = (1 - panBase) * allParams.globalParams.pan + panBase;
     } else {
-        panBase = (1 + panBase) * globalParams.pan + panBase;
+        panBase = (1 + panBase) * allParams.globalParams.pan + panBase;
     }
 
     auto panModAmp = std::min(1.0 - panBase, 1.0 + panBase);
@@ -217,7 +211,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         out[1] += o[1];
     }
     for (int filterIndex = 0; filterIndex < NUM_FILTER; ++filterIndex) {
-        auto &fp = mainParams.filterParams[filterIndex];
+        auto &fp = allParams.filterParams[filterIndex];
         if (!fp.enabled) {
             continue;
         }
@@ -259,7 +253,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
 void BerryVoice::updateModifiersByModEnv(Modifiers &modifiers, double sampleRate) {
     auto &mainParams = getMainParams();
     for (int i = 0; i < NUM_MODENV; ++i) {
-        auto &params = mainParams.modEnvParams[i];
+        auto &params = allParams.modEnvParams[i];
         if (!params.enabled) {
             continue;
         }

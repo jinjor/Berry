@@ -8,7 +8,7 @@ static void doStepLoop(benchmark::State& state, AllParams& p) {
     CurrentPositionInfo currentPositionInfo{};
     juce::AudioBuffer<float> buffer{2, 0};
 
-    BerryVoice voice{&currentPositionInfo, buffer, p.globalParams, p.voiceParams, p.mainParams};
+    BerryVoice voice{&currentPositionInfo, buffer, p};
     auto numChannels = 2;
     auto sampleRate = 48000;
     double out[2]{0, 0};
@@ -48,7 +48,7 @@ BENCHMARK(BM_VoiceStep_multiple_sine);
 static void BM_VoiceStep_single_abs_filter(benchmark::State& state) {
     AllParams p{};
     *p.mainParams.oscParams[0].Enabled = true;
-    *p.mainParams.filterParams[0].Enabled = true;
+    *p.filterParams[0].Enabled = true;
     doStepLoop(state, p);
 }
 BENCHMARK(BM_VoiceStep_single_abs_filter);
@@ -56,8 +56,8 @@ BENCHMARK(BM_VoiceStep_single_abs_filter);
 static void BM_VoiceStep_single_rel_filter(benchmark::State& state) {
     AllParams p{};
     *p.mainParams.oscParams[0].Enabled = true;
-    *p.mainParams.filterParams[0].Enabled = true;
-    *p.mainParams.filterParams[0].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
+    *p.filterParams[0].Enabled = true;
+    *p.filterParams[0].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
     doStepLoop(state, p);
 }
 BENCHMARK(BM_VoiceStep_single_rel_filter);
@@ -65,8 +65,8 @@ BENCHMARK(BM_VoiceStep_single_rel_filter);
 static void BM_VoiceStep_multiple_abs_filter(benchmark::State& state) {
     AllParams p{};
     *p.mainParams.oscParams[0].Enabled = true;
-    *p.mainParams.filterParams[0].Enabled = true;
-    *p.mainParams.filterParams[1].Enabled = true;
+    *p.filterParams[0].Enabled = true;
+    *p.filterParams[1].Enabled = true;
     doStepLoop(state, p);
 }
 BENCHMARK(BM_VoiceStep_multiple_abs_filter);
@@ -74,10 +74,10 @@ BENCHMARK(BM_VoiceStep_multiple_abs_filter);
 static void BM_VoiceStep_multiple_rel_filter(benchmark::State& state) {
     AllParams p{};
     *p.mainParams.oscParams[0].Enabled = true;
-    *p.mainParams.filterParams[0].Enabled = true;
-    *p.mainParams.filterParams[0].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
-    *p.mainParams.filterParams[1].Enabled = true;
-    *p.mainParams.filterParams[1].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
+    *p.filterParams[0].Enabled = true;
+    *p.filterParams[0].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
+    *p.filterParams[1].Enabled = true;
+    *p.filterParams[1].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
     doStepLoop(state, p);
 }
 BENCHMARK(BM_VoiceStep_multiple_rel_filter);
@@ -87,16 +87,16 @@ static void BM_VoiceStep_full(benchmark::State& state) {
     *p.mainParams.oscParams[0].Enabled = true;
     *p.mainParams.oscParams[1].Enabled = true;
     *p.mainParams.oscParams[2].Enabled = true;
-    *p.mainParams.filterParams[0].Enabled = true;
-    *p.mainParams.filterParams[1].Enabled = true;
-    *p.mainParams.filterParams[1].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
-    *p.mainParams.modEnvParams[0].Enabled = true;
-    *p.mainParams.modEnvParams[0].TargetType = MODENV_TARGET_TYPE_NAMES.indexOf("Filter");
-    *p.mainParams.modEnvParams[0].TargetFilterParam = MODENV_TARGET_FILTER_PARAM_NAMES.indexOf("Freq");
-    *p.mainParams.modEnvParams[1].Enabled = true;
-    *p.mainParams.modEnvParams[1].TargetType = MODENV_TARGET_TYPE_NAMES.indexOf("Filter");
-    *p.mainParams.modEnvParams[1].TargetFilterParam = MODENV_TARGET_FILTER_PARAM_NAMES.indexOf("Freq");
-    *p.mainParams.delayParams.Enabled = true;
+    *p.filterParams[0].Enabled = true;
+    *p.filterParams[1].Enabled = true;
+    *p.filterParams[1].FreqType = FILTER_FREQ_TYPE_NAMES.indexOf("Rel");
+    *p.modEnvParams[0].Enabled = true;
+    *p.modEnvParams[0].TargetType = MODENV_TARGET_TYPE_NAMES.indexOf("Filter");
+    *p.modEnvParams[0].TargetFilterParam = MODENV_TARGET_FILTER_PARAM_NAMES.indexOf("Freq");
+    *p.modEnvParams[1].Enabled = true;
+    *p.modEnvParams[1].TargetType = MODENV_TARGET_TYPE_NAMES.indexOf("Filter");
+    *p.modEnvParams[1].TargetFilterParam = MODENV_TARGET_FILTER_PARAM_NAMES.indexOf("Freq");
+    *p.delayParams.Enabled = true;
     doStepLoop(state, p);
 }
 BENCHMARK(BM_VoiceStep_full);
