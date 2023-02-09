@@ -99,7 +99,7 @@ public:
     // juce::AudioParameterChoice* NoiseEnvelope;
     juce::AudioParameterFloat* NoiseQ;
 
-    OscParams(int index);
+    OscParams(int timbreIndex, int index);
     OscParams(const OscParams&) = delete;
     OscParams(OscParams&&) noexcept = default;
 
@@ -161,7 +161,7 @@ public:
     juce::AudioParameterFloat* Decay;
     juce::AudioParameterFloat* Release;
 
-    EnvelopeParams(int index);
+    EnvelopeParams(int timbreIndex, int index);
     EnvelopeParams(const EnvelopeParams&) = delete;
     EnvelopeParams(EnvelopeParams&&) noexcept = default;
 
@@ -355,7 +355,7 @@ public:
     virtual void addAllParameters(juce::AudioProcessor& processor) override;
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
-    MainParams();
+    MainParams(int index);
     MainParams(const MainParams&) = delete;
     MainParams(MainParams&&) noexcept = default;
 
@@ -375,11 +375,13 @@ class AllParams : public SynthParametersBase {
 public:
     GlobalParams globalParams;
     VoiceParams voiceParams;
-    MainParams mainParams;
+    std::array<MainParams, NUM_TIMBRES> mainParams;
     std::array<FilterParams, NUM_FILTER> filterParams;
     std::array<ModEnvParams, NUM_MODENV> modEnvParams;
     DelayParams delayParams;
     MasterParams masterParams;
+    // UI の状態
+    int editingTimbreIndex = 0;
 
     AllParams();
     AllParams(const AllParams&) = delete;
@@ -392,7 +394,9 @@ public:
     void freeze() {
         globalParams.freeze();
         voiceParams.freeze();
-        mainParams.freeze();
+        for (int i = 0; i < NUM_TIMBRES; ++i) {
+            mainParams[i].freeze();
+        }
         for (int i = 0; i < NUM_FILTER; ++i) {
             filterParams[i].freeze();
         }
@@ -402,6 +406,7 @@ public:
         delayParams.freeze();
         masterParams.freeze();
     }
+    MainParams& getCurrentMainParams() { return mainParams[editingTimbreIndex]; }
 
 private:
 };

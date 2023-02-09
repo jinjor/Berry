@@ -34,7 +34,7 @@ void BerryVoice::startNote(int midiNoteNumber,
     noteNumberAtStart = midiNoteNumber;
     if (BerrySound *playingSound = dynamic_cast<BerrySound *>(sound)) {
         auto sampleRate = getSampleRate();
-        auto &mainParams = getMainParams();
+        auto &mainParams = allParams.mainParams[0];  // TODO
         smoothNote.init(midiNoteNumber);
         if (stolen) {
             smoothVelocity.exponentialInfinite(0.01, velocity, sampleRate);
@@ -113,7 +113,6 @@ void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int sta
 
         int numChannels = outputBuffer.getNumChannels();
         jassert(numChannels <= 2);
-        auto &buffer = getBuffer();
         while (--numSamples >= 0) {
             double out[2]{0, 0};
             auto active = step(out, sampleRate, numChannels);
@@ -129,7 +128,7 @@ void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int sta
     }
 }
 void BerryVoice::applyParamsBeforeLoop(double sampleRate) {
-    auto &mainParams = getMainParams();
+    auto &mainParams = allParams.mainParams[0];  // TODO
     for (int i = 0; i < NUM_OSC; ++i) {
         oscs[i].setSampleRate(sampleRate);
         auto &params = mainParams.envelopeParams[i];
@@ -148,7 +147,7 @@ void BerryVoice::applyParamsBeforeLoop(double sampleRate) {
     }
 }
 bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
-    auto &mainParams = getMainParams();
+    auto &mainParams = allParams.mainParams[0];  // TODO
     smoothNote.step();
     smoothVelocity.step();
 
@@ -251,7 +250,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
 }
 
 void BerryVoice::updateModifiersByModEnv(Modifiers &modifiers, double sampleRate) {
-    auto &mainParams = getMainParams();
+    auto &mainParams = allParams.mainParams[0];  // TODO
     for (int i = 0; i < NUM_MODENV; ++i) {
         auto &params = allParams.modEnvParams[i];
         if (!params.enabled) {

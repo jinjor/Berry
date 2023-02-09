@@ -13,7 +13,7 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
       audioProcessor(p),
       voiceComponent{SectionComponent{"VOICE", HEADER_CHECK::Hidden, std::make_unique<VoiceComponent>(p.allParams)}},
       analyserToggle(&analyserMode),
-      analyserWindow(&analyserMode, &p.latestDataProvider, p.allParams.voiceParams, p.allParams.mainParams),
+      analyserWindow(&analyserMode, &p.latestDataProvider),
       statusComponent(&p.polyphony, &p.timeConsumptionState, &p.latestDataProvider),
       utilComponent{SectionComponent{"UTILITY", HEADER_CHECK::Hidden, std::make_unique<UtilComponent>(p)}},
       oscComponents{
@@ -43,8 +43,9 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     addAndMakeVisible(analyserWindow);
     addAndMakeVisible(statusComponent);
     addAndMakeVisible(utilComponent);
+    auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
     for (auto i = 0; i < NUM_OSC; i++) {
-        auto &params = audioProcessor.allParams.mainParams.oscParams[i];
+        auto &params = mainParams.oscParams[i];
         auto &component = oscComponents[i];
         component.setEnabled(params.Enabled->get());
         component.addListener(this);
@@ -190,7 +191,7 @@ void BerryAudioProcessorEditor::resized() {
     }
 }
 void BerryAudioProcessorEditor::timerCallback() {
-    auto &mainParams = audioProcessor.allParams.mainParams;
+    auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
     for (auto i = 0; i < NUM_OSC; i++) {
         oscComponents[i].setEnabled(mainParams.oscParams[i].Enabled->get());
     }
@@ -203,9 +204,10 @@ void BerryAudioProcessorEditor::timerCallback() {
     delayComponent.setEnabled(audioProcessor.allParams.delayParams.Enabled->get());
 }
 void BerryAudioProcessorEditor::enabledChanged(SectionComponent *section) {
+    auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
     for (auto i = 0; i < NUM_OSC; i++) {
         if (&oscComponents[i] == section) {
-            auto &params = audioProcessor.allParams.mainParams.oscParams[i];
+            auto &params = mainParams.oscParams[i];
             *params.Enabled = section->getEnabled();
             return;
         }

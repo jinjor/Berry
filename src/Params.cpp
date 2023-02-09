@@ -66,9 +66,9 @@ void VoiceParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-OscParams::OscParams(int index) : index(index) {
-    auto idPrefix = "OSC" + std::to_string(index) + "_";
-    auto namePrefix = "OSC" + std::to_string(index) + " ";
+OscParams::OscParams(int timbreIndex, int index) : index(index) {
+    auto idPrefix = "T" + std::to_string(timbreIndex) + "_OSC" + std::to_string(index) + "_";
+    auto namePrefix = "T" + std::to_string(timbreIndex) + " OSC" + std::to_string(index) + " ";
     Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
     Gain = new juce::AudioParameterFloat(
         idPrefix + "GAIN", namePrefix + "Gain", rangeWithSkewForCentre(0.0f, 4.0f, 1.0f), 1.0f);
@@ -92,9 +92,9 @@ void OscParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-EnvelopeParams::EnvelopeParams(int index) {
-    auto idPrefix = "ENV" + std::to_string(index) + "_";
-    auto namePrefix = "Env" + std::to_string(index) + " ";
+EnvelopeParams::EnvelopeParams(int timbreIndex, int index) {
+    auto idPrefix = "T" + std::to_string(timbreIndex) + "_ENV" + std::to_string(index) + "_";
+    auto namePrefix = "T" + std::to_string(timbreIndex) + " Env" + std::to_string(index) + " ";
     AttackCurve = new juce::AudioParameterFloat(idPrefix + "ATTACK_CURVE", "Attack Curve", 0.01, 0.99, 0.5f);
     Attack =
         new juce::AudioParameterFloat(idPrefix + "ATTACK", "Attack", rangeWithSkewForCentre(0.001f, 0.2f, 0.1f), 0.05f);
@@ -300,23 +300,23 @@ void DelayParams::loadParameters(juce::XmlElement& xml) {
 }
 
 //==============================================================================
-MainParams::MainParams()
-    : oscParams{OscParams{0},
-                OscParams{1},
-                OscParams{2},
-                OscParams{3},
-                OscParams{4},
-                OscParams{5},
-                OscParams{6},
-                OscParams{7}},
-      envelopeParams{EnvelopeParams{0},
-                     EnvelopeParams{1},
-                     EnvelopeParams{2},
-                     EnvelopeParams{3},
-                     EnvelopeParams{4},
-                     EnvelopeParams{5},
-                     EnvelopeParams{6},
-                     EnvelopeParams{7}} {}
+MainParams::MainParams(int index)
+    : oscParams{OscParams{index, 0},
+                OscParams{index, 1},
+                OscParams{index, 2},
+                OscParams{index, 3},
+                OscParams{index, 4},
+                OscParams{index, 5},
+                OscParams{index, 6},
+                OscParams{index, 7}},
+      envelopeParams{EnvelopeParams{index, 0},
+                     EnvelopeParams{index, 1},
+                     EnvelopeParams{index, 2},
+                     EnvelopeParams{index, 3},
+                     EnvelopeParams{index, 4},
+                     EnvelopeParams{index, 5},
+                     EnvelopeParams{index, 6},
+                     EnvelopeParams{index, 7}} {}
 void MainParams::addAllParameters(juce::AudioProcessor& processor) {
     for (auto& params : envelopeParams) {
         params.addAllParameters(processor);
@@ -346,7 +346,7 @@ void MainParams::loadParameters(juce::XmlElement& xml) {
 AllParams::AllParams()
     : globalParams{},
       voiceParams{},
-      mainParams{},
+      mainParams{MainParams{0}, MainParams{1}},
       filterParams{FilterParams{0}, FilterParams{1}},
       modEnvParams{ModEnvParams{0}, ModEnvParams{1}, ModEnvParams{2}},
       delayParams{},
@@ -354,7 +354,9 @@ AllParams::AllParams()
 void AllParams::addAllParameters(juce::AudioProcessor& processor) {
     globalParams.addAllParameters(processor);
     voiceParams.addAllParameters(processor);
-    mainParams.addAllParameters(processor);
+    for (auto& params : mainParams) {
+        params.addAllParameters(processor);
+    }
     for (auto& params : filterParams) {
         params.addAllParameters(processor);
     }
@@ -367,7 +369,9 @@ void AllParams::addAllParameters(juce::AudioProcessor& processor) {
 void AllParams::saveParameters(juce::XmlElement& xml) {
     globalParams.saveParameters(xml);
     voiceParams.saveParameters(xml);
-    mainParams.saveParameters(xml);
+    for (auto& param : mainParams) {
+        param.saveParameters(xml);
+    }
     for (auto& param : filterParams) {
         param.saveParameters(xml);
     }
@@ -380,7 +384,9 @@ void AllParams::saveParameters(juce::XmlElement& xml) {
 void AllParams::loadParameters(juce::XmlElement& xml) {
     globalParams.loadParameters(xml);
     voiceParams.loadParameters(xml);
-    mainParams.loadParameters(xml);
+    for (auto& param : mainParams) {
+        param.loadParameters(xml);
+    }
     for (auto& param : filterParams) {
         param.loadParameters(xml);
     }
@@ -390,5 +396,11 @@ void AllParams::loadParameters(juce::XmlElement& xml) {
     delayParams.loadParameters(xml);
     masterParams.loadParameters(xml);
 }
-void AllParams::saveParametersToClipboard(juce::XmlElement& xml) { mainParams.saveParameters(xml); }
-void AllParams::loadParametersFromClipboard(juce::XmlElement& xml) { mainParams.loadParameters(xml); }
+void AllParams::saveParametersToClipboard(juce::XmlElement& xml) {
+    // TODO
+    // mainParams.saveParameters(xml);
+}
+void AllParams::loadParametersFromClipboard(juce::XmlElement& xml) {
+    // TODO
+    // mainParams.loadParameters(xml);
+}

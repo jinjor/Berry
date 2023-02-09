@@ -182,9 +182,8 @@ void IncDecButton::sliderValueChanged(juce::Slider* _slider) {
 }
 
 //==============================================================================
-VoiceComponent::VoiceComponent(AllParams& allParams)
-    : params(allParams.voiceParams), mainParams(allParams.mainParams), pitchBendRangeButton() {
-    initIncDec(pitchBendRangeButton, params.PitchBendRange, this, *this);
+VoiceComponent::VoiceComponent(AllParams& allParams) : allParams(allParams), pitchBendRangeButton() {
+    initIncDec(pitchBendRangeButton, allParams.voiceParams.PitchBendRange, this, *this);
     initLabel(pitchBendRangeLabel, "PB Range", *this);
 
     startTimerHz(30.0f);
@@ -201,11 +200,11 @@ void VoiceComponent::resized() {
 }
 void VoiceComponent::incDecValueChanged(IncDecButton* button) {
     if (button == &pitchBendRangeButton) {
-        *params.PitchBendRange = pitchBendRangeButton.getValue();
+        *allParams.voiceParams.PitchBendRange = pitchBendRangeButton.getValue();
     }
 }
 void VoiceComponent::timerCallback() {
-    pitchBendRangeButton.setValue(params.PitchBendRange->get(), juce::dontSendNotification);
+    pitchBendRangeButton.setValue(allParams.voiceParams.PitchBendRange->get(), juce::dontSendNotification);
 }
 
 //==============================================================================
@@ -862,14 +861,9 @@ void AnalyserToggle::toggleItemSelected(AnalyserToggleItem* toggleItem) {
 }
 
 //==============================================================================
-AnalyserWindow::AnalyserWindow(ANALYSER_MODE* analyserMode,
-                               LatestDataProvider* latestDataProvider,
-                               VoiceParams& voiceParams,
-                               MainParams& mainParams)
+AnalyserWindow::AnalyserWindow(ANALYSER_MODE* analyserMode, LatestDataProvider* latestDataProvider)
     : analyserMode(analyserMode),
       latestDataProvider(latestDataProvider),
-      voiceParams(voiceParams),
-      mainParams(mainParams),
       forwardFFT(fftOrder),
       window(fftSize, juce::dsp::WindowingFunction<float>::hann) {
     latestDataProvider->addConsumer(&fftConsumer);

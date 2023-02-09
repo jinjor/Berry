@@ -43,14 +43,10 @@ private:
 //==============================================================================
 class BerrySound : public juce::SynthesiserSound {
 public:
-    BerrySound(VoiceParams &voiceParams, MainParams &mainParams) : voiceParams(voiceParams), mainParams(mainParams) {}
+    BerrySound() {}
     ~BerrySound(){};
     bool appliesToNote(int noteNumber) override { return true; };
     bool appliesToChannel(int) override { return true; };
-
-private:
-    VoiceParams &voiceParams;
-    MainParams &mainParams;
 };
 
 //==============================================================================
@@ -106,14 +102,6 @@ private:
 
     Modifiers controlModifiers = Modifiers{};
     SparseLog sparseLog = SparseLog(10000);
-    MainParams &getMainParams() {
-        jassert(noteNumberAtStart >= 0);
-        return allParams.mainParams;
-    }
-    juce::AudioBuffer<float> &getBuffer() {
-        jassert(noteNumberAtStart >= 0);
-        return buffer;
-    }
     double getMidiNoteInHertzDouble(double noteNumber) {
         return 440.0 * std::pow(2.0, (noteNumber - 69) * A);
         //        return Y * std::pow(X, noteNumber);// こっちの方がパフォーマンス悪かった
@@ -127,7 +115,7 @@ class BerrySynthesiser : public juce::Synthesiser {
 public:
     BerrySynthesiser(CurrentPositionInfo *currentPositionInfo, juce::AudioBuffer<float> &buffer, AllParams &allParams)
         : currentPositionInfo(currentPositionInfo), buffer(buffer), allParams(allParams) {
-        addSound(new BerrySound(allParams.voiceParams, allParams.mainParams));
+        addSound(new BerrySound());
     }
     ~BerrySynthesiser() {}
     virtual void renderNextBlock(AudioBuffer<float> &outputAudio,
