@@ -34,7 +34,6 @@ void BerryVoice::startNote(int midiNoteNumber,
     noteNumberAtStart = midiNoteNumber;
     if (BerrySound *playingSound = dynamic_cast<BerrySound *>(sound)) {
         auto sampleRate = getSampleRate();
-        auto &mainParams = allParams.mainParams[0];  // TODO
         smoothNote.init(midiNoteNumber);
         if (stolen) {
             smoothVelocity.exponentialInfinite(0.01, velocity, sampleRate);
@@ -44,13 +43,19 @@ void BerryVoice::startNote(int midiNoteNumber,
         stolen = false;
 
         auto fixedSampleRate = sampleRate * CONTROL_RATE;  // for control
+        auto calculatedParams = CalculatedParams{};
+        calculateParamsBeforeLoop(calculatedParams);
 
         for (int i = 0; i < NUM_OSC; ++i) {
             if (!stolen) {
                 //                oscs[i].setAngle(0.0);
             }
-            auto &params = mainParams.envelopeParams[i];
-            adsr[i].setParams(params.attackCurve, params.attack, 0.0, params.decay, 0.0, params.release);
+            adsr[i].setParams(calculatedParams.attackCurve[i],
+                              calculatedParams.attack[i],
+                              0.0,
+                              calculatedParams.decay[i],
+                              0.0,
+                              calculatedParams.release[i]);
             adsr[i].doAttack(fixedSampleRate);
         }
         for (int i = 0; i < NUM_FILTER; ++i) {
@@ -109,13 +114,15 @@ void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int sta
         }
         auto sampleRate = getSampleRate();
 
-        applyParamsBeforeLoop(sampleRate);
+        auto calculatedParams = CalculatedParams{};
+        calculateParamsBeforeLoop(calculatedParams);
+        applyParamsBeforeLoop(sampleRate, calculatedParams);
 
         int numChannels = outputBuffer.getNumChannels();
         jassert(numChannels <= 2);
         while (--numSamples >= 0) {
             double out[2]{0, 0};
-            auto active = step(out, sampleRate, numChannels);
+            auto active = step(out, sampleRate, numChannels, calculatedParams);
             for (auto ch = 0; ch < numChannels; ++ch) {
                 buffer.addSample(ch, startSample, out[ch]);
             }
@@ -127,12 +134,10 @@ void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int sta
         }
     }
 }
-void BerryVoice::applyParamsBeforeLoop(double sampleRate) {
-    auto &mainParams = allParams.mainParams[0];  // TODO
+void BerryVoice::applyParamsBeforeLoop(double sampleRate, CalculatedParams &params) {
     for (int i = 0; i < NUM_OSC; ++i) {
         oscs[i].setSampleRate(sampleRate);
-        auto &params = mainParams.envelopeParams[i];
-        adsr[i].setParams(params.attackCurve, params.attack, 0.0, params.decay, 0.0, params.release);
+        adsr[i].setParams(params.attackCurve[i], params.attack[i], 0.0, params.decay[i], 0.0, params.release[i]);
     }
     for (int i = 0; i < NUM_FILTER; ++i) {
         filters[i].setSampleRate(sampleRate);
@@ -146,8 +151,60 @@ void BerryVoice::applyParamsBeforeLoop(double sampleRate) {
         }
     }
 }
-bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
-    auto &mainParams = allParams.mainParams[0];  // TODO
+void BerryVoice::calculateParamsBeforeLoop(CalculatedParams &params) {
+    int controlPoints[NUM_TIMBRES] = {40, 80};
+    auto leftIndex = 0;
+    auto rightIndex = NUM_TIMBRES - 1;
+    auto leftNote = 0;
+    auto rightNote = 127;
+    for (int i = 0; i < NUM_TIMBRES; i++) {
+        if (noteNumberAtStart <= controlPoints[i]) {
+            rightIndex = i;
+            rightNote = controlPoints[i];
+            break;
+        }
+    }
+    for (int i = NUM_TIMBRES - 1; i >= 0; i--) {
+        if (controlPoints[i] < noteNumberAtStart) {
+            leftIndex = i;
+            leftNote = controlPoints[i];
+            break;
+        }
+    }
+    jassert(rightNote - leftNote > 0);
+    auto leftRatio = (double)(rightNote - noteNumberAtStart) / (double)(rightNote - leftNote);
+    auto rightRatio = 1.0 - leftRatio;
+    for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
+        auto &leftParams = allParams.mainParams[leftIndex];
+        auto &rightParams = allParams.mainParams[rightIndex];
+        auto &leftOsc = leftParams.oscParams[oscIndex];
+        auto &rightOsc = rightParams.oscParams[oscIndex];
+        int leftEnvelopeIndex = 0;
+        for (int i = oscIndex; i >= 1; i--) {
+            auto &p = leftParams.oscParams[i];
+            if (p.newEnvelope) {
+                leftEnvelopeIndex = i;
+                break;
+            }
+        }
+        int rightEnvelopeIndex = 0;
+        for (int i = oscIndex; i >= 1; i--) {
+            auto &p = rightParams.oscParams[i];
+            if (p.newEnvelope) {
+                rightEnvelopeIndex = i;
+                break;
+            }
+        }
+        auto &leftEnv = leftParams.envelopeParams[leftEnvelopeIndex];
+        auto &rightEnv = rightParams.envelopeParams[rightEnvelopeIndex];
+        params.gain[oscIndex] = leftOsc.gain * leftRatio + rightOsc.gain * rightRatio;
+        params.attackCurve[oscIndex] = leftEnv.attackCurve * leftRatio + rightEnv.attackCurve * rightRatio;
+        params.attack[oscIndex] = leftEnv.attack * leftRatio + rightEnv.attack * rightRatio;
+        params.decay[oscIndex] = leftEnv.decay * leftRatio + rightEnv.decay * rightRatio;
+        params.release[oscIndex] = leftEnv.release * leftRatio + rightEnv.release * rightRatio;
+    }
+}
+bool BerryVoice::step(double *out, double sampleRate, int numChannels, CalculatedParams &params) {
     smoothNote.step();
     smoothVelocity.step();
 
@@ -180,16 +237,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
     auto panModAmp = std::min(1.0 - panBase, 1.0 + panBase);
     // ---------------- OSC with Envelope and Filter ----------------
     for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
-        auto &p = mainParams.oscParams[oscIndex];
-        int envelopeIndex = 0;
-        for (int i = oscIndex; i >= 1; i--) {
-            auto &p = mainParams.oscParams[i];
-            if (p.newEnvelope) {
-                envelopeIndex = i;
-                break;
-            }
-        }
-        if (!adsr[envelopeIndex].isActive()) {
+        if (!adsr[oscIndex].isActive()) {
             continue;
         }
         active = true;
@@ -199,7 +247,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels) {
         jassert(pan <= 1);
 
         double o[2]{0, 0};
-        auto sineGain = adsr[envelopeIndex].getValue() * p.gain;
+        auto sineGain = adsr[oscIndex].getValue() * params.gain[oscIndex];
 
         oscs[oscIndex].step(pan, freq, 0.0, sineGain, o);
 

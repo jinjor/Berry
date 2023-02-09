@@ -65,6 +65,15 @@ struct Modifiers {
 };
 
 //==============================================================================
+struct CalculatedParams {
+    double gain[NUM_OSC]{};
+    double attackCurve[NUM_OSC]{};
+    double attack[NUM_OSC]{};
+    double decay[NUM_OSC]{};
+    double release[NUM_OSC]{};
+};
+
+//==============================================================================
 class BerryVoice : public juce::SynthesiserVoice {
 public:
     BerryVoice(CurrentPositionInfo *currentPositionInfo, juce::AudioBuffer<float> &buffer, AllParams &allParams);
@@ -79,8 +88,9 @@ public:
     virtual void pitchWheelMoved(int) override{};
     virtual void controllerMoved(int, int) override{};
     void renderNextBlock(juce::AudioSampleBuffer &outputBuffer, int startSample, int numSamples) override;
-    void applyParamsBeforeLoop(double sampleRate);
-    bool step(double *out, double sampleRate, int numChannels);
+    void calculateParamsBeforeLoop(CalculatedParams &params);
+    void applyParamsBeforeLoop(double sampleRate, CalculatedParams &params);
+    bool step(double *out, double sampleRate, int numChannels, CalculatedParams &params);
     int noteNumberAtStart = -1;
 
 private:

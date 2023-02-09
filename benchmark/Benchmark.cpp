@@ -17,9 +17,11 @@ static void doStepLoop(benchmark::State& state, AllParams& p) {
 
     p.freeze();
     voice.startNote(60, 1.0, &sound, 8192);
-    voice.applyParamsBeforeLoop(sampleRate);
+    auto calculatedParams = CalculatedParams{};
+    voice.calculateParamsBeforeLoop(calculatedParams);
+    voice.applyParamsBeforeLoop(sampleRate, calculatedParams);
     for (auto _ : state) {
-        voice.step(out, sampleRate, numChannels);
+        voice.step(out, sampleRate, numChannels, calculatedParams);
     }
 }
 
