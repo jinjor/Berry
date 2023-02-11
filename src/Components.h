@@ -393,10 +393,10 @@ private:
     AllParams& allParams;
 
     IncDecButton pitchBendRangeButton;
-    juce::ComboBox timberSelector;
+    juce::ComboBox timbreSelector;
 
     juce::Label pitchBendRangeLabel;
-    juce::Label timberLabel;
+    juce::Label timbreLabel;
 };
 
 //==============================================================================
