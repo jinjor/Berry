@@ -297,7 +297,8 @@ void DelayParams::loadParameters(juce::XmlElement& xml) {
 
 //==============================================================================
 MainParams::MainParams(int index)
-    : oscParams{OscParams{index, 0},
+    : index(index),
+      oscParams{OscParams{index, 0},
                 OscParams{index, 1},
                 OscParams{index, 2},
                 OscParams{index, 3},
@@ -312,8 +313,23 @@ MainParams::MainParams(int index)
                      EnvelopeParams{index, 4},
                      EnvelopeParams{index, 5},
                      EnvelopeParams{index, 6},
-                     EnvelopeParams{index, 7}} {}
+                     EnvelopeParams{index, 7}} {
+    auto idPrefix = "T" + std::to_string(index) + "_";
+    auto namePrefix = "T" + std::to_string(index) + " ";
+    switch (index) {
+        case 0:
+            NoteNumber = new juce::AudioParameterInt(idPrefix + "NOTE_NUMBER", namePrefix + "Note Number", 0, 47, 30);
+            break;
+        case 1:
+            NoteNumber = new juce::AudioParameterInt(idPrefix + "NOTE_NUMBER", namePrefix + "Note Number", 48, 71, 60);
+            break;
+        case 2:
+            NoteNumber = new juce::AudioParameterInt(idPrefix + "NOTE_NUMBER", namePrefix + "Note Number", 72, 127, 90);
+            break;
+    }
+}
 void MainParams::addAllParameters(juce::AudioProcessor& processor) {
+    processor.addParameter(NoteNumber);
     for (auto& params : envelopeParams) {
         params.addAllParameters(processor);
     }
@@ -322,6 +338,7 @@ void MainParams::addAllParameters(juce::AudioProcessor& processor) {
     }
 }
 void MainParams::saveParameters(juce::XmlElement& xml) {
+    xml.setAttribute(NoteNumber->paramID, NoteNumber->get());
     for (auto& param : envelopeParams) {
         param.saveParameters(xml);
     }
@@ -330,6 +347,7 @@ void MainParams::saveParameters(juce::XmlElement& xml) {
     }
 }
 void MainParams::loadParameters(juce::XmlElement& xml) {
+    *NoteNumber = xml.getIntAttribute(NoteNumber->paramID, 30 * (index + 1));
     for (auto& param : envelopeParams) {
         param.loadParameters(xml);
     }
@@ -342,7 +360,7 @@ void MainParams::loadParameters(juce::XmlElement& xml) {
 AllParams::AllParams()
     : globalParams{},
       voiceParams{},
-      mainParams{MainParams{0}, MainParams{1}},
+      mainParams{MainParams{0}, MainParams{1}, MainParams{2}},
       filterParams{FilterParams{0}, FilterParams{1}},
       modEnvParams{ModEnvParams{0}, ModEnvParams{1}, ModEnvParams{2}},
       delayParams{},

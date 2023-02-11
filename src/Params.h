@@ -346,17 +346,22 @@ private:
 
 class MainParams : public SynthParametersBase {
 public:
-    virtual void addAllParameters(juce::AudioProcessor& processor) override;
-    virtual void saveParameters(juce::XmlElement& xml) override;
-    virtual void loadParameters(juce::XmlElement& xml) override;
+    juce::AudioParameterInt* NoteNumber;
+    std::array<OscParams, NUM_OSC> oscParams;
+    std::array<EnvelopeParams, NUM_OSC> envelopeParams;
+
     MainParams(int index);
     MainParams(const MainParams&) = delete;
     MainParams(MainParams&&) noexcept = default;
 
-    std::array<OscParams, NUM_OSC> oscParams;
-    std::array<EnvelopeParams, NUM_OSC> envelopeParams;
+    virtual void addAllParameters(juce::AudioProcessor& processor) override;
+    virtual void saveParameters(juce::XmlElement& xml) override;
+    virtual void loadParameters(juce::XmlElement& xml) override;
 
+    int index;
+    int noteNumber;
     void freeze() {
+        noteNumber = NoteNumber->get();
         for (int i = 0; i < NUM_OSC; ++i) {
             oscParams[i].freeze();
             envelopeParams[i].freeze();

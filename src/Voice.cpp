@@ -152,22 +152,21 @@ void BerryVoice::applyParamsBeforeLoop(double sampleRate, CalculatedParams &para
     }
 }
 void BerryVoice::calculateParamsBeforeLoop(CalculatedParams &params) {
-    int controlPoints[NUM_TIMBRES] = {40, 80};
     auto leftIndex = 0;
     auto rightIndex = NUM_TIMBRES - 1;
     auto leftNote = 0;
     auto rightNote = 127;
     for (int i = 0; i < NUM_TIMBRES; i++) {
-        if (noteNumberAtStart <= controlPoints[i]) {
+        if (noteNumberAtStart <= allParams.mainParams[i].noteNumber) {
             rightIndex = i;
-            rightNote = controlPoints[i];
+            rightNote = allParams.mainParams[i].noteNumber;
             break;
         }
     }
     for (int i = NUM_TIMBRES - 1; i >= 0; i--) {
-        if (controlPoints[i] < noteNumberAtStart) {
+        if (allParams.mainParams[i].noteNumber < noteNumberAtStart) {
             leftIndex = i;
-            leftNote = controlPoints[i];
+            leftNote = allParams.mainParams[i].noteNumber;
             break;
         }
     }
