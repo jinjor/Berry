@@ -375,6 +375,7 @@ private:
 class VoiceComponent : public juce::Component,
                        IncDecButton::Listener,
                        juce::ComboBox::Listener,
+                       juce::Slider::Listener,
                        private juce::Timer,
                        ComponentHelper {
 public:
@@ -388,15 +389,18 @@ public:
 private:
     virtual void incDecValueChanged(IncDecButton* button) override;
     virtual void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
+    virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
 
     AllParams& allParams;
 
     IncDecButton pitchBendRangeButton;
     juce::ComboBox timbreSelector;
+    std::array<juce::Slider, NUM_TIMBRES> timbreNoteNumberSliders;
 
     juce::Label pitchBendRangeLabel;
     juce::Label timbreLabel;
+    juce::Label timbreNoteNumberLabel;
 };
 
 //==============================================================================
@@ -475,8 +479,6 @@ private:
 
     juce::Label panLabel;
     juce::Label volumeLabel;
-
-    MasterParams& getSelectedOscParams() { return allParams.masterParams; }
 };
 
 //==============================================================================

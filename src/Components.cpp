@@ -182,11 +182,24 @@ void IncDecButton::sliderValueChanged(juce::Slider* _slider) {
 }
 
 //==============================================================================
-VoiceComponent::VoiceComponent(AllParams& allParams) : allParams(allParams), pitchBendRangeButton() {
+VoiceComponent::VoiceComponent(AllParams& allParams)
+    : allParams(allParams),
+      pitchBendRangeButton(),
+      timbreNoteNumberSliders{juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                                           juce::Slider::TextEntryBoxPosition::NoTextBox},
+                              juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                                           juce::Slider::TextEntryBoxPosition::NoTextBox},
+                              juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                                           juce::Slider::TextEntryBoxPosition::NoTextBox}} {
     initIncDec(pitchBendRangeButton, allParams.voiceParams.PitchBendRange, this, *this);
     initChoice(timbreSelector, TIMBER_NAMES, allParams.editingTimbreIndex, this, *this);
+    for (int i = 0; i < NUM_TIMBRES; i++) {
+        auto& slider = timbreNoteNumberSliders[i];
+        initLinear(slider, allParams.mainParams[i].NoteNumber, this, *this);
+    }
     initLabel(pitchBendRangeLabel, "PB Range", *this);
     initLabel(timbreLabel, "Timbre", *this);
+    initLabel(timbreNoteNumberLabel, "Timbre Note", *this);
 
     startTimerHz(30.0f);
 }
@@ -200,6 +213,17 @@ void VoiceComponent::resized() {
     bounds.reduce(0, 10);
     consumeLabeledIncDecButton(bounds, 60, pitchBendRangeLabel, pitchBendRangeButton);
     consumeLabeledComboBox(bounds, 60, timbreLabel, timbreSelector);
+    {
+        bounds.removeFromLeft(PARAM_MARGIN_LEFT);
+        auto area = bounds.removeFromLeft(SLIDER_WIDTH);
+        timbreNoteNumberLabel.setBounds(area.removeFromTop(LABEL_HEIGHT));
+        area.removeFromTop(LABEL_MARGIN_BOTTOM);
+        auto knobArea = area.removeFromTop(KNOB_HEIGHT);
+        for (int i = 0; i < NUM_TIMBRES; i++) {
+            auto& slider = timbreNoteNumberSliders[i];
+            slider.setBounds(knobArea);
+        }
+    }
 }
 void VoiceComponent::incDecValueChanged(IncDecButton* button) {
     if (button == &pitchBendRangeButton) {
@@ -211,8 +235,21 @@ void VoiceComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) {
         allParams.editingTimbreIndex = timbreSelector.getSelectedItemIndex();
     }
 }
+void VoiceComponent::sliderValueChanged(juce::Slider* slider) {
+    for (int i = 0; i < NUM_TIMBRES; i++) {
+        auto& timbreNoteNumberSlider = timbreNoteNumberSliders[i];
+        if (slider == &timbreNoteNumberSlider) {
+            *allParams.mainParams[i].NoteNumber = timbreNoteNumberSlider.getValue();
+        }
+    }
+}
 void VoiceComponent::timerCallback() {
     pitchBendRangeButton.setValue(allParams.voiceParams.PitchBendRange->get(), juce::dontSendNotification);
+    for (int i = 0; i < NUM_TIMBRES; i++) {
+        auto& slider = timbreNoteNumberSliders[i];
+        slider.setValue(allParams.mainParams[i].NoteNumber->get(), juce::dontSendNotification);
+        slider.setVisible(allParams.editingTimbreIndex == i);
+    }
 }
 
 //==============================================================================
@@ -221,13 +258,11 @@ UtilComponent::UtilComponent(BerryAudioProcessor& processor)
     copyToClipboardButton.setLookAndFeel(&berryLookAndFeel);
     copyToClipboardButton.setButtonText("Copy");
     copyToClipboardButton.addListener(this);
-    copyToClipboardButton.setLookAndFeel(&berryLookAndFeel);
     this->addAndMakeVisible(copyToClipboardButton);
 
     pasteFromClipboardButton.setLookAndFeel(&berryLookAndFeel);
     pasteFromClipboardButton.setButtonText("Paste");
     pasteFromClipboardButton.addListener(this);
-    pasteFromClipboardButton.setLookAndFeel(&berryLookAndFeel);
     this->addAndMakeVisible(pasteFromClipboardButton);
 
     initLabel(copyToClipboardLabel, "Copy", *this);
@@ -340,7 +375,7 @@ MasterComponent::MasterComponent(AllParams& allParams)
       panSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag, juce::Slider::TextEntryBoxPosition::NoTextBox),
       volumeSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                    juce::Slider::TextEntryBoxPosition::NoTextBox) {
-    auto& params = getSelectedOscParams();
+    auto& params = allParams.masterParams;
     initLinear(panSlider, params.Pan, 0.01, this, *this);
     initLinear(volumeSlider, params.MasterVolume, 0.01, this, *this);
     initLabel(panLabel, "Pan", *this);
@@ -361,7 +396,7 @@ void MasterComponent::resized() {
     consumeLabeledKnob(bounds, volumeLabel, volumeSlider);
 }
 void MasterComponent::sliderValueChanged(juce::Slider* slider) {
-    auto& params = getSelectedOscParams();
+    auto& params = allParams.masterParams;
     if (slider == &panSlider) {
         *params.Pan = (float)panSlider.getValue();
     } else if (slider == &volumeSlider) {
@@ -369,7 +404,7 @@ void MasterComponent::sliderValueChanged(juce::Slider* slider) {
     }
 }
 void MasterComponent::timerCallback() {
-    auto& params = getSelectedOscParams();
+    auto& params = allParams.masterParams;
     panSlider.setValue(params.Pan->get(), juce::dontSendNotification);
     volumeSlider.setValue(params.MasterVolume->get(), juce::dontSendNotification);
 }
