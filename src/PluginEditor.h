@@ -26,8 +26,7 @@ private:
     StatusComponent statusComponent;
     SectionComponent utilComponent;
     SectionComponent oscComponents[NUM_OSC];
-    SectionComponent filterComponents[NUM_FILTER];
-    SectionComponent modEnvComponents[NUM_MODENV];
+    SectionComponent noiseComponents[NUM_NOISE];
     SectionComponent delayComponent;
     SectionComponent masterComponent;
 

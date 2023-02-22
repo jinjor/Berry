@@ -119,9 +119,8 @@ private:
 //==============================================================================
 class NoiseParams : public SynthParametersBase {
 public:
-    juce::AudioParameterBool* Enabled;
     juce::AudioParameterFloat* Gain;
-    juce::AudioParameterChoice* Type;
+    juce::AudioParameterChoice* Waveform;
 
     NoiseParams(int index);
     NoiseParams(const NoiseParams&) = delete;
@@ -131,14 +130,12 @@ public:
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
 
-    WAVEFORM getWaveForm() { return NOISE_WAVEFORM_VALUES[Type->getIndex()]; }
+    WAVEFORM getWaveForm() { return NOISE_WAVEFORM_VALUES[Waveform->getIndex()]; }
 
-    bool enabled;
     float gain;
     WAVEFORM waveform;
 
     void freeze() {
-        enabled = Enabled->get();
         gain = Gain->get();
         waveform = getWaveForm();
     }
@@ -189,7 +186,7 @@ public:
     juce::AudioParameterFloat* Q;
     juce::AudioParameterFloat* Gain;
 
-    FilterParams(int index);
+    FilterParams(int noiseIndex, int filterIndex);
     FilterParams(const FilterParams&) = delete;
     FilterParams(FilterParams&&) noexcept = default;
 
@@ -231,63 +228,6 @@ public:
 
 private:
     FilterParams(){};
-};
-
-//==============================================================================
-class ModEnvParams : public SynthParametersBase {
-public:
-    juce::AudioParameterBool* Enabled;
-    juce::AudioParameterChoice* TargetType;
-    juce::AudioParameterChoice* TargetFilter;
-    juce::AudioParameterChoice* TargetFilterParam;
-    juce::AudioParameterChoice* Fade;
-    juce::AudioParameterFloat* PeakFreq;
-    juce::AudioParameterFloat* Wait;
-    juce::AudioParameterFloat* Attack;
-    juce::AudioParameterFloat* Decay;
-
-    ModEnvParams(int index);
-    ModEnvParams(const ModEnvParams&) = delete;
-    ModEnvParams(ModEnvParams&&) noexcept = default;
-
-    virtual void addAllParameters(juce::AudioProcessor& processor) override;
-    virtual void saveParameters(juce::XmlElement& xml) override;
-    virtual void loadParameters(juce::XmlElement& xml) override;
-
-    MODENV_TARGET_TYPE getTargetType() { return static_cast<MODENV_TARGET_TYPE>(TargetType->getIndex()); }
-    MODENV_TARGET_FILTER_PARAM getTargetFilterParam() {
-        return static_cast<MODENV_TARGET_FILTER_PARAM>(TargetFilterParam->getIndex());
-    }
-    bool isTargetFreq() {
-        auto t = getTargetType();
-        return (t == MODENV_TARGET_TYPE::Filter && getTargetFilterParam() == MODENV_TARGET_FILTER_PARAM::Freq);
-    }
-    bool shouldUseHold() { return !isTargetFreq() && isFadeIn(); }
-    bool isFadeIn() { return static_cast<MODENV_FADE>(Fade->getIndex()) == MODENV_FADE::In; }
-
-    bool enabled;
-    MODENV_TARGET_TYPE targetType;
-    int targetFilter;
-    MODENV_TARGET_FILTER_PARAM targetFilterParam;
-    bool fadeIn;
-    float peakFreq;
-    float wait;
-    float attack;
-    float decay;
-    void freeze() {
-        enabled = Enabled->get();
-        targetType = getTargetType();
-        targetFilter = TargetFilter->getIndex();
-        targetFilterParam = getTargetFilterParam();
-        fadeIn = isFadeIn();
-        peakFreq = PeakFreq->get();
-        wait = Wait->get();
-        attack = Attack->get();
-        decay = Decay->get();
-    }
-
-private:
-    ModEnvParams(){};
 };
 
 //==============================================================================
@@ -344,6 +284,7 @@ public:
 private:
 };
 
+//==============================================================================
 class MainParams : public SynthParametersBase {
 public:
     juce::AudioParameterInt* NoteNumber;
@@ -370,13 +311,37 @@ public:
 };
 
 //==============================================================================
+class NoiseUnitParams : public SynthParametersBase {
+public:
+    NoiseParams noiseParams;
+    EnvelopeParams envelopeParams;
+    std::array<FilterParams, NUM_NOISE_FILTER> filterParams;
+
+    NoiseUnitParams(int index);
+    NoiseUnitParams(const NoiseUnitParams&) = delete;
+    NoiseUnitParams(NoiseUnitParams&&) noexcept = default;
+
+    virtual void addAllParameters(juce::AudioProcessor& processor) override;
+    virtual void saveParameters(juce::XmlElement& xml) override;
+    virtual void loadParameters(juce::XmlElement& xml) override;
+
+    int index;
+    void freeze() {
+        noiseParams.freeze();
+        envelopeParams.freeze();
+        for (auto& params : filterParams) {
+            params.freeze();
+        }
+    }
+};
+
+//==============================================================================
 class AllParams : public SynthParametersBase {
 public:
     GlobalParams globalParams;
     VoiceParams voiceParams;
     std::array<MainParams, NUM_TIMBRES> mainParams;
-    std::array<FilterParams, NUM_FILTER> filterParams;
-    std::array<ModEnvParams, NUM_MODENV> modEnvParams;
+    std::array<NoiseUnitParams, NUM_NOISE> noiseUnitParams;
     DelayParams delayParams;
     MasterParams masterParams;
     // UI の状態
@@ -393,14 +358,11 @@ public:
     void freeze() {
         globalParams.freeze();
         voiceParams.freeze();
-        for (int i = 0; i < NUM_TIMBRES; ++i) {
-            mainParams[i].freeze();
+        for (auto& params : mainParams) {
+            params.freeze();
         }
-        for (int i = 0; i < NUM_FILTER; ++i) {
-            filterParams[i].freeze();
-        }
-        for (int i = 0; i < NUM_MODENV; ++i) {
-            modEnvParams[i].freeze();
+        for (auto& params : noiseUnitParams) {
+            params.freeze();
         }
         delayParams.freeze();
         masterParams.freeze();

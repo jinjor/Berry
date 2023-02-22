@@ -58,13 +58,6 @@ public:
 };
 
 //==============================================================================
-struct Modifiers {
-    double panMod[NUM_OSC]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    double filterOctShift[NUM_FILTER]{0.0, 0.0};
-    double filterQExp[NUM_FILTER]{1.0, 1.0};
-};
-
-//==============================================================================
 struct CalculatedParams {
     double gain[NUM_OSC]{};
     double attackCurve[NUM_OSC]{};
@@ -102,22 +95,21 @@ private:
 
     MultiOsc oscs[NUM_OSC];
     Adsr adsr[NUM_OSC];
-    Filter filters[NUM_FILTER];
-    Adsr modEnvs[NUM_MODENV];
+    Osc noises[NUM_NOISE];
+    Adsr noiseAdsr[NUM_NOISE];
+    Filter noiseFilters[NUM_NOISE][NUM_NOISE_FILTER];
 
     TransitiveValue smoothNote;
     TransitiveValue smoothVelocity;
     bool stolen = false;
     int stepCounter = 0;
 
-    Modifiers controlModifiers = Modifiers{};
     SparseLog sparseLog = SparseLog(10000);
     double getMidiNoteInHertzDouble(double noteNumber) {
         return 440.0 * std::pow(2.0, (noteNumber - 69) * A);
         //        return Y * std::pow(X, noteNumber);// こっちの方がパフォーマンス悪かった
     }
     double shiftHertsByNotes(double herts, double notes) { return herts * std::pow(2.0, notes * A); }
-    void updateModifiersByModEnv(Modifiers &modifiers, double sampleRate);
 };
 
 //==============================================================================

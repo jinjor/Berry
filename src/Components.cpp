@@ -511,8 +511,83 @@ void OscComponent::timerCallback() {
 }
 
 //==============================================================================
-FilterComponent::FilterComponent(int index, AllParams& allParams)
+NoiseComponent::NoiseComponent(int index, AllParams& allParams)
     : index(index),
+      allParams(allParams),
+      gainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                 juce::Slider::TextEntryBoxPosition::NoTextBox),
+      attackCurveSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                        juce::Slider::TextEntryBoxPosition::NoTextBox),
+      attackSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                   juce::Slider::TextEntryBoxPosition::NoTextBox),
+      decaySlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                  juce::Slider::TextEntryBoxPosition::NoTextBox),
+      releaseSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                    juce::Slider::TextEntryBoxPosition::NoTextBox) {
+    auto& params = getNoiseParams();
+    auto& envParams = getEnvelopeParams();
+
+    auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
+    initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
+    auto formatGain2 = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
+    initLinear(attackCurveSlider, envParams.AttackCurve, 0.01, this, *this);
+    initSkewFromMid(attackSlider, envParams.Attack, 0.001, " sec", nullptr, this, *this);
+    initSkewFromMid(decaySlider, envParams.Decay, 0.01, " sec", nullptr, this, *this);
+    initSkewFromMid(releaseSlider, envParams.Release, 0.01, " sec", nullptr, this, *this);
+
+    initLabel(gainLabel, "Gain", *this);
+    initLabel(attackCurveLabel, "A. Curve", *this);
+    initLabel(attackLabel, "Attack", *this);
+    initLabel(decayLabel, "Decay", *this);
+    initLabel(releaseLabel, "Release", *this);
+
+    startTimerHz(30.0f);
+}
+
+NoiseComponent::~NoiseComponent() {}
+
+void NoiseComponent::paint(juce::Graphics& g) {}
+
+void NoiseComponent::resized() {
+    juce::Rectangle<int> bounds = getLocalBounds();
+    consumeLabeledKnob(bounds, gainLabel, gainSlider);
+    consumeLabeledKnob(bounds, attackCurveLabel, attackCurveSlider);
+    consumeLabeledKnob(bounds, attackLabel, attackSlider);
+    consumeLabeledKnob(bounds, decayLabel, decaySlider);
+    consumeLabeledKnob(bounds, releaseLabel, releaseSlider);
+}
+void NoiseComponent::sliderValueChanged(juce::Slider* slider) {
+    auto& params = getNoiseParams();
+    auto& envParams = getEnvelopeParams();
+    if (slider == &gainSlider) {
+        *params.Gain = (float)gainSlider.getValue();
+    } else if (slider == &attackCurveSlider) {
+        *envParams.AttackCurve = (float)attackCurveSlider.getValue();
+    } else if (slider == &attackSlider) {
+        *envParams.Attack = (float)attackSlider.getValue();
+    } else if (slider == &decaySlider) {
+        *envParams.Decay = (float)decaySlider.getValue();
+    } else if (slider == &releaseSlider) {
+        *envParams.Release = (float)releaseSlider.getValue();
+    }
+}
+void NoiseComponent::timerCallback() {
+    auto& params = getNoiseParams();
+    gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
+
+    auto& envParams = getEnvelopeParams();
+    attackCurveSlider.setValue(envParams.AttackCurve->get(), juce::dontSendNotification);
+    attackSlider.setValue(envParams.Attack->get(), juce::dontSendNotification);
+    decaySlider.setValue(envParams.Decay->get(), juce::dontSendNotification);
+    releaseSlider.setValue(envParams.Release->get(), juce::dontSendNotification);
+
+    gainSlider.setLookAndFeel(&berryLookAndFeel);
+}
+
+//==============================================================================
+FilterComponent::FilterComponent(int noiseIndex, int filterIndex, AllParams& allParams)
+    : noiseIndex(noiseIndex),
+      filterIndex(filterIndex),
       allParams(allParams),
       typeSelector("Type"),
       freqTypeToggle("Freq Type"),
@@ -554,13 +629,11 @@ void FilterComponent::paint(juce::Graphics& g) {}
 void FilterComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
     auto bodyHeight = bounds.getHeight();
-    auto upperArea = bounds.removeFromTop(bodyHeight / 2);
-    auto& lowerArea = bounds;
-    consumeLabeledComboBox(upperArea, 120, typeLabel, typeSelector);
-    consumeLabeledToggle(lowerArea, 35, freqTypeLabel, freqTypeToggle);
-    consumeLabeledKnob(lowerArea, freqLabel, hzSlider, semitoneSlider);
-    consumeLabeledKnob(lowerArea, qLabel, qSlider);
-    consumeLabeledKnob(lowerArea, gainLabel, gainSlider);
+    consumeLabeledComboBox(bounds, 120, typeLabel, typeSelector);
+    consumeLabeledToggle(bounds, 35, freqTypeLabel, freqTypeToggle);
+    consumeLabeledKnob(bounds, freqLabel, hzSlider, semitoneSlider);
+    consumeLabeledKnob(bounds, qLabel, qSlider);
+    consumeLabeledKnob(bounds, gainLabel, gainSlider);
 }
 void FilterComponent::buttonClicked(juce::Button* button) {
     auto& params = getSelectedFilterParams();
@@ -607,130 +680,6 @@ void FilterComponent::timerCallback() {
     hzSlider.setLookAndFeel(&berryLookAndFeel);
     semitoneSlider.setLookAndFeel(&berryLookAndFeel);
     qSlider.setLookAndFeel(&berryLookAndFeel);
-}
-
-//==============================================================================
-ModEnvComponent::ModEnvComponent(int index, AllParams& allParams)
-    : index(index),
-      allParams(allParams),
-      targetTypeSelector("TargetType"),
-      targetFilterSelector("TargetFilter"),
-      targetFilterParamSelector("TargetFilterParam"),
-      peakFreqSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                     juce::Slider::TextEntryBoxPosition::NoTextBox),
-      waitSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                 juce::Slider::TextEntryBoxPosition::NoTextBox),
-      attackSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                   juce::Slider::TextEntryBoxPosition::NoTextBox),
-      decaySlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                  juce::Slider::TextEntryBoxPosition::NoTextBox) {
-    auto& params = getSelectedModEnvParams();
-
-    initChoice(targetTypeSelector, params.TargetType, this, targetSelector);
-    initChoice(targetFilterSelector, params.TargetFilter, this, targetSelector);
-    initChoice(targetFilterParamSelector, params.TargetFilterParam, this, targetSelector);
-    initChoice(fadeSelector, params.Fade, this, *this);
-    auto formatPeakFreq = [](double oct) -> juce::String {
-        return (oct == 0 ? " " : oct > 0 ? "+" : "-") + juce::String(std::abs(oct), 2) + " oct";
-    };
-    initLinear(peakFreqSlider, params.PeakFreq, 0.01, nullptr, std::move(formatPeakFreq), this, *this);
-    initSkewFromMid(waitSlider, params.Wait, 0.01, " sec", nullptr, this, *this);
-    initSkewFromMid(attackSlider, params.Attack, 0.001, " sec", nullptr, this, *this);
-    initSkewFromMid(decaySlider, params.Decay, 0.01, " sec", nullptr, this, *this);
-    initLabel(targetLabel, "Destination", *this);
-    initLabel(typeLabel, "Type", *this);
-    initLabel(fadeLabel, "Fade", *this);
-    initLabel(peakFreqLabel, "Peak Freq", *this);
-    initLabel(waitLabel, "Wait", *this);
-    initLabel(attackLabel, "Attack", *this);
-    initLabel(decayLabel, "Decay", *this);
-
-    this->addAndMakeVisible(targetSelector);
-
-    startTimerHz(30.0f);
-}
-
-ModEnvComponent::~ModEnvComponent() {}
-
-void ModEnvComponent::paint(juce::Graphics& g) {}
-
-void ModEnvComponent::resized() {
-    juce::Rectangle<int> bounds = getLocalBounds();
-
-    auto bodyHeight = bounds.getHeight();
-    auto upperArea = bounds.removeFromTop(bodyHeight / 2);
-    auto& lowerArea = bounds;
-    consumeLabeledComboBox(upperArea, 280, targetLabel, targetSelector);
-    {
-        auto selectorsArea = targetSelector.getLocalBounds();
-
-        targetTypeSelector.setBounds(selectorsArea.removeFromLeft(90));
-        auto indexArea = selectorsArea.removeFromLeft(70);
-        targetFilterSelector.setBounds(indexArea);
-        auto paramArea = selectorsArea.removeFromLeft(110);
-        targetFilterParamSelector.setBounds(paramArea);
-    }
-    {
-        juce::Rectangle<int> area = lowerArea.removeFromLeft(SLIDER_WIDTH);
-        auto area2 = area;
-        consumeLabeledKnob(area, peakFreqLabel, peakFreqSlider);
-        consumeLabeledComboBox(area2, 120, fadeLabel, fadeSelector);
-    }
-    consumeLabeledKnob(lowerArea, waitLabel, waitSlider, attackLabel, attackSlider);
-    consumeLabeledKnob(lowerArea, decayLabel, decaySlider);
-}
-void ModEnvComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) {
-    auto& params = getSelectedModEnvParams();
-    if (comboBoxThatHasChanged == &targetTypeSelector) {
-        *params.TargetType = targetTypeSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetFilterSelector) {
-        *params.TargetFilter = targetFilterSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &targetFilterParamSelector) {
-        *params.TargetFilterParam = targetFilterParamSelector.getSelectedItemIndex();
-    } else if (comboBoxThatHasChanged == &fadeSelector) {
-        *params.Fade = fadeSelector.getSelectedItemIndex();
-    }
-    resized();  // re-render
-}
-void ModEnvComponent::sliderValueChanged(juce::Slider* slider) {
-    auto& params = getSelectedModEnvParams();
-    if (slider == &peakFreqSlider) {
-        *params.PeakFreq = (float)peakFreqSlider.getValue();
-    } else if (slider == &waitSlider) {
-        *params.Wait = (float)waitSlider.getValue();
-    } else if (slider == &attackSlider) {
-        *params.Attack = (float)attackSlider.getValue();
-    } else if (slider == &decaySlider) {
-        *params.Decay = (float)decaySlider.getValue();
-    }
-}
-void ModEnvComponent::timerCallback() {
-    auto& params = getSelectedModEnvParams();
-
-    targetTypeSelector.setSelectedItemIndex(params.TargetType->getIndex(), juce::dontSendNotification);
-    targetFilterSelector.setSelectedItemIndex(params.TargetFilter->getIndex(), juce::dontSendNotification);
-    targetFilterParamSelector.setSelectedItemIndex(params.TargetFilterParam->getIndex(), juce::dontSendNotification);
-    fadeSelector.setSelectedItemIndex(params.Fade->getIndex(), juce::dontSendNotification);
-
-    peakFreqSlider.setValue(params.PeakFreq->get(), juce::dontSendNotification);
-    waitSlider.setValue(params.Wait->get(), juce::dontSendNotification);
-    attackSlider.setValue(params.Attack->get(), juce::dontSendNotification);
-    decaySlider.setValue(params.Decay->get(), juce::dontSendNotification);
-
-    auto targetType = params.getTargetType();
-    targetFilterSelector.setVisible(targetType == MODENV_TARGET_TYPE::Filter);
-    targetFilterParamSelector.setVisible(targetType == MODENV_TARGET_TYPE::Filter);
-
-    auto isTargetFreq = params.isTargetFreq();
-    auto isFadeIn = params.isFadeIn();
-    peakFreqLabel.setVisible(isTargetFreq);
-    peakFreqSlider.setVisible(isTargetFreq);
-    fadeLabel.setVisible(!isTargetFreq);
-    fadeSelector.setVisible(!isTargetFreq);
-    waitLabel.setVisible(!isTargetFreq && isFadeIn);
-    waitSlider.setVisible(!isTargetFreq && isFadeIn);
-    attackLabel.setVisible(isTargetFreq || !isFadeIn);
-    attackSlider.setVisible(isTargetFreq || !isFadeIn);
 }
 
 //==============================================================================

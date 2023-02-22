@@ -525,6 +525,39 @@ private:
 };
 
 //==============================================================================
+class NoiseComponent : public juce::Component, juce::Slider::Listener, private juce::Timer, ComponentHelper {
+public:
+    NoiseComponent(int index, AllParams& allParams);
+    virtual ~NoiseComponent();
+    NoiseComponent(const OscComponent&) = delete;
+
+    virtual void paint(juce::Graphics& g) override;
+    virtual void resized() override;
+
+private:
+    virtual void sliderValueChanged(juce::Slider* slider) override;
+    virtual void timerCallback() override;
+    int index;
+
+    AllParams& allParams;
+
+    juce::Slider gainSlider;
+    juce::Slider attackCurveSlider;
+    juce::Slider attackSlider;
+    juce::Slider decaySlider;
+    juce::Slider releaseSlider;
+
+    juce::Label gainLabel;
+    juce::Label attackCurveLabel;
+    juce::Label attackLabel;
+    juce::Label decayLabel;
+    juce::Label releaseLabel;
+
+    NoiseParams& getNoiseParams() { return allParams.noiseUnitParams[index].noiseParams; }
+    EnvelopeParams& getEnvelopeParams() { return allParams.noiseUnitParams[index].envelopeParams; }
+};
+
+//==============================================================================
 class FilterComponent : public juce::Component,
                         juce::ToggleButton::Listener,
                         juce::ComboBox::Listener,
@@ -532,7 +565,7 @@ class FilterComponent : public juce::Component,
                         private juce::Timer,
                         ComponentHelper {
 public:
-    FilterComponent(int index, AllParams& allParams);
+    FilterComponent(int noiseIndex, int filterIndex, AllParams& allParams);
     virtual ~FilterComponent();
     FilterComponent(const FilterComponent&) = delete;
 
@@ -545,7 +578,8 @@ private:
     virtual void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
     virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
-    int index;
+    int noiseIndex;
+    int filterIndex;
 
     AllParams& allParams;
 
@@ -563,51 +597,7 @@ private:
     juce::Label qLabel;
     juce::Label gainLabel;
 
-    FilterParams& getSelectedFilterParams() { return allParams.filterParams[index]; }
-};
-
-//==============================================================================
-class ModEnvComponent : public juce::Component,
-                        juce::ComboBox::Listener,
-                        juce::Slider::Listener,
-                        private juce::Timer,
-                        ComponentHelper {
-public:
-    ModEnvComponent(int index, AllParams& allParams);
-    virtual ~ModEnvComponent();
-    ModEnvComponent(const ModEnvComponent&) = delete;
-
-    virtual void paint(juce::Graphics& g) override;
-    virtual void resized() override;
-
-private:
-    virtual void comboBoxChanged(juce::ComboBox* comboBox) override;
-    virtual void sliderValueChanged(juce::Slider* slider) override;
-    virtual void timerCallback() override;
-    int index;
-
-    AllParams& allParams;
-
-    juce::Component targetSelector;
-
-    juce::ComboBox targetTypeSelector;
-    juce::ComboBox targetFilterSelector;
-    juce::ComboBox targetFilterParamSelector;
-    juce::ComboBox fadeSelector;
-    juce::Slider peakFreqSlider;
-    juce::Slider waitSlider;
-    juce::Slider attackSlider;
-    juce::Slider decaySlider;
-
-    juce::Label targetLabel;
-    juce::Label typeLabel;
-    juce::Label fadeLabel;
-    juce::Label peakFreqLabel;
-    juce::Label waitLabel;
-    juce::Label attackLabel;
-    juce::Label decayLabel;
-
-    ModEnvParams& getSelectedModEnvParams() { return allParams.modEnvParams[index]; }
+    FilterParams& getSelectedFilterParams() { return allParams.noiseUnitParams[noiseIndex].filterParams[filterIndex]; }
 };
 
 //==============================================================================
@@ -740,26 +730,6 @@ private:
     float overflowedLevelR = 0;
     int overflowWarningL = 0;
     int overflowWarningR = 0;
-
-    // Filter
-    Filter filters[NUM_FILTER];
-    class SimpleFilterParams {
-    public:
-        SimpleFilterParams() {}
-        SimpleFilterParams(const SimpleFilterParams&) = delete;
-        bool enabled = false;
-        int type = -1;
-        float freq = 0;
-        float q = 0;
-        float gain = 0;
-        bool equals(SimpleFilterParams& p) {
-            return enabled == p.enabled && type == p.type && freq == p.freq && q == p.q & gain == p.gain;
-        }
-    };
-    SimpleFilterParams lastFilterParams[NUM_FILTER];
-    int relNoteNumber = 69;
-    float filterSource[fftSize * 2]{};
-    float scopeDataForFilter[NUM_FILTER][scopeSize]{};
 
     // methods
     virtual void timerCallback() override;

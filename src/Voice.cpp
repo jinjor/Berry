@@ -24,9 +24,25 @@ BerryVoice::BerryVoice(CurrentPositionInfo *currentPositionInfo, juce::AudioBuff
            MultiOsc(false),
            MultiOsc(false),
            MultiOsc(true)},
-      adsr{Adsr(), Adsr()},
-      filters{Filter(), Filter()},
-      modEnvs{Adsr(), Adsr(), Adsr()} {}
+      adsr{Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr(),
+           Adsr()},
+      noises{Osc{}, Osc{}},
+      noiseAdsr{Adsr(), Adsr()},
+      noiseFilters{Filter{}, Filter{}, Filter{}, Filter{}} {}
 BerryVoice::~BerryVoice() { DBG("BerryVoice's destructor called."); }
 bool BerryVoice::canPlaySound(juce::SynthesiserSound *sound) {
     if (dynamic_cast<BerrySound *>(sound) != nullptr) {
@@ -58,6 +74,7 @@ void BerryVoice::startNote(int midiNoteNumber,
             if (!stolen) {
                 //                oscs[i].setAngle(0.0);
             }
+            oscs[i].setSampleRate(sampleRate);
             adsr[i].setParams(calculatedParams.attackCurve[i],
                               calculatedParams.attack[i],
                               0.0,
@@ -66,17 +83,19 @@ void BerryVoice::startNote(int midiNoteNumber,
                               calculatedParams.release[i]);
             adsr[i].doAttack(fixedSampleRate);
         }
-        for (int i = 0; i < NUM_FILTER; ++i) {
-            filters[i].initializePastData();
-        }
-        for (int i = 0; i < NUM_MODENV; ++i) {
-            auto &params = allParams.modEnvParams[i];
-            if (params.shouldUseHold()) {
-                modEnvs[i].setParams(0.5, 0.0, params.wait, params.decay, 0.0, 0.0);
-            } else {
-                modEnvs[i].setParams(0.5, params.attack, 0.0, params.decay, 0.0, 0.0);
+        for (int i = 0; i < NUM_NOISE; ++i) {
+            noises[i].setSampleRate(sampleRate);
+            noises[i].setWaveform(allParams.noiseUnitParams[i].noiseParams.waveform, true);
+            noiseAdsr[i].setParams(allParams.noiseUnitParams[i].envelopeParams.attackCurve,
+                                   allParams.noiseUnitParams[i].envelopeParams.attack,
+                                   0.0,
+                                   allParams.noiseUnitParams[i].envelopeParams.decay,
+                                   0.0,
+                                   allParams.noiseUnitParams[i].envelopeParams.release);
+            noiseAdsr[i].doAttack(fixedSampleRate);
+            for (int j = 0; j < NUM_NOISE_FILTER; ++j) {
+                noiseFilters[i][j].initializePastData();
             }
-            modEnvs[i].doAttack(fixedSampleRate);
         }
         stepCounter = 0;
     }
@@ -93,6 +112,12 @@ void BerryVoice::stopNote(float velocity, bool allowTailOff) {
                 }
                 adsr[i].doRelease(fixedSampleRate);
             }
+            for (int i = 0; i < NUM_NOISE; ++i) {
+                if (noiseAdsr[i].isReleasing()) {
+                    continue;
+                }
+                noiseAdsr[i].doRelease(fixedSampleRate);
+            }
         } else {
             stolen = true;
             for (int i = 0; i < NUM_OSC; ++i) {
@@ -100,6 +125,9 @@ void BerryVoice::stopNote(float velocity, bool allowTailOff) {
             }
             for (int i = 0; i < NUM_OSC; ++i) {
                 adsr[i].forceStop();
+            }
+            for (int i = 0; i < NUM_NOISE; ++i) {
+                noiseAdsr[i].forceStop();
             }
             clearCurrentNote();
         }
@@ -111,6 +139,9 @@ void BerryVoice::mute(double duration) {
     auto fixedSampleRate = sampleRate * CONTROL_RATE;  // for control
     for (int i = 0; i < NUM_OSC; ++i) {
         adsr[i].doRelease(fixedSampleRate, duration);
+    }
+    for (int i = 0; i < NUM_NOISE; ++i) {
+        noiseAdsr[i].doRelease(fixedSampleRate, duration);
     }
 }
 void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int startSample, int numSamples) {
@@ -147,16 +178,15 @@ void BerryVoice::applyParamsBeforeLoop(double sampleRate, CalculatedParams &para
         oscs[i].setSampleRate(sampleRate);
         adsr[i].setParams(params.attackCurve[i], params.attack[i], 0.0, params.decay[i], 0.0, params.release[i]);
     }
-    for (int i = 0; i < NUM_FILTER; ++i) {
-        filters[i].setSampleRate(sampleRate);
-    }
-    for (int i = 0; i < NUM_MODENV; ++i) {
-        auto &params = allParams.modEnvParams[i];
-        if (params.shouldUseHold()) {
-            modEnvs[i].setParams(0.5, 0.0, params.wait, params.decay, 0.0, 0.0);
-        } else {
-            modEnvs[i].setParams(0.5, params.attack, 0.0, params.decay, 0.0, 0.0);
-        }
+    for (int i = 0; i < NUM_NOISE; ++i) {
+        noises[i].setSampleRate(sampleRate);
+        noises[i].setWaveform(allParams.noiseUnitParams[i].noiseParams.waveform, true);
+        noiseAdsr[i].setParams(allParams.noiseUnitParams[i].envelopeParams.attackCurve,
+                               allParams.noiseUnitParams[i].envelopeParams.attack,
+                               0.0,
+                               allParams.noiseUnitParams[i].envelopeParams.decay,
+                               0.0,
+                               allParams.noiseUnitParams[i].envelopeParams.release);
     }
 }
 void BerryVoice::calculateParamsBeforeLoop(CalculatedParams &params) {
@@ -223,15 +253,14 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels, Calculate
         for (int i = 0; i < NUM_OSC; ++i) {
             adsr[i].step(fixedSampleRate);
         }
-        controlModifiers = Modifiers{};
-        updateModifiersByModEnv(controlModifiers, fixedSampleRate);
+        for (int i = 0; i < NUM_NOISE; ++i) {
+            noiseAdsr[i].step(fixedSampleRate);
+        }
     }
     stepCounter++;
     if (stepCounter >= CONTROL_INTERVAL) {
         stepCounter = 0;
     }
-
-    auto modifiers = controlModifiers;  // copy;
 
     bool active = false;
     auto panBase = allParams.masterParams.pan;
@@ -249,7 +278,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels, Calculate
         }
         active = true;
         auto freq = oscIndex == NUM_OSC - 1 ? baseFreq : baseFreq * (oscIndex + 1);
-        auto pan = panBase + panModAmp * modifiers.panMod[oscIndex];
+        auto pan = panBase;
         jassert(pan >= -1);
         jassert(pan <= 1);
 
@@ -261,31 +290,29 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels, Calculate
         out[0] += o[0];
         out[1] += o[1];
     }
-    for (int filterIndex = 0; filterIndex < NUM_FILTER; ++filterIndex) {
-        auto &fp = allParams.filterParams[filterIndex];
-        if (!fp.enabled) {
+    for (int noiseIndex = 0; noiseIndex < NUM_NOISE; ++noiseIndex) {
+        if (!noiseAdsr[noiseIndex].isActive()) {
             continue;
         }
-        if (true) {
-            auto filterType = fp.type;
-            double freq;
-            if (fp.isFreqAbsoluteFreezed) {
-                double noteShift = modifiers.filterOctShift[filterIndex] * 12;
-                freq = shiftHertsByNotes(fp.hz, noteShift);
-            } else {
-                double shiftedNoteNumber = midiNoteNumber + fp.semitone + modifiers.filterOctShift[filterIndex] * 12;
-                freq = getMidiNoteInHertzDouble(shiftedNoteNumber);
+        auto &noiseUnitParams = allParams.noiseUnitParams[noiseIndex];
+
+        auto gain = noiseAdsr[noiseIndex].getValue() * noiseUnitParams.noiseParams.gain;
+        auto value = noises[noiseIndex].step(440, 0.0) * gain;
+        double o[2]{value, value};
+
+        for (int filterIndex = 0; filterIndex < NUM_NOISE_FILTER; ++filterIndex) {
+            auto &fp = noiseUnitParams.filterParams[filterIndex];
+            if (!fp.enabled) {
+                continue;
             }
-            auto q = fp.q;
-            if (modifiers.filterQExp[filterIndex] != 1.0) {
-                q = std::pow(q, modifiers.filterQExp[filterIndex]);
-            }
-            auto gain = fp.gain;
             for (auto ch = 0; ch < numChannels; ++ch) {
-                out[ch] = filters[filterIndex].step(filterType, freq, q, gain, ch, out[ch]);
+                o[ch] = noiseFilters[noiseIndex][filterIndex].step(fp.type, fp.hz, fp.q, fp.gain, ch, o[ch]);
             }
         }
+        out[0] += o[0];
+        out[1] += o[1];
     }
+
     auto finalGain = 0.3 * smoothVelocity.value;
     for (auto ch = 0; ch < numChannels; ++ch) {
         out[ch] *= finalGain;
@@ -299,46 +326,4 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels, Calculate
     //     clearCurrentNote();
     //     break;
     // }
-}
-
-void BerryVoice::updateModifiersByModEnv(Modifiers &modifiers, double sampleRate) {
-    auto &mainParams = allParams.mainParams[0];  // TODO
-    for (int i = 0; i < NUM_MODENV; ++i) {
-        auto &params = allParams.modEnvParams[i];
-        if (!params.enabled) {
-            continue;
-        }
-        modEnvs[i].step(sampleRate);
-        auto modEnvValue = modEnvs[i].getValue();
-        switch (params.targetType) {
-            case MODENV_TARGET_TYPE::Filter: {
-                int targetIndex = params.targetFilter;
-                switch (params.targetFilterParam) {
-                    case MODENV_TARGET_FILTER_PARAM::Freq: {
-                        auto v = params.peakFreq * modEnvValue;
-                        if (targetIndex == NUM_FILTER) {
-                            for (int filterIndex = 0; filterIndex < NUM_FILTER; ++filterIndex) {
-                                modifiers.filterOctShift[filterIndex] += v;
-                            }
-                        } else {
-                            modifiers.filterOctShift[targetIndex] += v;
-                        }
-                        break;
-                    }
-                    case MODENV_TARGET_FILTER_PARAM::Q: {
-                        auto v = params.fadeIn ? 1 - modEnvValue : modEnvValue;
-                        if (targetIndex == NUM_FILTER) {
-                            for (int filterIndex = 0; filterIndex < NUM_FILTER; ++filterIndex) {
-                                modifiers.filterQExp[filterIndex] *= v;
-                            }
-                        } else {
-                            modifiers.filterQExp[targetIndex] *= v;
-                        }
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-    }
 }

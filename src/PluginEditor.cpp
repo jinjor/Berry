@@ -34,13 +34,9 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
           SectionComponent{"15th", HEADER_CHECK::Hidden, std::make_unique<OscComponent>(14, p.allParams)},
           SectionComponent{"16th...", HEADER_CHECK::Hidden, std::make_unique<OscComponent>(15, p.allParams)},
       },
-      filterComponents{
-          SectionComponent{"FILTER 1", HEADER_CHECK::Enabled, std::make_unique<FilterComponent>(0, p.allParams)},
-          SectionComponent{"FILTER 2", HEADER_CHECK::Enabled, std::make_unique<FilterComponent>(1, p.allParams)}},
-      modEnvComponents{
-          SectionComponent{"MOD ENV 1", HEADER_CHECK::Enabled, std::make_unique<ModEnvComponent>(0, p.allParams)},
-          SectionComponent{"MOD ENV 2", HEADER_CHECK::Enabled, std::make_unique<ModEnvComponent>(1, p.allParams)},
-          SectionComponent{"MOD ENV 3", HEADER_CHECK::Enabled, std::make_unique<ModEnvComponent>(2, p.allParams)}},
+      noiseComponents{
+          SectionComponent{"NOISE 1", HEADER_CHECK::Hidden, std::make_unique<NoiseComponent>(0, p.allParams)},
+          SectionComponent{"NOISE 2", HEADER_CHECK::Hidden, std::make_unique<NoiseComponent>(1, p.allParams)}},
       delayComponent{SectionComponent{"DELAY", HEADER_CHECK::Enabled, std::make_unique<DelayComponent>(p.allParams)}},
       masterComponent{
           SectionComponent{"MASTER", HEADER_CHECK::Hidden, std::make_unique<MasterComponent>(p.allParams)}} {
@@ -52,24 +48,13 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     addAndMakeVisible(statusComponent);
     addAndMakeVisible(utilComponent);
     auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
+
     for (auto i = 0; i < NUM_OSC; i++) {
-        auto &params = mainParams.oscParams[i];
         auto &component = oscComponents[i];
-        component.addListener(this);
         addAndMakeVisible(component);
     }
-    for (auto i = 0; i < NUM_FILTER; i++) {
-        auto &params = audioProcessor.allParams.filterParams[i];
-        auto &component = filterComponents[i];
-        component.setEnabled(params.Enabled->get());
-        component.addListener(this);
-        addAndMakeVisible(component);
-    }
-    for (auto i = 0; i < NUM_MODENV; i++) {
-        auto &params = audioProcessor.allParams.modEnvParams[i];
-        auto &component = modEnvComponents[i];
-        component.setEnabled(params.Enabled->get());
-        component.addListener(this);
+    for (auto i = 0; i < NUM_NOISE; i++) {
+        auto &component = noiseComponents[i];
         addAndMakeVisible(component);
     }
     {
@@ -93,7 +78,7 @@ void BerryAudioProcessorEditor::paint(juce::Graphics &g) {
     auto bounds = getLocalBounds();
     auto height = bounds.getHeight();
     auto upperArea = bounds.removeFromTop(height * 0.12);
-    auto middleArea = bounds.removeFromTop(bounds.getHeight() * 2 / 5);
+    auto middleArea = bounds.removeFromTop(bounds.getHeight() * 4 / 5);
 
     g.fillAll(colour::BACKGROUND);
 
@@ -185,25 +170,18 @@ void BerryAudioProcessorEditor::resized() {
     }
     {
         auto lowerArea = bounds.reduced(AREA_PADDING_X, AREA_PADDING_Y);
-        auto leftWidth = (width - PANEL_MARGIN_X * 2) * 0.31;
-        auto centreWidth = (width - PANEL_MARGIN_X * 2) * 0.31;
+        auto leftWidth = (width - PANEL_MARGIN_X * 2) * 0.6;
 
         auto lowerHeight = lowerArea.getHeight();
-        auto modEnvPanelHeight = (lowerHeight - PANEL_MARGIN_Y * 2) / 3;
-        auto delayPanelHeight = (lowerHeight - PANEL_MARGIN_Y * 2) / 3;
+        auto filterPanelHeight = (lowerHeight - PANEL_MARGIN_Y * 2) / 2;
+        auto delayPanelHeight = (lowerHeight - PANEL_MARGIN_Y * 2) / 2;
         auto masterPanelHeight = (lowerHeight - delayPanelHeight - PANEL_MARGIN_Y) * 1 / 3;
         lowerArea.removeFromLeft(PANEL_MARGIN_X);
         {
             auto area = lowerArea.removeFromLeft(leftWidth);
-            filterComponents[0].setBounds(area.removeFromTop(modEnvPanelHeight));
+            noiseComponents[0].setBounds(area.removeFromTop(filterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
-            filterComponents[1].setBounds(area.removeFromTop(modEnvPanelHeight));
-
-            // modEnvComponents[0].setBounds(area.removeFromTop(modEnvPanelHeight));
-            // area.removeFromTop(PANEL_MARGIN_Y);
-            // modEnvComponents[1].setBounds(area.removeFromTop(modEnvPanelHeight));
-            // area.removeFromTop(PANEL_MARGIN_Y);
-            // modEnvComponents[2].setBounds(area.removeFromTop(modEnvPanelHeight));
+            noiseComponents[1].setBounds(area.removeFromTop(filterPanelHeight));
         }
         lowerArea.removeFromLeft(PANEL_MARGIN_X);
         {
@@ -216,29 +194,9 @@ void BerryAudioProcessorEditor::resized() {
 }
 void BerryAudioProcessorEditor::timerCallback() {
     auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
-    for (auto i = 0; i < NUM_FILTER; i++) {
-        filterComponents[i].setEnabled(audioProcessor.allParams.filterParams[i].Enabled->get());
-    }
-    for (auto i = 0; i < NUM_MODENV; i++) {
-        modEnvComponents[i].setEnabled(audioProcessor.allParams.modEnvParams[i].Enabled->get());
-    }
     delayComponent.setEnabled(audioProcessor.allParams.delayParams.Enabled->get());
 }
 void BerryAudioProcessorEditor::enabledChanged(SectionComponent *section) {
-    for (auto i = 0; i < NUM_FILTER; i++) {
-        if (&filterComponents[i] == section) {
-            auto &params = audioProcessor.allParams.filterParams[i];
-            *params.Enabled = section->getEnabled();
-            return;
-        }
-    }
-    for (auto i = 0; i < NUM_MODENV; i++) {
-        if (&modEnvComponents[i] == section) {
-            auto &params = audioProcessor.allParams.modEnvParams[i];
-            *params.Enabled = section->getEnabled();
-            return;
-        }
-    }
     if (&delayComponent == section) {
         auto &params = audioProcessor.allParams.delayParams;
         *params.Enabled = section->getEnabled();
