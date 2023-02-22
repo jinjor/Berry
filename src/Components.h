@@ -602,7 +602,6 @@ private:
 
 //==============================================================================
 class DelayComponent : public juce::Component,
-                       juce::ToggleButton::Listener,
                        juce::ComboBox::Listener,
                        juce::Slider::Listener,
                        private juce::Timer,
@@ -616,7 +615,6 @@ public:
     virtual void resized() override;
 
 private:
-    virtual void buttonClicked(juce::Button* button) override;
     virtual void comboBoxChanged(juce::ComboBox* comboBox) override;
     virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
@@ -624,18 +622,14 @@ private:
     AllParams& allParams;
 
     juce::ComboBox typeSelector;
-    juce::ToggleButton syncToggle;
     juce::Slider timeLSlider;
     juce::Slider timeRSlider;
-    juce::Slider timeSyncLSlider;
-    juce::Slider timeSyncRSlider;
     juce::Slider lowFreqSlider;
     juce::Slider highFreqSlider;
     juce::Slider feedbackSlider;
     juce::Slider mixSlider;
 
     juce::Label typeLabel;
-    juce::Label syncLabel;
     juce::Label timeLLabel;
     juce::Label timeRLabel;
     juce::Label lowFreqLabel;

@@ -235,11 +235,8 @@ class DelayParams : public SynthParametersBase {
 public:
     juce::AudioParameterBool* Enabled;
     juce::AudioParameterChoice* Type;
-    juce::AudioParameterBool* Sync;
     juce::AudioParameterFloat* TimeL;
     juce::AudioParameterFloat* TimeR;
-    juce::AudioParameterChoice* TimeSyncL;
-    juce::AudioParameterChoice* TimeSyncR;
     juce::AudioParameterFloat* LowFreq;
     juce::AudioParameterFloat* HighFreq;
     juce::AudioParameterFloat* Feedback;
@@ -253,16 +250,11 @@ public:
     virtual void loadParameters(juce::XmlElement& xml) override;
 
     DELAY_TYPE getType() { return static_cast<DELAY_TYPE>(Type->getIndex()); }
-    double getTimeSyncL() { return DELAY_TIME_SYNC_VALUES[TimeSyncL->getIndex()]; }
-    double getTimeSyncR() { return DELAY_TIME_SYNC_VALUES[TimeSyncR->getIndex()]; }
 
     bool enabled;
     DELAY_TYPE type;
-    bool sync;
     float timeL;
     float timeR;
-    double timeSyncL;
-    double timeSyncR;
     float lowFreq;
     float highFreq;
     float feedback;
@@ -270,11 +262,8 @@ public:
     void freeze() {
         enabled = Enabled->get();
         type = getType();
-        sync = Sync->get();
         timeL = TimeL->get();
         timeR = TimeR->get();
-        timeSyncL = getTimeSyncL();
-        timeSyncR = getTimeSyncR();
         lowFreq = LowFreq->get();
         highFreq = HighFreq->get();
         feedback = Feedback->get();

@@ -196,19 +196,10 @@ DelayParams::DelayParams() {
     Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
     Type = new juce::AudioParameterChoice(
         idPrefix + "TYPE", namePrefix + "Type", DELAY_TYPE_NAMES, DELAY_TYPE_NAMES.indexOf("Parallel"));
-    Sync = new juce::AudioParameterBool(idPrefix + "SYNC", namePrefix + "Sync", false);
     TimeL = new juce::AudioParameterFloat(
         idPrefix + "TIME_L", namePrefix + "TimeL", rangeWithSkewForCentre(0.01f, 1.0f, 0.4f), 0.3f);
     TimeR = new juce::AudioParameterFloat(
         idPrefix + "TIME_R", namePrefix + "TimeR", rangeWithSkewForCentre(0.01f, 1.0f, 0.4f), 0.4f);
-    TimeSyncL = new juce::AudioParameterChoice(idPrefix + "TIME_SYNC_L",
-                                               namePrefix + "TimeSyncL",
-                                               DELAY_TIME_SYNC_NAMES,
-                                               DELAY_TIME_SYNC_NAMES.indexOf("1/8"));
-    TimeSyncR = new juce::AudioParameterChoice(idPrefix + "TIME_SYNC_R",
-                                               namePrefix + "TimeSyncR",
-                                               DELAY_TIME_SYNC_NAMES,
-                                               DELAY_TIME_SYNC_NAMES.indexOf("1/8"));
     LowFreq = new juce::AudioParameterFloat(
         idPrefix + "LOW_FREQ", namePrefix + "LowFfreq", rangeWithSkewForCentre(10.0f, 20000.0f, 2000.0f), 10.0f);
     HighFreq = new juce::AudioParameterFloat(
@@ -220,11 +211,8 @@ DelayParams::DelayParams() {
 void DelayParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Enabled);
     processor.addParameter(Type);
-    processor.addParameter(Sync);
     processor.addParameter(TimeL);
     processor.addParameter(TimeR);
-    processor.addParameter(TimeSyncL);
-    processor.addParameter(TimeSyncR);
     processor.addParameter(LowFreq);
     processor.addParameter(HighFreq);
     processor.addParameter(Feedback);
@@ -233,11 +221,8 @@ void DelayParams::addAllParameters(juce::AudioProcessor& processor) {
 void DelayParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(Enabled->paramID, Enabled->get());
     xml.setAttribute(Type->paramID, Type->getIndex());
-    xml.setAttribute(Sync->paramID, Sync->get());
     xml.setAttribute(TimeL->paramID, (double)TimeL->get());
     xml.setAttribute(TimeR->paramID, (double)TimeR->get());
-    xml.setAttribute(TimeSyncL->paramID, TimeSyncL->getIndex());
-    xml.setAttribute(TimeSyncR->paramID, TimeSyncR->getIndex());
     xml.setAttribute(LowFreq->paramID, (double)LowFreq->get());
     xml.setAttribute(HighFreq->paramID, (double)HighFreq->get());
     xml.setAttribute(Feedback->paramID, (double)Feedback->get());
@@ -246,11 +231,8 @@ void DelayParams::saveParameters(juce::XmlElement& xml) {
 void DelayParams::loadParameters(juce::XmlElement& xml) {
     *Enabled = xml.getBoolAttribute(Enabled->paramID, false);
     *Type = xml.getIntAttribute(Type->paramID, 0);
-    *Sync = xml.getBoolAttribute(Sync->paramID, false);
     *TimeL = (float)xml.getDoubleAttribute(TimeL->paramID, 0.01);
     *TimeR = (float)xml.getDoubleAttribute(TimeR->paramID, 0.01);
-    *TimeSyncL = xml.getIntAttribute(TimeSyncL->paramID, 0);
-    *TimeSyncR = xml.getIntAttribute(TimeSyncR->paramID, 0);
     *LowFreq = (float)xml.getDoubleAttribute(LowFreq->paramID, 10);
     *HighFreq = (float)xml.getDoubleAttribute(HighFreq->paramID, 20000);
     *Feedback = (float)xml.getDoubleAttribute(Feedback->paramID, 0);

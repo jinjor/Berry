@@ -690,10 +690,6 @@ DelayComponent::DelayComponent(AllParams& allParams)
                   juce::Slider::TextEntryBoxPosition::NoTextBox),
       timeRSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                   juce::Slider::TextEntryBoxPosition::NoTextBox),
-      timeSyncLSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                      juce::Slider::TextEntryBoxPosition::NoTextBox),
-      timeSyncRSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                      juce::Slider::TextEntryBoxPosition::NoTextBox),
       lowFreqSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
                     juce::Slider::TextEntryBoxPosition::NoTextBox),
       highFreqSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
@@ -705,18 +701,14 @@ DelayComponent::DelayComponent(AllParams& allParams)
     auto& params = getSelectedDelayParams();
 
     initChoice(typeSelector, params.Type, this, *this);
-    initChoiceToggle(syncToggle, params.Sync, this, *this);
     initSkewFromMid(timeLSlider, params.TimeL, 0.01, " sec", nullptr, this, *this);
     initSkewFromMid(timeRSlider, params.TimeR, 0.01, " sec", nullptr, this, *this);
-    initEnum(timeSyncLSlider, params.TimeSyncL, this, *this);
-    initEnum(timeSyncRSlider, params.TimeSyncR, this, *this);
     initSkewFromMid(lowFreqSlider, params.LowFreq, 1.0, " Hz", nullptr, this, *this);
     initSkewFromMid(highFreqSlider, params.HighFreq, 1.0, " Hz", nullptr, this, *this);
     initLinearPercent(feedbackSlider, params.Feedback, 0.01, this, *this);
     initLinear(mixSlider, params.Mix, 0.01, this, *this);
 
     initLabel(typeLabel, "Type", *this);
-    initLabel(syncLabel, "Sync", *this);
     initLabel(timeLLabel, "Time L", *this);
     initLabel(timeRLabel, "Time R", *this);
     initLabel(lowFreqLabel, "Lo Cut", *this);
@@ -738,19 +730,10 @@ void DelayComponent::resized() {
     auto upperArea = bounds.removeFromTop(bodyHeight / 2);
     auto& lowerArea = bounds;
     consumeLabeledComboBox(upperArea, 120, typeLabel, typeSelector);
-    consumeLabeledToggle(upperArea, 35, syncLabel, syncToggle);
     consumeLabeledKnob(upperArea, lowFreqLabel, lowFreqSlider);
     consumeLabeledKnob(upperArea, highFreqLabel, highFreqSlider);
-    consumeLabeledKnob(lowerArea, timeLLabel, timeLSlider, timeSyncLSlider);
-    consumeLabeledKnob(lowerArea, timeRLabel, timeRSlider, timeSyncRSlider);
     consumeLabeledKnob(lowerArea, feedbackLabel, feedbackSlider);
     consumeLabeledKnob(lowerArea, mixLabel, mixSlider);
-}
-void DelayComponent::buttonClicked(juce::Button* button) {
-    auto& params = getSelectedDelayParams();
-    if (button == &syncToggle) {
-        *params.Sync = syncToggle.getToggleState();
-    }
 }
 void DelayComponent::comboBoxChanged(juce::ComboBox* comboBox) {
     auto& params = getSelectedDelayParams();
@@ -764,10 +747,6 @@ void DelayComponent::sliderValueChanged(juce::Slider* slider) {
         *params.TimeL = (float)timeLSlider.getValue();
     } else if (slider == &timeRSlider) {
         *params.TimeR = (float)timeRSlider.getValue();
-    } else if (slider == &timeSyncLSlider) {
-        *params.TimeSyncL = timeSyncLSlider.getValue();
-    } else if (slider == &timeSyncRSlider) {
-        *params.TimeSyncR = timeSyncRSlider.getValue();
     } else if (slider == &lowFreqSlider) {
         *params.LowFreq = (float)lowFreqSlider.getValue();
     } else if (slider == &highFreqSlider) {
@@ -782,15 +761,8 @@ void DelayComponent::timerCallback() {
     auto& params = getSelectedDelayParams();
 
     typeSelector.setSelectedItemIndex(params.Type->getIndex(), juce::dontSendNotification);
-    syncToggle.setToggleState(params.Sync->get(), juce::dontSendNotification);
-    timeLSlider.setVisible(!params.Sync->get());
-    timeRSlider.setVisible(!params.Sync->get());
-    timeSyncLSlider.setVisible(params.Sync->get());
-    timeSyncRSlider.setVisible(params.Sync->get());
     timeLSlider.setValue(params.TimeL->get(), juce::dontSendNotification);
     timeRSlider.setValue(params.TimeR->get(), juce::dontSendNotification);
-    timeSyncLSlider.setValue(params.TimeSyncL->getIndex(), juce::dontSendNotification);
-    timeSyncRSlider.setValue(params.TimeSyncR->getIndex(), juce::dontSendNotification);
 
     lowFreqSlider.setValue(params.LowFreq->get(), juce::dontSendNotification);
     highFreqSlider.setValue(params.HighFreq->get(), juce::dontSendNotification);

@@ -11,7 +11,6 @@ enum class WAVEFORM { Sine, Saw, Pink, White };
 
 const juce::StringArray TIMBER_NAMES = juce::StringArray("1", "2", "3");
 
-const juce::StringArray OSC_ENV_NAMES = juce::StringArray("1", "2", "3");
 const juce::StringArray NOISE_WAVEFORM_NAMES = juce::StringArray("White", "Pink");
 const WAVEFORM NOISE_WAVEFORM_VALUES[2] = {WAVEFORM::White, WAVEFORM::Pink};
 
@@ -22,57 +21,8 @@ const juce::StringArray FILTER_TYPE_NAMES =
 enum class FILTER_FREQ_TYPE { Absolute, Relative };
 const juce::StringArray FILTER_FREQ_TYPE_NAMES = juce::StringArray("Abs", "Rel");
 
-enum class MODENV_TARGET_TYPE { Filter };
-const juce::StringArray MODENV_TARGET_TYPE_NAMES = juce::StringArray("Filter", "Dummy");
-
-const juce::StringArray MODENV_TARGET_OSC_NAMES = juce::StringArray("1", "2", "3", "All");
-const juce::StringArray MODENV_TARGET_FILTER_NAMES = juce::StringArray("1", "2", "All");
-
-enum class MODENV_TARGET_FILTER_PARAM { Freq, Q };
-const juce::StringArray MODENV_TARGET_FILTER_PARAM_NAMES = juce::StringArray("Freq", "Q");
-
-enum class MODENV_FADE { In, Out };
-const juce::StringArray MODENV_FADE_NAMES = juce::StringArray("In", "Out");
-
 enum class DELAY_TYPE { Parallel, PingPong };
 const juce::StringArray DELAY_TYPE_NAMES = juce::StringArray("Parallel", "Ping-Pong");
-
-const juce::StringArray DELAY_TIME_SYNC_NAMES = juce::StringArray("1/1",
-                                                                  "1/2",
-                                                                  "1/4",
-                                                                  "1/8",
-                                                                  "1/16",
-                                                                  "1/32",
-                                                                  "1/1 T",
-                                                                  "1/2 T",
-                                                                  "1/4 T",
-                                                                  "1/8 T",
-                                                                  "1/16 T",
-                                                                  "1/32 T",
-                                                                  "1/1 D",
-                                                                  "1/2 D",
-                                                                  "1/4 D",
-                                                                  "1/8 D",
-                                                                  "1/16 D",
-                                                                  "1/32 D");
-const double DELAY_TIME_SYNC_VALUES[18] = {1.0,
-                                           0.5,
-                                           0.25,
-                                           0.125,
-                                           0.0625,
-                                           0.03125,
-                                           1.0 * 2 / 3,
-                                           0.5 * 2 / 3,
-                                           0.25 * 2 / 3,
-                                           0.125 * 2 / 3,
-                                           0.0625 * 2 / 3,
-                                           0.03125 * 2 / 3,
-                                           1.0 * 3 / 2,
-                                           0.5 * 3 / 2,
-                                           0.25 * 3 / 2,
-                                           0.125 * 3 / 2,
-                                           0.0625 * 3 / 2,
-                                           0.03125 * 3 / 2};
 
 }  // namespace
 
@@ -728,24 +678,15 @@ public:
     ~StereoDelay() { DBG("DelayEffect's destructor called."); }
     StereoDelay(const StereoDelay &) = delete;
     void setParams(double sampleRate,
-                   std::optional<double> bpm,  // TODO: UI 上 optional であることが分からない
                    DELAY_TYPE type,
-                   bool sync,
                    double delayTimeL,
                    double delayTimeR,
-                   double delayTimeSyncL,
-                   double delayTimeSyncR,
                    double lowFreq,
                    double highFreq,
                    double feedback,
                    double mix) {
         lowpass.setSampleRate(sampleRate);
         highpass.setSampleRate(sampleRate);
-        if (sync && bpm) {
-            auto timePerBar = 60 * 4 / *bpm;
-            delayTimeL = timePerBar * delayTimeSyncL;
-            delayTimeR = timePerBar * delayTimeSyncR;
-        }
         delayLength[0] = std::max(1.0, std::min(192000.0, sampleRate * delayTimeL));
         delayLength[1] = std::max(1.0, std::min(192000.0, sampleRate * delayTimeR));
         this->type = type;

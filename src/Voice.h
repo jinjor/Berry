@@ -154,13 +154,9 @@ public:
         auto busIndex = 0;
         if (delayParams.enabled) {
             stereoDelay.setParams(getSampleRate(),
-                                  currentPositionInfo->bpm,
                                   delayParams.type,
-                                  delayParams.sync,
                                   delayParams.timeL,
                                   delayParams.timeR,
-                                  delayParams.timeSyncL,
-                                  delayParams.timeSyncR,
                                   delayParams.lowFreq,
                                   delayParams.highFreq,
                                   delayParams.feedback,
