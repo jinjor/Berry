@@ -305,7 +305,15 @@ MainParams::MainParams(int index)
                 OscParams{index, 4},
                 OscParams{index, 5},
                 OscParams{index, 6},
-                OscParams{index, 7}},
+                OscParams{index, 7},
+                OscParams{index, 8},
+                OscParams{index, 9},
+                OscParams{index, 10},
+                OscParams{index, 11},
+                OscParams{index, 12},
+                OscParams{index, 13},
+                OscParams{index, 14},
+                OscParams{index, 15}},
       envelopeParams{EnvelopeParams{index, 0},
                      EnvelopeParams{index, 1},
                      EnvelopeParams{index, 2},
@@ -313,7 +321,15 @@ MainParams::MainParams(int index)
                      EnvelopeParams{index, 4},
                      EnvelopeParams{index, 5},
                      EnvelopeParams{index, 6},
-                     EnvelopeParams{index, 7}} {
+                     EnvelopeParams{index, 7},
+                     EnvelopeParams{index, 8},
+                     EnvelopeParams{index, 9},
+                     EnvelopeParams{index, 10},
+                     EnvelopeParams{index, 11},
+                     EnvelopeParams{index, 12},
+                     EnvelopeParams{index, 13},
+                     EnvelopeParams{index, 14},
+                     EnvelopeParams{index, 15}} {
     auto idPrefix = "T" + std::to_string(index) + "_";
     auto namePrefix = "T" + std::to_string(index) + " ";
     switch (index) {

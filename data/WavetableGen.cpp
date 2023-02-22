@@ -6,7 +6,7 @@
 namespace {
 const int NUM_DIVISIONS = 4095;
 const int NUM_SAMPLES = NUM_DIVISIONS + 1;
-const int MIN_PARTIAL = 8;  // 第{MIN_PARTIAL}倍音以降のみ足し合わせる
+const int MIN_PARTIAL = 16;  // 第{MIN_PARTIAL}倍音以降のみ足し合わせる
 const float BASE_FREQ = 440.0f;
 const float MAX_FREQ = 22000.0f;
 const float PI = 3.141592f;
