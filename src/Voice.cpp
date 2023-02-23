@@ -95,6 +95,7 @@ void BerryVoice::startNote(int midiNoteNumber,
             noiseAdsr[i].doAttack(fixedSampleRate);
             for (int j = 0; j < NUM_NOISE_FILTER; ++j) {
                 noiseFilters[i][j].initializePastData();
+                noiseFilters[i][j].setSampleRate(sampleRate);
             }
         }
         stepCounter = 0;
@@ -305,8 +306,9 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels, Calculate
             if (!fp.enabled) {
                 continue;
             }
+            auto freq = fp.isFreqAbsoluteFreezed ? fp.hz : getMidiNoteInHertzDouble(noteNumberAtStart + fp.semitone);
             for (auto ch = 0; ch < numChannels; ++ch) {
-                o[ch] = noiseFilters[noiseIndex][filterIndex].step(fp.type, fp.hz, fp.q, fp.gain, ch, o[ch]);
+                o[ch] = noiseFilters[noiseIndex][filterIndex].step(fp.type, freq, fp.q, fp.gain, ch, o[ch]);
             }
         }
         out[0] += o[0];

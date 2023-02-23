@@ -511,80 +511,6 @@ void OscComponent::timerCallback() {
 }
 
 //==============================================================================
-NoiseComponent::NoiseComponent(int index, AllParams& allParams)
-    : index(index),
-      allParams(allParams),
-      gainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                 juce::Slider::TextEntryBoxPosition::NoTextBox),
-      attackCurveSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                        juce::Slider::TextEntryBoxPosition::NoTextBox),
-      attackSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                   juce::Slider::TextEntryBoxPosition::NoTextBox),
-      decaySlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                  juce::Slider::TextEntryBoxPosition::NoTextBox),
-      releaseSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                    juce::Slider::TextEntryBoxPosition::NoTextBox) {
-    auto& params = getNoiseParams();
-    auto& envParams = getEnvelopeParams();
-
-    auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
-    initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
-    auto formatGain2 = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
-    initLinear(attackCurveSlider, envParams.AttackCurve, 0.01, this, *this);
-    initSkewFromMid(attackSlider, envParams.Attack, 0.001, " sec", nullptr, this, *this);
-    initSkewFromMid(decaySlider, envParams.Decay, 0.01, " sec", nullptr, this, *this);
-    initSkewFromMid(releaseSlider, envParams.Release, 0.01, " sec", nullptr, this, *this);
-
-    initLabel(gainLabel, "Gain", *this);
-    initLabel(attackCurveLabel, "A. Curve", *this);
-    initLabel(attackLabel, "Attack", *this);
-    initLabel(decayLabel, "Decay", *this);
-    initLabel(releaseLabel, "Release", *this);
-
-    startTimerHz(30.0f);
-}
-
-NoiseComponent::~NoiseComponent() {}
-
-void NoiseComponent::paint(juce::Graphics& g) {}
-
-void NoiseComponent::resized() {
-    juce::Rectangle<int> bounds = getLocalBounds();
-    consumeLabeledKnob(bounds, gainLabel, gainSlider);
-    consumeLabeledKnob(bounds, attackCurveLabel, attackCurveSlider);
-    consumeLabeledKnob(bounds, attackLabel, attackSlider);
-    consumeLabeledKnob(bounds, decayLabel, decaySlider);
-    consumeLabeledKnob(bounds, releaseLabel, releaseSlider);
-}
-void NoiseComponent::sliderValueChanged(juce::Slider* slider) {
-    auto& params = getNoiseParams();
-    auto& envParams = getEnvelopeParams();
-    if (slider == &gainSlider) {
-        *params.Gain = (float)gainSlider.getValue();
-    } else if (slider == &attackCurveSlider) {
-        *envParams.AttackCurve = (float)attackCurveSlider.getValue();
-    } else if (slider == &attackSlider) {
-        *envParams.Attack = (float)attackSlider.getValue();
-    } else if (slider == &decaySlider) {
-        *envParams.Decay = (float)decaySlider.getValue();
-    } else if (slider == &releaseSlider) {
-        *envParams.Release = (float)releaseSlider.getValue();
-    }
-}
-void NoiseComponent::timerCallback() {
-    auto& params = getNoiseParams();
-    gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
-
-    auto& envParams = getEnvelopeParams();
-    attackCurveSlider.setValue(envParams.AttackCurve->get(), juce::dontSendNotification);
-    attackSlider.setValue(envParams.Attack->get(), juce::dontSendNotification);
-    decaySlider.setValue(envParams.Decay->get(), juce::dontSendNotification);
-    releaseSlider.setValue(envParams.Release->get(), juce::dontSendNotification);
-
-    gainSlider.setLookAndFeel(&berryLookAndFeel);
-}
-
-//==============================================================================
 FilterComponent::FilterComponent(int noiseIndex, int filterIndex, AllParams& allParams)
     : noiseIndex(noiseIndex),
       filterIndex(filterIndex),
@@ -680,6 +606,98 @@ void FilterComponent::timerCallback() {
     hzSlider.setLookAndFeel(&berryLookAndFeel);
     semitoneSlider.setLookAndFeel(&berryLookAndFeel);
     qSlider.setLookAndFeel(&berryLookAndFeel);
+}
+
+//==============================================================================
+NoiseComponent::NoiseComponent(int index, AllParams& allParams)
+    : index(index),
+      allParams(allParams),
+      gainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                 juce::Slider::TextEntryBoxPosition::NoTextBox),
+      typeSelector("Type"),
+      attackCurveSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                        juce::Slider::TextEntryBoxPosition::NoTextBox),
+      attackSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                   juce::Slider::TextEntryBoxPosition::NoTextBox),
+      decaySlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                  juce::Slider::TextEntryBoxPosition::NoTextBox),
+      releaseSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                    juce::Slider::TextEntryBoxPosition::NoTextBox),
+      filters{FilterComponent{index, 0, allParams}, FilterComponent{index, 1, allParams}} {
+    auto& params = getNoiseParams();
+    auto& envParams = getEnvelopeParams();
+
+    auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
+    initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
+    initChoice(typeSelector, NOISE_WAVEFORM_NAMES, params.Waveform->getIndex(), this, *this);
+    initLinear(attackCurveSlider, envParams.AttackCurve, 0.01, this, *this);
+    initSkewFromMid(attackSlider, envParams.Attack, 0.001, " sec", nullptr, this, *this);
+    initSkewFromMid(decaySlider, envParams.Decay, 0.01, " sec", nullptr, this, *this);
+    initSkewFromMid(releaseSlider, envParams.Release, 0.01, " sec", nullptr, this, *this);
+
+    initLabel(gainLabel, "Gain", *this);
+    initLabel(typeLabel, "Type", *this);
+    initLabel(attackCurveLabel, "A. Curve", *this);
+    initLabel(attackLabel, "Attack", *this);
+    initLabel(decayLabel, "Decay", *this);
+    initLabel(releaseLabel, "Release", *this);
+
+    for (auto& filter : filters) {
+        addAndMakeVisible(filter);
+    }
+
+    startTimerHz(30.0f);
+}
+
+NoiseComponent::~NoiseComponent() {}
+
+void NoiseComponent::paint(juce::Graphics& g) {}
+
+void NoiseComponent::resized() {
+    juce::Rectangle<int> bounds = getLocalBounds();
+    consumeLabeledKnob(bounds, gainLabel, gainSlider);
+    consumeLabeledComboBox(bounds, 120, typeLabel, typeSelector);
+    consumeLabeledKnob(bounds, attackCurveLabel, attackCurveSlider);
+    consumeLabeledKnob(bounds, attackLabel, attackSlider);
+    consumeLabeledKnob(bounds, decayLabel, decaySlider);
+    consumeLabeledKnob(bounds, releaseLabel, releaseSlider);
+    auto remainingWidth = bounds.getWidth();
+    for (auto& filter : filters) {
+        filter.setBounds(bounds.removeFromLeft(remainingWidth / 2));
+    }
+}
+void NoiseComponent::comboBoxChanged(juce::ComboBox* comboBox) {
+    auto& params = getNoiseParams();
+    if (comboBox == &typeSelector) {
+        *params.Waveform = typeSelector.getSelectedItemIndex();
+    }
+}
+void NoiseComponent::sliderValueChanged(juce::Slider* slider) {
+    auto& params = getNoiseParams();
+    auto& envParams = getEnvelopeParams();
+    if (slider == &gainSlider) {
+        *params.Gain = (float)gainSlider.getValue();
+    } else if (slider == &attackCurveSlider) {
+        *envParams.AttackCurve = (float)attackCurveSlider.getValue();
+    } else if (slider == &attackSlider) {
+        *envParams.Attack = (float)attackSlider.getValue();
+    } else if (slider == &decaySlider) {
+        *envParams.Decay = (float)decaySlider.getValue();
+    } else if (slider == &releaseSlider) {
+        *envParams.Release = (float)releaseSlider.getValue();
+    }
+}
+void NoiseComponent::timerCallback() {
+    auto& params = getNoiseParams();
+    gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
+
+    auto& envParams = getEnvelopeParams();
+    attackCurveSlider.setValue(envParams.AttackCurve->get(), juce::dontSendNotification);
+    attackSlider.setValue(envParams.Attack->get(), juce::dontSendNotification);
+    decaySlider.setValue(envParams.Decay->get(), juce::dontSendNotification);
+    releaseSlider.setValue(envParams.Release->get(), juce::dontSendNotification);
+
+    gainSlider.setLookAndFeel(&berryLookAndFeel);
 }
 
 //==============================================================================

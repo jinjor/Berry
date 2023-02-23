@@ -525,39 +525,6 @@ private:
 };
 
 //==============================================================================
-class NoiseComponent : public juce::Component, juce::Slider::Listener, private juce::Timer, ComponentHelper {
-public:
-    NoiseComponent(int index, AllParams& allParams);
-    virtual ~NoiseComponent();
-    NoiseComponent(const OscComponent&) = delete;
-
-    virtual void paint(juce::Graphics& g) override;
-    virtual void resized() override;
-
-private:
-    virtual void sliderValueChanged(juce::Slider* slider) override;
-    virtual void timerCallback() override;
-    int index;
-
-    AllParams& allParams;
-
-    juce::Slider gainSlider;
-    juce::Slider attackCurveSlider;
-    juce::Slider attackSlider;
-    juce::Slider decaySlider;
-    juce::Slider releaseSlider;
-
-    juce::Label gainLabel;
-    juce::Label attackCurveLabel;
-    juce::Label attackLabel;
-    juce::Label decayLabel;
-    juce::Label releaseLabel;
-
-    NoiseParams& getNoiseParams() { return allParams.noiseUnitParams[index].noiseParams; }
-    EnvelopeParams& getEnvelopeParams() { return allParams.noiseUnitParams[index].envelopeParams; }
-};
-
-//==============================================================================
 class FilterComponent : public juce::Component,
                         juce::ToggleButton::Listener,
                         juce::ComboBox::Listener,
@@ -598,6 +565,48 @@ private:
     juce::Label gainLabel;
 
     FilterParams& getSelectedFilterParams() { return allParams.noiseUnitParams[noiseIndex].filterParams[filterIndex]; }
+};
+
+//==============================================================================
+class NoiseComponent : public juce::Component,
+                       juce::Slider::Listener,
+                       juce::ComboBox::Listener,
+                       private juce::Timer,
+                       ComponentHelper {
+public:
+    NoiseComponent(int index, AllParams& allParams);
+    virtual ~NoiseComponent();
+    NoiseComponent(const OscComponent&) = delete;
+
+    virtual void paint(juce::Graphics& g) override;
+    virtual void resized() override;
+
+private:
+    virtual void comboBoxChanged(juce::ComboBox* comboBox) override;
+    virtual void sliderValueChanged(juce::Slider* slider) override;
+    virtual void timerCallback() override;
+    int index;
+
+    AllParams& allParams;
+
+    juce::Slider gainSlider;
+    juce::ComboBox typeSelector;
+    juce::Slider attackCurveSlider;
+    juce::Slider attackSlider;
+    juce::Slider decaySlider;
+    juce::Slider releaseSlider;
+
+    juce::Label gainLabel;
+    juce::Label typeLabel;
+    juce::Label attackCurveLabel;
+    juce::Label attackLabel;
+    juce::Label decayLabel;
+    juce::Label releaseLabel;
+
+    std::array<FilterComponent, NUM_NOISE_FILTER> filters;
+
+    NoiseParams& getNoiseParams() { return allParams.noiseUnitParams[index].noiseParams; }
+    EnvelopeParams& getEnvelopeParams() { return allParams.noiseUnitParams[index].envelopeParams; }
 };
 
 //==============================================================================

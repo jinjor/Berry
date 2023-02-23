@@ -146,7 +146,8 @@ FilterParams::FilterParams(int noiseIndex, int filterIndex) {
     auto idPrefix = "N" + juce::String(noiseIndex) + "_FILTER" + juce::String(filterIndex) + "_";
     auto namePrefix = "N" + juce::String(noiseIndex) + " Filter" + juce::String(filterIndex) + " ";
 
-    Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
+    // Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", false);
+    Enabled = new juce::AudioParameterBool(idPrefix + "ENABLED", namePrefix + "Enabled", true);  // TODO
     Type = new juce::AudioParameterChoice(
         idPrefix + "TYPE", namePrefix + "Type", FILTER_TYPE_NAMES, FILTER_TYPE_NAMES.indexOf("Lowpass"));
     FreqType = new juce::AudioParameterChoice(idPrefix + "FREQ_TYPE",
@@ -180,7 +181,8 @@ void FilterParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(Gain->paramID, (double)Gain->get());
 }
 void FilterParams::loadParameters(juce::XmlElement& xml) {
-    *Enabled = xml.getIntAttribute(Enabled->paramID, 0);
+    // *Enabled = xml.getBoolAttribute(Enabled->paramID, false);
+    *Enabled = true;  // TODO
     *Type = xml.getIntAttribute(Type->paramID, 0);
     *FreqType = xml.getIntAttribute(FreqType->paramID, 0);
     *Hz = (float)xml.getDoubleAttribute(Hz->paramID, 0);

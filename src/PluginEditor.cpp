@@ -178,18 +178,19 @@ void BerryAudioProcessorEditor::resized() {
         auto masterPanelHeight = (lowerHeight - delayPanelHeight - PANEL_MARGIN_Y) * 1 / 3;
         lowerArea.removeFromLeft(PANEL_MARGIN_X);
         {
-            auto area = lowerArea.removeFromLeft(leftWidth);
+            // auto area = lowerArea.removeFromLeft(leftWidth);
+            auto &area = lowerArea;
             noiseComponents[0].setBounds(area.removeFromTop(filterPanelHeight));
             area.removeFromTop(PANEL_MARGIN_Y);
             noiseComponents[1].setBounds(area.removeFromTop(filterPanelHeight));
         }
-        lowerArea.removeFromLeft(PANEL_MARGIN_X);
-        {
-            auto &area = lowerArea;
-            delayComponent.setBounds(area.removeFromTop(delayPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            masterComponent.setBounds(area.removeFromTop(masterPanelHeight));
-        }
+        // lowerArea.removeFromLeft(PANEL_MARGIN_X);
+        // {
+        //     auto &area = lowerArea;
+        //     delayComponent.setBounds(area.removeFromTop(delayPanelHeight));
+        //     area.removeFromTop(PANEL_MARGIN_Y);
+        //     masterComponent.setBounds(area.removeFromTop(masterPanelHeight));
+        // }
     }
 }
 void BerryAudioProcessorEditor::timerCallback() {
