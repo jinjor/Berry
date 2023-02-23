@@ -120,7 +120,7 @@ void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     if (synth.getNumVoices() != numVoices) {
         synth.clearVoices();
         for (auto i = 0; i < numVoices; ++i) {
-            synth.addVoice(new BerryVoice(&currentPositionInfo, buffer, allParams));
+            synth.addVoice(new BerryVoice(&currentPositionInfo, this->buffer, allParams));
         }
     }
     auto numSamples = buffer.getNumSamples();

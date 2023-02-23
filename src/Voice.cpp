@@ -271,7 +271,6 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels, Calculate
         panBase = (1 + panBase) * allParams.globalParams.pan + panBase;
     }
 
-    auto panModAmp = std::min(1.0 - panBase, 1.0 + panBase);
     // ---------------- OSC with Envelope and Filter ----------------
     for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
         if (!adsr[oscIndex].isActive()) {
@@ -295,6 +294,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels, Calculate
         if (!noiseAdsr[noiseIndex].isActive()) {
             continue;
         }
+        active = true;
         auto &noiseUnitParams = allParams.noiseUnitParams[noiseIndex];
 
         auto gain = noiseAdsr[noiseIndex].getValue() * noiseUnitParams.noiseParams.gain;
