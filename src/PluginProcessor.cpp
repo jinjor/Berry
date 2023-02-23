@@ -159,7 +159,6 @@ juce::AudioProcessorEditor* BerryAudioProcessor::createEditor() { return new Ber
 
 //==============================================================================
 void BerryAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
-    // TODO: ValueTree でもできるらしいので調べる
     juce::XmlElement xml("BerryInstrument");
     allParams.saveParameters(xml);
     copyXmlToBinary(xml, destData);
@@ -177,9 +176,8 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new BerryAudio
 
 //==============================================================================
 void BerryAudioProcessor::copyToClipboard() {
-    // TODO: ValueTree でもできるらしいので調べる
     juce::XmlElement xml("BerryInstrumentClipboard");
-    allParams.saveParametersToClipboard(xml);
+    allParams.saveParameters(xml);
     juce::SystemClipboard::copyTextToClipboard(xml.toString());
 }
 void BerryAudioProcessor::pasteFromClipboard() {
@@ -187,6 +185,6 @@ void BerryAudioProcessor::pasteFromClipboard() {
     DBG(text);
     auto xml = juce::parseXML(text);
     if (xml && xml->hasTagName("BerryInstrumentClipboard")) {
-        allParams.loadParametersFromClipboard(*xml);
+        allParams.loadParameters(*xml);
     }
 }

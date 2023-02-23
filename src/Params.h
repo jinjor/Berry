@@ -342,8 +342,6 @@ public:
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
 
-    void saveParametersToClipboard(juce::XmlElement& xml);
-    void loadParametersFromClipboard(juce::XmlElement& xml);
     void freeze() {
         globalParams.freeze();
         voiceParams.freeze();

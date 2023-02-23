@@ -390,11 +390,3 @@ void AllParams::loadParameters(juce::XmlElement& xml) {
     delayParams.loadParameters(xml);
     masterParams.loadParameters(xml);
 }
-void AllParams::saveParametersToClipboard(juce::XmlElement& xml) {
-    // TODO
-    // mainParams.saveParameters(xml);
-}
-void AllParams::loadParametersFromClipboard(juce::XmlElement& xml) {
-    // TODO
-    // mainParams.loadParameters(xml);
-}
