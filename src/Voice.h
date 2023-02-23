@@ -77,7 +77,6 @@ public:
                    juce::SynthesiserSound *,
                    int currentPitchWheelPosition) override;
     void stopNote(float velocity, bool allowTailOff) override;
-    void mute(double duration);
     virtual void pitchWheelMoved(int) override{};
     virtual void controllerMoved(int, int) override{};
     void renderNextBlock(juce::AudioSampleBuffer &outputBuffer, int startSample, int numSamples) override;

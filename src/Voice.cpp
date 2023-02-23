@@ -134,17 +134,6 @@ void BerryVoice::stopNote(float velocity, bool allowTailOff) {
         }
     }
 }
-void BerryVoice::mute(double duration) {
-    DBG("mute()");
-    auto sampleRate = getSampleRate();
-    auto fixedSampleRate = sampleRate * CONTROL_RATE;  // for control
-    for (int i = 0; i < NUM_OSC; ++i) {
-        adsr[i].doRelease(fixedSampleRate, duration);
-    }
-    for (int i = 0; i < NUM_NOISE; ++i) {
-        noiseAdsr[i].doRelease(fixedSampleRate, duration);
-    }
-}
 void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int startSample, int numSamples) {
     if (BerrySound *playingSound = dynamic_cast<BerrySound *>(getCurrentlyPlayingSound().get())) {
         // DBG("startSample: " + std::to_string(startSample));
