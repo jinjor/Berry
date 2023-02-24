@@ -71,21 +71,11 @@ OscParams::OscParams(int timbreIndex, int index) : index(index) {
     auto namePrefix = "T" + std::to_string(timbreIndex) + " OSC" + std::to_string(index) + " ";
     Gain = new juce::AudioParameterFloat(
         idPrefix + "GAIN", namePrefix + "Gain", rangeWithSkewForCentre(0.0f, 4.0f, 1.0f), 1.0f);
-    NewEnvelope = new juce::AudioParameterBool(idPrefix + "SYNC_ENVELOPE", namePrefix + "Envelope", index == 0);
     freeze();
 }
-void OscParams::addAllParameters(juce::AudioProcessor& processor) {
-    processor.addParameter(Gain);
-    processor.addParameter(NewEnvelope);
-}
-void OscParams::saveParameters(juce::XmlElement& xml) {
-    xml.setAttribute(Gain->paramID, (double)Gain->get());
-    xml.setAttribute(NewEnvelope->paramID, NewEnvelope->get());
-}
-void OscParams::loadParameters(juce::XmlElement& xml) {
-    *Gain = (float)xml.getDoubleAttribute(Gain->paramID, 0);
-    *NewEnvelope = xml.getIntAttribute(NewEnvelope->paramID, index == 0);
-}
+void OscParams::addAllParameters(juce::AudioProcessor& processor) { processor.addParameter(Gain); }
+void OscParams::saveParameters(juce::XmlElement& xml) { xml.setAttribute(Gain->paramID, (double)Gain->get()); }
+void OscParams::loadParameters(juce::XmlElement& xml) { *Gain = (float)xml.getDoubleAttribute(Gain->paramID, 0); }
 
 //==============================================================================
 NoiseParams::NoiseParams(int index) {

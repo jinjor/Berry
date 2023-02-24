@@ -93,7 +93,6 @@ private:
 class OscParams : public SynthParametersBase {
 public:
     juce::AudioParameterFloat* Gain;
-    juce::AudioParameterBool* NewEnvelope;
 
     OscParams(int timbreIndex, int index);
     OscParams(const OscParams&) = delete;
@@ -104,12 +103,8 @@ public:
     virtual void loadParameters(juce::XmlElement& xml) override;
 
     float gain;
-    bool newEnvelope;
 
-    void freeze() {
-        gain = Gain->get();
-        newEnvelope = NewEnvelope->get();
-    }
+    void freeze() { gain = Gain->get(); }
 
 private:
     int index;

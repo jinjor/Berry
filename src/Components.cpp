@@ -410,110 +410,8 @@ void MasterComponent::timerCallback() {
 }
 
 //==============================================================================
-OscComponent::OscComponent(int index, AllParams& allParams)
-    : index(index),
-      allParams(allParams),
-      newEnvelopeToggle(),
-      gainSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                 juce::Slider::TextEntryBoxPosition::NoTextBox),
-      attackCurveSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                        juce::Slider::TextEntryBoxPosition::NoTextBox),
-      attackSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                   juce::Slider::TextEntryBoxPosition::NoTextBox),
-      decaySlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                  juce::Slider::TextEntryBoxPosition::NoTextBox),
-      releaseSlider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                    juce::Slider::TextEntryBoxPosition::NoTextBox) {
-    auto& params = getSelectedOscParams();
-    auto& envParams = getSelectedEnvelopeParams();
-
-    auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
-    initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
-    auto formatGain2 = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
-    initChoiceToggle(newEnvelopeToggle, params.NewEnvelope, this, *this);
-    initLinear(attackCurveSlider, envParams.AttackCurve, 0.01, this, *this);
-    initSkewFromMid(attackSlider, envParams.Attack, 0.001, " sec", nullptr, this, *this);
-    initSkewFromMid(decaySlider, envParams.Decay, 0.01, " sec", nullptr, this, *this);
-    initSkewFromMid(releaseSlider, envParams.Release, 0.01, " sec", nullptr, this, *this);
-
-    initLabel(gainLabel, "Gain", *this);
-    initLabel(newEnvelopeLabel, "New Env", *this);
-    initLabel(attackCurveLabel, "A. Curve", *this);
-    initLabel(attackLabel, "Attack", *this);
-    initLabel(decayLabel, "Decay", *this);
-    initLabel(releaseLabel, "Release", *this);
-
-    if (index == 0) {
-        newEnvelopeToggle.setEnabled(false);
-        newEnvelopeLabel.setEnabled(false);
-    }
-
-    startTimerHz(30.0f);
-}
-
-OscComponent::~OscComponent() {}
-
-void OscComponent::paint(juce::Graphics& g) {}
-
-void OscComponent::resized() {
-    juce::Rectangle<int> bounds = getLocalBounds();
-
-    consumeLabeledKnob(bounds, gainLabel, gainSlider);
-    consumeLabeledToggle(bounds, 45, newEnvelopeLabel, newEnvelopeToggle);
-    consumeLabeledKnob(bounds, attackCurveLabel, attackCurveSlider);
-    consumeLabeledKnob(bounds, attackLabel, attackSlider);
-    consumeLabeledKnob(bounds, decayLabel, decaySlider);
-    consumeLabeledKnob(bounds, releaseLabel, releaseSlider);
-}
-void OscComponent::sliderValueChanged(juce::Slider* slider) {
-    auto& params = getSelectedOscParams();
-    auto& envParams = getSelectedEnvelopeParams();
-    if (slider == &gainSlider) {
-        *params.Gain = (float)gainSlider.getValue();
-    } else if (slider == &attackCurveSlider) {
-        *envParams.AttackCurve = (float)attackCurveSlider.getValue();
-    } else if (slider == &attackSlider) {
-        *envParams.Attack = (float)attackSlider.getValue();
-    } else if (slider == &decaySlider) {
-        *envParams.Decay = (float)decaySlider.getValue();
-    } else if (slider == &releaseSlider) {
-        *envParams.Release = (float)releaseSlider.getValue();
-    }
-}
-void OscComponent::buttonClicked(juce::Button* button) {
-    auto& params = getSelectedOscParams();
-    if (button == &newEnvelopeToggle) {
-        *params.NewEnvelope = newEnvelopeToggle.getToggleState();
-    }
-}
-void OscComponent::timerCallback() {
-    auto& params = getSelectedOscParams();
-    gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
-
-    auto newEnvelope = params.NewEnvelope->get();
-    newEnvelopeToggle.setToggleState(newEnvelope, juce::dontSendNotification);
-    attackCurveSlider.setEnabled(newEnvelope);
-    attackSlider.setEnabled(newEnvelope);
-    decaySlider.setEnabled(newEnvelope);
-    releaseSlider.setEnabled(newEnvelope);
-    attackCurveLabel.setEnabled(newEnvelope);
-    attackLabel.setEnabled(newEnvelope);
-    decayLabel.setEnabled(newEnvelope);
-    releaseLabel.setEnabled(newEnvelope);
-
-    auto& envParams = getSelectedEnvelopeParams();
-    attackCurveSlider.setValue(envParams.AttackCurve->get(), juce::dontSendNotification);
-    attackSlider.setValue(envParams.Attack->get(), juce::dontSendNotification);
-    decaySlider.setValue(envParams.Decay->get(), juce::dontSendNotification);
-    releaseSlider.setValue(envParams.Release->get(), juce::dontSendNotification);
-
-    gainSlider.setLookAndFeel(&berryLookAndFeel);
-}
-
-//==============================================================================
 HarmonicHeadComponent::HarmonicHeadComponent() {
     initLabel(gainLabel, "Gain", *this);
-    initLabel(newEnvelopeLabel, "New Env", *this);
     initLabel(attackCurveLabel, "A. Curve", *this);
     initLabel(attackLabel, "Attack", *this);
     initLabel(decayLabel, "Decay", *this);
@@ -528,7 +426,7 @@ void HarmonicHeadComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
 
     consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, gainLabel);
-    consumeLabel(bounds, 45, newEnvelopeLabel);
+    bounds.removeFromLeft(20);
     consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, attackCurveLabel);
     consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, attackLabel);
     consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, decayLabel);
@@ -539,7 +437,6 @@ void HarmonicHeadComponent::resized() {
 HarmonicBodyComponent::HarmonicBodyComponent(int index, AllParams& allParams)
     : index(index),
       allParams(allParams),
-      newEnvelopeToggle(),
       gainSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
       attackCurveSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
       attackSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
@@ -550,15 +447,10 @@ HarmonicBodyComponent::HarmonicBodyComponent(int index, AllParams& allParams)
 
     auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
     initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
-    initChoiceToggle(newEnvelopeToggle, params.NewEnvelope, this, *this);
     initLinear(attackCurveSlider, envParams.AttackCurve, 0.01, this, *this);
     initSkewFromMid(attackSlider, envParams.Attack, 0.001, " sec", nullptr, this, *this);
     initSkewFromMid(decaySlider, envParams.Decay, 0.01, " sec", nullptr, this, *this);
     initSkewFromMid(releaseSlider, envParams.Release, 0.01, " sec", nullptr, this, *this);
-
-    if (index == 0) {
-        newEnvelopeToggle.setEnabled(false);
-    }
 
     startTimerHz(30.0f);
 }
@@ -571,7 +463,7 @@ void HarmonicBodyComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
 
     consumeHorizontalSlider(bounds, gainSlider);
-    consumeToggle(bounds, 45, newEnvelopeToggle);
+    bounds.removeFromLeft(20);
     consumeHorizontalSlider(bounds, attackCurveSlider);
     consumeHorizontalSlider(bounds, attackSlider);
     consumeHorizontalSlider(bounds, decaySlider);
@@ -590,12 +482,6 @@ void HarmonicBodyComponent::sliderValueChanged(juce::Slider* slider) {
         *envParams.Decay = (float)decaySlider.getValue();
     } else if (slider == &releaseSlider) {
         *envParams.Release = (float)releaseSlider.getValue();
-    }
-}
-void HarmonicBodyComponent::buttonClicked(juce::Button* button) {
-    auto& params = getSelectedOscParams();
-    if (button == &newEnvelopeToggle) {
-        *params.NewEnvelope = newEnvelopeToggle.getToggleState();
     }
 }
 void HarmonicBodyComponent::timerCallback() {
@@ -627,14 +513,6 @@ void HarmonicBodyComponent::timerCallback() {
         }
     }
     gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
-
-    auto newEnvelope = params.NewEnvelope->get();
-    newEnvelopeToggle.setToggleState(newEnvelope, juce::dontSendNotification);
-    attackCurveSlider.setEnabled(newEnvelope);
-    attackSlider.setEnabled(newEnvelope);
-    decaySlider.setEnabled(newEnvelope);
-    releaseSlider.setEnabled(newEnvelope);
-
     attackCurveSlider.setValue(envParams.AttackCurve->get(), juce::dontSendNotification);
     attackSlider.setValue(envParams.Attack->get(), juce::dontSendNotification);
     decaySlider.setValue(envParams.Decay->get(), juce::dontSendNotification);

@@ -206,24 +206,8 @@ void BerryVoice::calculateParamsBeforeLoop(CalculatedParams &params) {
         auto &rightParams = allParams.mainParams[rightIndex];
         auto &leftOsc = leftParams.oscParams[oscIndex];
         auto &rightOsc = rightParams.oscParams[oscIndex];
-        int leftEnvelopeIndex = 0;
-        for (int i = oscIndex; i >= 1; i--) {
-            auto &p = leftParams.oscParams[i];
-            if (p.newEnvelope) {
-                leftEnvelopeIndex = i;
-                break;
-            }
-        }
-        int rightEnvelopeIndex = 0;
-        for (int i = oscIndex; i >= 1; i--) {
-            auto &p = rightParams.oscParams[i];
-            if (p.newEnvelope) {
-                rightEnvelopeIndex = i;
-                break;
-            }
-        }
-        auto &leftEnv = leftParams.envelopeParams[leftEnvelopeIndex];
-        auto &rightEnv = rightParams.envelopeParams[rightEnvelopeIndex];
+        auto &leftEnv = leftParams.envelopeParams[oscIndex];
+        auto &rightEnv = rightParams.envelopeParams[oscIndex];
         params.gain[oscIndex] = leftOsc.gain * leftRatio + rightOsc.gain * rightRatio;
         params.attackCurve[oscIndex] = leftEnv.attackCurve * leftRatio + rightEnv.attackCurve * rightRatio;
         params.attack[oscIndex] = leftEnv.attack * leftRatio + rightEnv.attack * rightRatio;

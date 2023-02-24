@@ -497,49 +497,6 @@ private:
 };
 
 //==============================================================================
-class OscComponent : public juce::Component,
-                     juce::Slider::Listener,
-                     juce::Button::Listener,
-                     private juce::Timer,
-                     ComponentHelper {
-public:
-    OscComponent(int index, AllParams& allParams);
-    virtual ~OscComponent();
-    OscComponent(const OscComponent&) = delete;
-
-    virtual void paint(juce::Graphics& g) override;
-    virtual void resized() override;
-
-private:
-    virtual void sliderValueChanged(juce::Slider* slider) override;
-    virtual void buttonClicked(juce::Button* button) override;
-    virtual void timerCallback() override;
-    int index;
-
-    AllParams& allParams;
-
-    juce::ToggleButton newEnvelopeToggle;
-    juce::Slider gainSlider;
-    juce::Slider attackCurveSlider;
-    juce::Slider attackSlider;
-    juce::Slider decaySlider;
-    juce::Slider releaseSlider;
-
-    juce::Label newEnvelopeLabel;
-    juce::Label gainLabel;
-    juce::Label attackCurveLabel;
-    juce::Label attackLabel;
-    juce::Label decayLabel;
-    juce::Label releaseLabel;
-
-    OscParams& getSelectedOscParams() { return allParams.getCurrentMainParams().oscParams[index]; }
-    EnvelopeParams& getSelectedEnvelopeParams() {
-        // sync 先を表示した方がいいかもしれない
-        return allParams.getCurrentMainParams().envelopeParams[index];
-    }
-};
-
-//==============================================================================
 class HarmonicHeadComponent : public juce::Component, ComponentHelper {
 public:
     HarmonicHeadComponent();
@@ -550,7 +507,6 @@ public:
     virtual void resized() override;
 
 private:
-    juce::Label newEnvelopeLabel;
     juce::Label gainLabel;
     juce::Label attackCurveLabel;
     juce::Label attackLabel;
@@ -559,11 +515,7 @@ private:
 };
 
 //==============================================================================
-class HarmonicBodyComponent : public juce::Component,
-                              juce::Slider::Listener,
-                              juce::Button::Listener,
-                              private juce::Timer,
-                              ComponentHelper {
+class HarmonicBodyComponent : public juce::Component, juce::Slider::Listener, private juce::Timer, ComponentHelper {
 public:
     HarmonicBodyComponent(int index, AllParams& allParams);
     virtual ~HarmonicBodyComponent();
@@ -574,13 +526,11 @@ public:
 
 private:
     virtual void sliderValueChanged(juce::Slider* slider) override;
-    virtual void buttonClicked(juce::Button* button) override;
     virtual void timerCallback() override;
     int index;
 
     AllParams& allParams;
 
-    juce::ToggleButton newEnvelopeToggle;
     juce::Slider gainSlider;
     juce::Slider attackCurveSlider;
     juce::Slider attackSlider;
