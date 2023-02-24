@@ -511,6 +511,115 @@ void OscComponent::timerCallback() {
 }
 
 //==============================================================================
+HarmonicHeadComponent::HarmonicHeadComponent() {
+    initLabel(gainLabel, "Gain", *this);
+    initLabel(newEnvelopeLabel, "New Env", *this);
+    initLabel(attackCurveLabel, "A. Curve", *this);
+    initLabel(attackLabel, "Attack", *this);
+    initLabel(decayLabel, "Decay", *this);
+    initLabel(releaseLabel, "Release", *this);
+}
+
+HarmonicHeadComponent::~HarmonicHeadComponent() {}
+
+void HarmonicHeadComponent::paint(juce::Graphics& g) {}
+
+void HarmonicHeadComponent::resized() {
+    juce::Rectangle<int> bounds = getLocalBounds();
+
+    consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, gainLabel);
+    consumeLabel(bounds, 45, newEnvelopeLabel);
+    consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, attackCurveLabel);
+    consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, attackLabel);
+    consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, decayLabel);
+    consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, releaseLabel);
+}
+
+//==============================================================================
+HarmonicBodyComponent::HarmonicBodyComponent(int index, AllParams& allParams)
+    : index(index),
+      allParams(allParams),
+      newEnvelopeToggle(),
+      gainSlider(juce::Slider::SliderStyle::LinearHorizontal, juce::Slider::TextEntryBoxPosition::NoTextBox),
+      attackCurveSlider(juce::Slider::SliderStyle::LinearHorizontal, juce::Slider::TextEntryBoxPosition::NoTextBox),
+      attackSlider(juce::Slider::SliderStyle::LinearHorizontal, juce::Slider::TextEntryBoxPosition::NoTextBox),
+      decaySlider(juce::Slider::SliderStyle::LinearHorizontal, juce::Slider::TextEntryBoxPosition::NoTextBox),
+      releaseSlider(juce::Slider::SliderStyle::LinearHorizontal, juce::Slider::TextEntryBoxPosition::NoTextBox) {
+    auto& params = getSelectedOscParams();
+    auto& envParams = getSelectedEnvelopeParams();
+
+    auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
+    initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
+    auto formatGain2 = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
+    initChoiceToggle(newEnvelopeToggle, params.NewEnvelope, this, *this);
+    initLinear(attackCurveSlider, envParams.AttackCurve, 0.01, this, *this);
+    initSkewFromMid(attackSlider, envParams.Attack, 0.001, " sec", nullptr, this, *this);
+    initSkewFromMid(decaySlider, envParams.Decay, 0.01, " sec", nullptr, this, *this);
+    initSkewFromMid(releaseSlider, envParams.Release, 0.01, " sec", nullptr, this, *this);
+
+    if (index == 0) {
+        newEnvelopeToggle.setEnabled(false);
+    }
+
+    startTimerHz(30.0f);
+}
+
+HarmonicBodyComponent::~HarmonicBodyComponent() {}
+
+void HarmonicBodyComponent::paint(juce::Graphics& g) {}
+
+void HarmonicBodyComponent::resized() {
+    juce::Rectangle<int> bounds = getLocalBounds();
+
+    consumeHorizontalSlider(bounds, gainSlider);
+    consumeToggle(bounds, 45, newEnvelopeToggle);
+    consumeHorizontalSlider(bounds, attackCurveSlider);
+    consumeHorizontalSlider(bounds, attackSlider);
+    consumeHorizontalSlider(bounds, decaySlider);
+    consumeHorizontalSlider(bounds, releaseSlider);
+}
+void HarmonicBodyComponent::sliderValueChanged(juce::Slider* slider) {
+    auto& params = getSelectedOscParams();
+    auto& envParams = getSelectedEnvelopeParams();
+    if (slider == &gainSlider) {
+        *params.Gain = (float)gainSlider.getValue();
+    } else if (slider == &attackCurveSlider) {
+        *envParams.AttackCurve = (float)attackCurveSlider.getValue();
+    } else if (slider == &attackSlider) {
+        *envParams.Attack = (float)attackSlider.getValue();
+    } else if (slider == &decaySlider) {
+        *envParams.Decay = (float)decaySlider.getValue();
+    } else if (slider == &releaseSlider) {
+        *envParams.Release = (float)releaseSlider.getValue();
+    }
+}
+void HarmonicBodyComponent::buttonClicked(juce::Button* button) {
+    auto& params = getSelectedOscParams();
+    if (button == &newEnvelopeToggle) {
+        *params.NewEnvelope = newEnvelopeToggle.getToggleState();
+    }
+}
+void HarmonicBodyComponent::timerCallback() {
+    auto& params = getSelectedOscParams();
+    gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
+
+    auto newEnvelope = params.NewEnvelope->get();
+    newEnvelopeToggle.setToggleState(newEnvelope, juce::dontSendNotification);
+    attackCurveSlider.setEnabled(newEnvelope);
+    attackSlider.setEnabled(newEnvelope);
+    decaySlider.setEnabled(newEnvelope);
+    releaseSlider.setEnabled(newEnvelope);
+
+    auto& envParams = getSelectedEnvelopeParams();
+    attackCurveSlider.setValue(envParams.AttackCurve->get(), juce::dontSendNotification);
+    attackSlider.setValue(envParams.Attack->get(), juce::dontSendNotification);
+    decaySlider.setValue(envParams.Decay->get(), juce::dontSendNotification);
+    releaseSlider.setValue(envParams.Release->get(), juce::dontSendNotification);
+
+    // gainSlider.setLookAndFeel(&berryLookAndFeel);
+}
+
+//==============================================================================
 FilterComponent::FilterComponent(int noiseIndex, int filterIndex, AllParams& allParams)
     : noiseIndex(noiseIndex),
       filterIndex(filterIndex),
@@ -655,15 +764,18 @@ void NoiseComponent::paint(juce::Graphics& g) {}
 
 void NoiseComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
-    consumeLabeledKnob(bounds, gainLabel, gainSlider);
-    consumeLabeledComboBox(bounds, 120, typeLabel, typeSelector);
-    consumeLabeledKnob(bounds, attackCurveLabel, attackCurveSlider);
-    consumeLabeledKnob(bounds, attackLabel, attackSlider);
-    consumeLabeledKnob(bounds, decayLabel, decaySlider);
-    consumeLabeledKnob(bounds, releaseLabel, releaseSlider);
-    auto remainingWidth = bounds.getWidth();
+    auto height = bounds.getHeight();
+    auto noiseArea = bounds.removeFromTop(height / 3);
+    consumeLabeledKnob(noiseArea, gainLabel, gainSlider);
+    consumeLabeledComboBox(noiseArea, 70, typeLabel, typeSelector);
+    consumeLabeledKnob(noiseArea, attackCurveLabel, attackCurveSlider);
+    consumeLabeledKnob(noiseArea, attackLabel, attackSlider);
+    consumeLabeledKnob(noiseArea, decayLabel, decaySlider);
+    consumeLabeledKnob(noiseArea, releaseLabel, releaseSlider);
+
+    auto remainingHeight = bounds.getHeight();
     for (auto& filter : filters) {
-        filter.setBounds(bounds.removeFromLeft(remainingWidth / 2));
+        filter.setBounds(bounds.removeFromTop(remainingHeight / 2));
     }
 }
 void NoiseComponent::comboBoxChanged(juce::ComboBox* comboBox) {
