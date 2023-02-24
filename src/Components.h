@@ -259,7 +259,11 @@ protected:
         slider.addListener(listener);
         parent.addAndMakeVisible(slider);
     }
-
+    void consumeLabel(juce::Rectangle<int>& parentArea, int width, juce::Label& label) {
+        parentArea.removeFromLeft(PARAM_MARGIN_LEFT);
+        auto area = parentArea.removeFromLeft(width);
+        label.setBounds(area.removeFromTop(LABEL_HEIGHT));
+    }
     void consumeLabeledKnob(juce::Rectangle<int>& parentArea, juce::Label& label, juce::Slider& knob) {
         parentArea.removeFromLeft(PARAM_MARGIN_LEFT);
         auto area = parentArea.removeFromLeft(SLIDER_WIDTH);
@@ -288,6 +292,10 @@ protected:
         consumeLabeledKnob(parentArea, label1, knob1);
         consumeLabeledKnob(copied, label2, knob2);
     }
+    void consumeHorizontalSlider(juce::Rectangle<int>& parentArea, juce::Slider& slider) {
+        parentArea.removeFromLeft(PARAM_MARGIN_LEFT);
+        slider.setBounds(parentArea.removeFromLeft(HORIZONTAL_SLIDER_WIDTH).removeFromTop(HORIZONTAL_SLIDER_HEIGHT));
+    }
     void consumeLabeledComboBox(juce::Rectangle<int>& parentArea, int width, juce::Label& label, juce::Component& box) {
         parentArea.removeFromLeft(PARAM_MARGIN_LEFT);
         auto area = parentArea.removeFromLeft(width);
@@ -313,9 +321,16 @@ protected:
         auto area = parentArea.removeFromLeft(width);
         label.setBounds(area.removeFromTop(LABEL_HEIGHT));
         area.removeFromTop(LABEL_MARGIN_BOTTOM);
-        const auto SIZE = 12.0f;
-        auto padding = (width - SIZE) / 2.0f;
-        toggle.setBounds(area.removeFromTop(SIZE).removeFromLeft(padding + SIZE).removeFromRight(SIZE));
+        auto padding = (width - CHECKBOX_SIZE) / 2.0f;
+        toggle.setBounds(
+            area.removeFromTop(CHECKBOX_SIZE).removeFromLeft(padding + CHECKBOX_SIZE).removeFromRight(CHECKBOX_SIZE));
+    }
+    void consumeToggle(juce::Rectangle<int>& parentArea, int width, juce::ToggleButton& toggle) {
+        parentArea.removeFromLeft(PARAM_MARGIN_LEFT);
+        auto area = parentArea.removeFromLeft(width);
+        auto padding = (width - CHECKBOX_SIZE) / 2.0f;
+        toggle.setBounds(
+            area.removeFromTop(CHECKBOX_SIZE).removeFromLeft(padding + CHECKBOX_SIZE).removeFromRight(CHECKBOX_SIZE));
     }
     void consumeKeyValueText(
         juce::Rectangle<int>& parentArea, int height, int width, juce::Label& keyLabel, juce::Label& valueLabel) {
@@ -482,40 +497,45 @@ private:
 };
 
 //==============================================================================
-class OscComponent : public juce::Component,
-                     juce::Slider::Listener,
-                     juce::Button::Listener,
-                     private juce::Timer,
-                     ComponentHelper {
+class HarmonicHeadComponent : public juce::Component, ComponentHelper {
 public:
-    OscComponent(int index, AllParams& allParams);
-    virtual ~OscComponent();
-    OscComponent(const OscComponent&) = delete;
+    HarmonicHeadComponent();
+    virtual ~HarmonicHeadComponent();
+    HarmonicHeadComponent(const HarmonicHeadComponent&) = delete;
+
+    virtual void paint(juce::Graphics& g) override;
+    virtual void resized() override;
+
+private:
+    juce::Label gainLabel;
+    juce::Label attackCurveLabel;
+    juce::Label attackLabel;
+    juce::Label decayLabel;
+    juce::Label releaseLabel;
+};
+
+//==============================================================================
+class HarmonicBodyComponent : public juce::Component, juce::Slider::Listener, private juce::Timer, ComponentHelper {
+public:
+    HarmonicBodyComponent(int index, AllParams& allParams);
+    virtual ~HarmonicBodyComponent();
+    HarmonicBodyComponent(const HarmonicBodyComponent&) = delete;
 
     virtual void paint(juce::Graphics& g) override;
     virtual void resized() override;
 
 private:
     virtual void sliderValueChanged(juce::Slider* slider) override;
-    virtual void buttonClicked(juce::Button* button) override;
     virtual void timerCallback() override;
     int index;
 
     AllParams& allParams;
 
-    juce::ToggleButton newEnvelopeToggle;
     juce::Slider gainSlider;
     juce::Slider attackCurveSlider;
     juce::Slider attackSlider;
     juce::Slider decaySlider;
     juce::Slider releaseSlider;
-
-    juce::Label newEnvelopeLabel;
-    juce::Label gainLabel;
-    juce::Label attackCurveLabel;
-    juce::Label attackLabel;
-    juce::Label decayLabel;
-    juce::Label releaseLabel;
 
     OscParams& getSelectedOscParams() { return allParams.getCurrentMainParams().oscParams[index]; }
     EnvelopeParams& getSelectedEnvelopeParams() {
@@ -576,7 +596,7 @@ class NoiseComponent : public juce::Component,
 public:
     NoiseComponent(int index, AllParams& allParams);
     virtual ~NoiseComponent();
-    NoiseComponent(const OscComponent&) = delete;
+    NoiseComponent(const NoiseComponent&) = delete;
 
     virtual void paint(juce::Graphics& g) override;
     virtual void resized() override;
