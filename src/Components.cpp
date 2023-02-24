@@ -540,17 +540,16 @@ HarmonicBodyComponent::HarmonicBodyComponent(int index, AllParams& allParams)
     : index(index),
       allParams(allParams),
       newEnvelopeToggle(),
-      gainSlider(juce::Slider::SliderStyle::LinearHorizontal, juce::Slider::TextEntryBoxPosition::NoTextBox),
-      attackCurveSlider(juce::Slider::SliderStyle::LinearHorizontal, juce::Slider::TextEntryBoxPosition::NoTextBox),
-      attackSlider(juce::Slider::SliderStyle::LinearHorizontal, juce::Slider::TextEntryBoxPosition::NoTextBox),
-      decaySlider(juce::Slider::SliderStyle::LinearHorizontal, juce::Slider::TextEntryBoxPosition::NoTextBox),
-      releaseSlider(juce::Slider::SliderStyle::LinearHorizontal, juce::Slider::TextEntryBoxPosition::NoTextBox) {
+      gainSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
+      attackCurveSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
+      attackSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
+      decaySlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
+      releaseSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox) {
     auto& params = getSelectedOscParams();
     auto& envParams = getSelectedEnvelopeParams();
 
     auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
     initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
-    auto formatGain2 = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
     initChoiceToggle(newEnvelopeToggle, params.NewEnvelope, this, *this);
     initLinear(attackCurveSlider, envParams.AttackCurve, 0.01, this, *this);
     initSkewFromMid(attackSlider, envParams.Attack, 0.001, " sec", nullptr, this, *this);
@@ -601,6 +600,32 @@ void HarmonicBodyComponent::buttonClicked(juce::Button* button) {
 }
 void HarmonicBodyComponent::timerCallback() {
     auto& params = getSelectedOscParams();
+    auto& envParams = getSelectedEnvelopeParams();
+
+    if (this->isMouseButtonDownAnywhere()) {
+        auto xy = this->getMouseXYRelative();
+        if (gainSlider.getBoundsInParent().contains(xy)) {
+            double width = gainSlider.getWidth();
+            double left = xy.x - gainSlider.getX();
+            *params.Gain = (float)gainSlider.proportionOfLengthToValue(left / width);
+        } else if (attackCurveSlider.getBoundsInParent().contains(xy)) {
+            double width = attackCurveSlider.getWidth();
+            double left = xy.x - attackCurveSlider.getX();
+            *envParams.AttackCurve = (float)attackCurveSlider.proportionOfLengthToValue(left / width);
+        } else if (attackSlider.getBoundsInParent().contains(xy)) {
+            double width = attackSlider.getWidth();
+            double left = xy.x - attackSlider.getX();
+            *envParams.Attack = (float)attackSlider.proportionOfLengthToValue(left / width);
+        } else if (decaySlider.getBoundsInParent().contains(xy)) {
+            double width = decaySlider.getWidth();
+            double left = xy.x - decaySlider.getX();
+            *envParams.Decay = (float)decaySlider.proportionOfLengthToValue(left / width);
+        } else if (releaseSlider.getBoundsInParent().contains(xy)) {
+            double width = releaseSlider.getWidth();
+            double left = xy.x - releaseSlider.getX();
+            *envParams.Release = (float)releaseSlider.proportionOfLengthToValue(left / width);
+        }
+    }
     gainSlider.setValue(params.Gain->get(), juce::dontSendNotification);
 
     auto newEnvelope = params.NewEnvelope->get();
@@ -610,13 +635,10 @@ void HarmonicBodyComponent::timerCallback() {
     decaySlider.setEnabled(newEnvelope);
     releaseSlider.setEnabled(newEnvelope);
 
-    auto& envParams = getSelectedEnvelopeParams();
     attackCurveSlider.setValue(envParams.AttackCurve->get(), juce::dontSendNotification);
     attackSlider.setValue(envParams.Attack->get(), juce::dontSendNotification);
     decaySlider.setValue(envParams.Decay->get(), juce::dontSendNotification);
     releaseSlider.setValue(envParams.Release->get(), juce::dontSendNotification);
-
-    // gainSlider.setLookAndFeel(&berryLookAndFeel);
 }
 
 //==============================================================================
