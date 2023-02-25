@@ -383,7 +383,9 @@ void KeyComponent::update(bool isBlack, bool isOn) {
     repaint();
 }
 void KeyComponent::paint(juce::Graphics& g) {
-    auto colour = isBlack ? juce::Colours::black : juce::Colours::white;
+    auto colour = isBlack ? isOn ? colour::KEY_BLACK_ON : colour::KEY_BLACK
+                  : isOn  ? colour::KEY_WHITE_ON
+                          : colour::KEY_WHITE;
     g.setColour(colour);
     g.fillAll();
 }
@@ -483,10 +485,6 @@ void KeyboardComponent::resized() {
         int height = keyHeight * (isBlack ? 0.65 : 1);
         int index = n - MIN_NOTE;
         keys[index].setBounds(x, y, width, height);
-
-        int midiChannel = 1;  // TODO
-        bool isOn = keyboardState.isNoteOn(midiChannel, n);
-        keys[index].update(isBlack, isOn);
     }
 }
 void KeyboardComponent::sliderValueChanged(juce::Slider* slider) {
@@ -498,7 +496,17 @@ void KeyboardComponent::sliderValueChanged(juce::Slider* slider) {
     }
     repaint();
 }
-void KeyboardComponent::timerCallback() { auto& params = allParams.masterParams; }
+void KeyboardComponent::timerCallback() {
+    for (int n = MIN_NOTE; n <= MAX_NOTE; n++) {
+        auto pos = KEY_POSITIONS[n % 12];
+        auto isBlack = pos < 0;
+        int index = n - MIN_NOTE;
+
+        int midiChannel = 1;  // TODO
+        bool isOn = keyboardState.isNoteOn(midiChannel, n);
+        keys[index].update(isBlack, isOn);
+    }
+}
 
 //==============================================================================
 HarmonicHeadComponent::HarmonicHeadComponent() {

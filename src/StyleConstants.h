@@ -25,6 +25,10 @@ const juce::Colour ANALYSER_BACKGROUND = juce::Colour(200, 200, 200);
 const juce::Colour ANALYSER_BORDER = juce::Colour(150, 150, 150);
 const juce::Colour ANALYSER_LINE = juce::Colour(20, 40, 70);
 const juce::Colour PIT = juce::Colour(180, 180, 180);
+const juce::Colour KEY_WHITE = juce::Colour(255, 255, 255);
+const juce::Colour KEY_WHITE_ON = juce::Colour(200, 210, 230);
+const juce::Colour KEY_BLACK = juce::Colour(20, 40, 70);
+const juce::Colour KEY_BLACK_ON = juce::Colour(90, 120, 180);
 }  // namespace colour
 // font
 constexpr float PANEL_NAME_FONT_SIZE = 15.0f;
