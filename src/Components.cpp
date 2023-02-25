@@ -551,7 +551,7 @@ HarmonicBodyComponent::HarmonicBodyComponent(int index, AllParams& allParams)
     initSkewFromMid(decaySlider, envParams.Decay, 0.01, " sec", nullptr, this, *this);
     initSkewFromMid(releaseSlider, envParams.Release, 0.01, " sec", nullptr, this, *this);
 
-    startTimerHz(30.0f);
+    startTimerHz(60.0f);  // ドラッグを捕捉するため頻度高め
 }
 
 HarmonicBodyComponent::~HarmonicBodyComponent() {}
@@ -560,6 +560,8 @@ void HarmonicBodyComponent::paint(juce::Graphics& g) {}
 
 void HarmonicBodyComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
+
+    bounds = bounds.withSizeKeepingCentre(bounds.getWidth(), HORIZONTAL_SLIDER_HEIGHT);
 
     consumeHorizontalSlider(bounds, gainSlider);
     bounds.removeFromLeft(20);

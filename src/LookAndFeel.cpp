@@ -16,6 +16,7 @@ BerryLookAndFeel::BerryLookAndFeel(bool controlled) : controlled(controlled) {
     setColour(juce::BubbleComponent::backgroundColourId, colour::PIT);
     setColour(juce::TextButton::textColourOnId, colour::TEXT);
     setColour(juce::TextButton::textColourOffId, colour::TEXT);  // ?
+    setColour(juce::Slider::trackColourId, colour::SELECT);
 }
 BerryLookAndFeel::~BerryLookAndFeel() {}
 void BerryLookAndFeel::drawTickBox(juce::Graphics& g,

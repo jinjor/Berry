@@ -53,6 +53,6 @@ constexpr float COMBO_BOX_HEIGHT = 30.0f;
 constexpr float SLIDER_WIDTH = 60.0f;
 constexpr float KNOB_HEIGHT = 44.0f;
 constexpr float HORIZONTAL_SLIDER_WIDTH = 80.0f;
-constexpr float HORIZONTAL_SLIDER_HEIGHT = 20.0f;
+constexpr float HORIZONTAL_SLIDER_HEIGHT = 10.0f;
 constexpr float CHECKBOX_SIZE = 12.0f;
 }  // namespace styles
