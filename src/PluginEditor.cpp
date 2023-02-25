@@ -16,6 +16,8 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
       analyserWindow(&analyserMode, &p.latestDataProvider),
       statusComponent(&p.polyphony, &p.timeConsumptionState, &p.latestDataProvider),
       utilComponent{SectionComponent{"UTILITY", HEADER_CHECK::Hidden, std::make_unique<UtilComponent>(p)}},
+      timberComponent{SectionComponent{
+          "TIMBER", HEADER_CHECK::Hidden, std::make_unique<KeyboardComponent>(p.allParams, p.keyboardState)}},
       harmonicHeadComponent{SectionComponent{"", HEADER_CHECK::Hidden, std::make_unique<HarmonicHeadComponent>()}},
       harmonicBodyComponents{
           SectionComponent{"1", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(0, p.allParams)},
@@ -48,7 +50,7 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     addAndMakeVisible(analyserWindow);
     addAndMakeVisible(statusComponent);
     addAndMakeVisible(utilComponent);
-    auto &mainParams = audioProcessor.allParams.getCurrentMainParams();
+    addAndMakeVisible(timberComponent);
 
     addAndMakeVisible(harmonicHeadComponent);
     for (auto i = 0; i < NUM_OSC; i++) {
@@ -126,7 +128,9 @@ void BerryAudioProcessorEditor::resized() {
     }
     {
         auto middleArea = bounds.removeFromTop(middleHeight).reduced(AREA_PADDING_X, AREA_PADDING_Y);
-
+        timberComponent.setBounds(middleArea);
+    }
+    {
         auto lowerArea = bounds.reduced(AREA_PADDING_X, AREA_PADDING_Y);
 
         auto leftWidth = (width - PANEL_MARGIN_X * 2) * 0.5;

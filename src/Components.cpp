@@ -410,6 +410,81 @@ void MasterComponent::timerCallback() {
 }
 
 //==============================================================================
+KeyComponent::KeyComponent() {}
+
+KeyComponent::~KeyComponent() {}
+void KeyComponent::update(bool isBlack, bool isOn) {
+    this->isBlack = isBlack;
+    this->isOn = isOn;
+    repaint();
+}
+void KeyComponent::paint(juce::Graphics& g) {
+    auto colour = isBlack ? juce::Colours::black : juce::Colours::white;
+    g.setColour(colour);
+    g.fillAll();
+}
+void KeyComponent::resized() {}
+
+//==============================================================================
+KeyboardComponent::KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState)
+    : allParams(allParams), keyboardState(keyboardState), keys{} {
+    float positions[12] = {0, -1, 1, -3, 2, 3, -6, 4, -8, 5, -10, 6};
+    int minNote = 21;
+    int maxNote = 108;
+    for (int n = minNote; n <= maxNote; n++) {
+        auto pos = positions[n % 12];
+        auto isBlack = pos < 0;
+        if (!isBlack) {
+            int index = n - minNote;
+            addAndMakeVisible(keys[index]);
+        }
+    }
+    for (int n = minNote; n <= maxNote; n++) {
+        auto pos = positions[n % 12];
+        auto isBlack = pos < 0;
+        if (isBlack) {
+            int index = n - minNote;
+            addAndMakeVisible(keys[index]);
+        }
+    }
+    startTimerHz(30.0f);
+}
+
+KeyboardComponent::~KeyboardComponent() {}
+
+void KeyboardComponent::paint(juce::Graphics& g) {}
+
+void KeyboardComponent::resized() {
+    juce::Rectangle<int> bounds = getLocalBounds();
+    // 21 (A0) - 108 (C8)
+    int minNote = 21;
+    int maxNote = 108;
+
+    float positions[12] = {0, -1, 1, -3, 2, 3, -6, 4, -8, 5, -10, 6};
+    float octaveWidth = (float)bounds.getWidth() / (7.0f + 3.0f / 7);
+    float boundsHeight = (float)bounds.getHeight();
+    int leftNote = 12;  // この音を基準にマイナスからスタート
+    for (int n = minNote; n <= maxNote; n++) {
+        auto pos = positions[n % 12];
+        auto isBlack = pos < 0;
+        auto w = isBlack ? 1.0f / 12 : 1.0f / 7;
+        float p = isBlack ? -pos / 12 : pos / 7;
+        int octave = (n - leftNote) / 12;
+        float x = octaveWidth * (-5.0f / 7 + octave + p);
+        float y = 0;
+        float width = octaveWidth * w;
+        float height = boundsHeight * (isBlack ? 0.65 : 1);
+        int index = n - minNote;
+        keys[index].setBounds(x, y, width, height);
+
+        int miniChannel = 1;  // TODO
+        bool isOn = keyboardState.isNoteOn(miniChannel, n);
+        keys[index].update(isBlack, isOn);
+    }
+}
+void KeyboardComponent::timerCallback() { auto& params = allParams.masterParams; }
+
+//==============================================================================
 HarmonicHeadComponent::HarmonicHeadComponent() {
     initLabel(gainLabel, "Gain", *this);
     initLabel(attackCurveLabel, "A. Curve", *this);

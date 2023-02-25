@@ -497,6 +497,46 @@ private:
 };
 
 //==============================================================================
+namespace {
+constexpr int NUM_KEYS = 88;
+}  // namespace
+
+class KeyComponent : public juce::Component {
+public:
+    KeyComponent();
+    virtual ~KeyComponent();
+    KeyComponent(const KeyComponent&) = delete;
+
+    void update(bool isBlack, bool isOn);
+
+    virtual void paint(juce::Graphics& g) override;
+    virtual void resized() override;
+
+private:
+    bool isBlack = false;
+    bool isOn = false;
+};
+
+//==============================================================================
+class KeyboardComponent : public juce::Component, private juce::Timer, ComponentHelper {
+public:
+    KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState);
+    virtual ~KeyboardComponent();
+    KeyboardComponent(const KeyboardComponent&) = delete;
+
+    virtual void paint(juce::Graphics& g) override;
+    virtual void resized() override;
+
+private:
+    virtual void timerCallback() override;
+
+    AllParams& allParams;
+    juce::MidiKeyboardState& keyboardState;
+
+    std::array<KeyComponent, NUM_KEYS> keys;
+};
+
+//==============================================================================
 class HarmonicHeadComponent : public juce::Component, ComponentHelper {
 public:
     HarmonicHeadComponent();
