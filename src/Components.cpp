@@ -182,24 +182,12 @@ void IncDecButton::sliderValueChanged(juce::Slider* _slider) {
 }
 
 //==============================================================================
-VoiceComponent::VoiceComponent(AllParams& allParams)
-    : allParams(allParams),
-      pitchBendRangeButton(),
-      timbreNoteNumberSliders{juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                                           juce::Slider::TextEntryBoxPosition::NoTextBox},
-                              juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                                           juce::Slider::TextEntryBoxPosition::NoTextBox},
-                              juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                                           juce::Slider::TextEntryBoxPosition::NoTextBox}} {
+VoiceComponent::VoiceComponent(AllParams& allParams) : allParams(allParams), pitchBendRangeButton() {
     initIncDec(pitchBendRangeButton, allParams.voiceParams.PitchBendRange, this, *this);
-    initChoice(timbreSelector, TIMBER_NAMES, allParams.editingTimbreIndex, this, *this);
-    for (int i = 0; i < NUM_TIMBRES; i++) {
-        auto& slider = timbreNoteNumberSliders[i];
-        initLinear(slider, allParams.mainParams[i].NoteNumber, this, *this);
-    }
+    initChoice(timbreSelector, TIMBRE_NAMES, allParams.editingTimbreIndex, this, *this);
+
     initLabel(pitchBendRangeLabel, "PB Range", *this);
     initLabel(timbreLabel, "Timbre", *this);
-    initLabel(timbreNoteNumberLabel, "Timbre Note", *this);
 
     startTimerHz(30.0f);
 }
@@ -213,17 +201,6 @@ void VoiceComponent::resized() {
     bounds.reduce(0, 10);
     consumeLabeledIncDecButton(bounds, 60, pitchBendRangeLabel, pitchBendRangeButton);
     consumeLabeledComboBox(bounds, 60, timbreLabel, timbreSelector);
-    {
-        bounds.removeFromLeft(PARAM_MARGIN_LEFT);
-        auto area = bounds.removeFromLeft(SLIDER_WIDTH);
-        timbreNoteNumberLabel.setBounds(area.removeFromTop(LABEL_HEIGHT));
-        area.removeFromTop(LABEL_MARGIN_BOTTOM);
-        auto knobArea = area.removeFromTop(KNOB_HEIGHT);
-        for (int i = 0; i < NUM_TIMBRES; i++) {
-            auto& slider = timbreNoteNumberSliders[i];
-            slider.setBounds(knobArea);
-        }
-    }
 }
 void VoiceComponent::incDecValueChanged(IncDecButton* button) {
     if (button == &pitchBendRangeButton) {
@@ -235,21 +212,8 @@ void VoiceComponent::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) {
         allParams.editingTimbreIndex = timbreSelector.getSelectedItemIndex();
     }
 }
-void VoiceComponent::sliderValueChanged(juce::Slider* slider) {
-    for (int i = 0; i < NUM_TIMBRES; i++) {
-        auto& timbreNoteNumberSlider = timbreNoteNumberSliders[i];
-        if (slider == &timbreNoteNumberSlider) {
-            *allParams.mainParams[i].NoteNumber = timbreNoteNumberSlider.getValue();
-        }
-    }
-}
 void VoiceComponent::timerCallback() {
     pitchBendRangeButton.setValue(allParams.voiceParams.PitchBendRange->get(), juce::dontSendNotification);
-    for (int i = 0; i < NUM_TIMBRES; i++) {
-        auto& slider = timbreNoteNumberSliders[i];
-        slider.setValue(allParams.mainParams[i].NoteNumber->get(), juce::dontSendNotification);
-        slider.setVisible(allParams.editingTimbreIndex == i);
-    }
 }
 
 //==============================================================================
@@ -427,23 +391,30 @@ void KeyComponent::resized() {}
 
 //==============================================================================
 KeyboardComponent::KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState)
-    : allParams(allParams), keyboardState(keyboardState), keys{} {
-    float positions[12] = {0, -1, 1, -3, 2, 3, -6, 4, -8, 5, -10, 6};
-    int minNote = 21;
-    int maxNote = 108;
-    for (int n = minNote; n <= maxNote; n++) {
-        auto pos = positions[n % 12];
-        auto isBlack = pos < 0;
-        if (!isBlack) {
-            int index = n - minNote;
+    : allParams(allParams),
+      keyboardState(keyboardState),
+      timbreNoteNumberSliders{juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                                           juce::Slider::TextEntryBoxPosition::NoTextBox},
+                              juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                                           juce::Slider::TextEntryBoxPosition::NoTextBox},
+                              juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                                           juce::Slider::TextEntryBoxPosition::NoTextBox}},
+      keys{} {
+    for (int i = 0; i < NUM_TIMBRES; i++) {
+        auto& slider = timbreNoteNumberSliders[i];
+        auto& label = timbreLabels[i];
+        initLinear(slider, allParams.mainParams[i].NoteNumber, this, *this);
+        initLabel(label, std::to_string(i + 1), *this);
+    }
+    for (int n = MIN_NOTE; n <= MAX_NOTE; n++) {
+        if (KEY_POSITIONS[n % 12] >= 0) {
+            int index = n - MIN_NOTE;
             addAndMakeVisible(keys[index]);
         }
     }
-    for (int n = minNote; n <= maxNote; n++) {
-        auto pos = positions[n % 12];
-        auto isBlack = pos < 0;
-        if (isBlack) {
-            int index = n - minNote;
+    for (int n = MIN_NOTE; n <= MAX_NOTE; n++) {
+        if (KEY_POSITIONS[n % 12] < 0) {
+            int index = n - MIN_NOTE;
             addAndMakeVisible(keys[index]);
         }
     }
@@ -452,35 +423,80 @@ KeyboardComponent::KeyboardComponent(AllParams& allParams, juce::MidiKeyboardSta
 
 KeyboardComponent::~KeyboardComponent() {}
 
-void KeyboardComponent::paint(juce::Graphics& g) {}
+void KeyboardComponent::paint(juce::Graphics& g) {
+    float W = 1.0f / 7;
+    float B = 1.0f / 12;
+    int leftNote = 12;
+
+    juce::Rectangle<int> bounds = getLocalBounds();
+    bounds.removeFromTop(bounds.getHeight() / 2);
+    bounds.removeFromTop(10);
+    auto& lowerArea = bounds;
+
+    auto markerArea = lowerArea.removeFromTop(5);
+    auto markerAreaY = markerArea.getY();
+    float octaveWidth = (float)bounds.getWidth() / (7.0f + W * 3);
+    g.setColour(colour::SELECT);
+
+    for (auto& params : allParams.mainParams) {
+        auto n = params.NoteNumber->get();
+        float normalizedX = W * (-5) + (n - leftNote) * B;
+
+        int x0 = octaveWidth * normalizedX;
+        int x1 = octaveWidth * (normalizedX + B);
+        int y = markerAreaY;
+        int width = x1 - x0 - 1;
+        g.fillRect(x0, y, width, 5);
+    }
+}
 
 void KeyboardComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
-    // 21 (A0) - 108 (C8)
-    int minNote = 21;
-    int maxNote = 108;
 
-    float positions[12] = {0, -1, 1, -3, 2, 3, -6, 4, -8, 5, -10, 6};
-    float octaveWidth = (float)bounds.getWidth() / (7.0f + 3.0f / 7);
-    float boundsHeight = (float)bounds.getHeight();
-    int leftNote = 12;  // この音を基準にマイナスからスタート
-    for (int n = minNote; n <= maxNote; n++) {
-        auto pos = positions[n % 12];
+    auto upperArea = bounds.removeFromTop(bounds.getHeight() / 2);
+    for (int i = 0; i < NUM_TIMBRES; i++) {
+        auto& label = timbreLabels[i];
+        auto& slider = timbreNoteNumberSliders[i];
+        consumeLabeledKnob(upperArea, label, slider);
+    }
+    bounds.removeFromTop(10);
+    auto& lowerArea = bounds;
+
+    float W = 1.0f / 7;
+    float B = 1.0f / 12;
+    int lowerAreaY = lowerArea.getY();
+    float octaveWidth = (float)lowerArea.getWidth() / (7.0f + W * 3);  // 7 オクターブと左の AB と右の C
+    float keyHeight = (float)lowerArea.getHeight();
+
+    // この音を基準にマイナスからスタート
+    int leftNote = 12;
+    for (int n = MIN_NOTE; n <= MAX_NOTE; n++) {
+        auto pos = KEY_POSITIONS[n % 12];
         auto isBlack = pos < 0;
-        auto w = isBlack ? 1.0f / 12 : 1.0f / 7;
-        float p = isBlack ? -pos / 12 : pos / 7;
+        float p = isBlack ? -pos : pos;
         int octave = (n - leftNote) / 12;
-        float x = octaveWidth * (-5.0f / 7 + octave + p);
-        float y = 0;
-        float width = octaveWidth * w;
-        float height = boundsHeight * (isBlack ? 0.65 : 1);
-        int index = n - minNote;
+        float normalizedX = W * (-5) + octave + p;
+        int x = octaveWidth * normalizedX;
+        int y = lowerAreaY + 6;
+        int width =
+            isBlack ? octaveWidth * B : octaveWidth * (normalizedX + W) - x - 1;  // 白鍵の場合は隣との差分を幅とする
+        int height = keyHeight * (isBlack ? 0.65 : 1);
+        int index = n - MIN_NOTE;
         keys[index].setBounds(x, y, width, height);
 
-        int miniChannel = 1;  // TODO
-        bool isOn = keyboardState.isNoteOn(miniChannel, n);
+        int midiChannel = 1;  // TODO
+        bool isOn = keyboardState.isNoteOn(midiChannel, n);
         keys[index].update(isBlack, isOn);
     }
+}
+void KeyboardComponent::sliderValueChanged(juce::Slider* slider) {
+    for (int i = 0; i < NUM_TIMBRES; i++) {
+        auto& timbreNoteNumberSlider = timbreNoteNumberSliders[i];
+        if (slider == &timbreNoteNumberSlider) {
+            *allParams.mainParams[i].NoteNumber = timbreNoteNumberSlider.getValue();
+        }
+    }
+    repaint();
 }
 void KeyboardComponent::timerCallback() { auto& params = allParams.masterParams; }
 

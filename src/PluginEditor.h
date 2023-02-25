@@ -25,7 +25,7 @@ private:
     AnalyserWindow analyserWindow;
     StatusComponent statusComponent;
     SectionComponent utilComponent;
-    SectionComponent timberComponent;
+    SectionComponent timbreComponent;
     SectionComponent harmonicHeadComponent;
     SectionComponent harmonicBodyComponents[NUM_OSC];
     SectionComponent noiseComponents[NUM_NOISE];

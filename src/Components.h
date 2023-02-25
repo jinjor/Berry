@@ -390,7 +390,6 @@ private:
 class VoiceComponent : public juce::Component,
                        IncDecButton::Listener,
                        juce::ComboBox::Listener,
-                       juce::Slider::Listener,
                        private juce::Timer,
                        ComponentHelper {
 public:
@@ -404,18 +403,15 @@ public:
 private:
     virtual void incDecValueChanged(IncDecButton* button) override;
     virtual void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
-    virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
 
     AllParams& allParams;
 
     IncDecButton pitchBendRangeButton;
     juce::ComboBox timbreSelector;
-    std::array<juce::Slider, NUM_TIMBRES> timbreNoteNumberSliders;
 
     juce::Label pitchBendRangeLabel;
     juce::Label timbreLabel;
-    juce::Label timbreNoteNumberLabel;
 };
 
 //==============================================================================
@@ -498,7 +494,21 @@ private:
 
 //==============================================================================
 namespace {
-constexpr int NUM_KEYS = 88;
+constexpr int MIN_NOTE = 21;   // A0
+constexpr int MAX_NOTE = 108;  // C8
+constexpr int NUM_KEYS = MAX_NOTE - MIN_NOTE + 1;
+constexpr float KEY_POSITIONS[12] = {0,
+                                     -1.0f / 12,
+                                     1.0f / 7,
+                                     -3.0f / 12,
+                                     2.0f / 7,
+                                     3.0f / 7,
+                                     -6.0f / 12,
+                                     4.0f / 7,
+                                     -8.0f / 12,
+                                     5.0f / 7,
+                                     -10.0f / 12,
+                                     6.0f / 7};
 }  // namespace
 
 class KeyComponent : public juce::Component {
@@ -518,7 +528,7 @@ private:
 };
 
 //==============================================================================
-class KeyboardComponent : public juce::Component, private juce::Timer, ComponentHelper {
+class KeyboardComponent : public juce::Component, private juce::Slider::Listener, juce::Timer, ComponentHelper {
 public:
     KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState);
     virtual ~KeyboardComponent();
@@ -528,11 +538,14 @@ public:
     virtual void resized() override;
 
 private:
+    virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
 
     AllParams& allParams;
     juce::MidiKeyboardState& keyboardState;
 
+    std::array<juce::Label, NUM_TIMBRES> timbreLabels;
+    std::array<juce::Slider, NUM_TIMBRES> timbreNoteNumberSliders;
     std::array<KeyComponent, NUM_KEYS> keys;
 };
 

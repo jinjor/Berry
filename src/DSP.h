@@ -9,7 +9,7 @@ using namespace math_constants;
 namespace {
 enum class WAVEFORM { Sine, Saw, Pink, White };
 
-const juce::StringArray TIMBER_NAMES = juce::StringArray("1", "2", "3");
+const juce::StringArray TIMBRE_NAMES = juce::StringArray("1", "2", "3");
 
 const juce::StringArray NOISE_WAVEFORM_NAMES = juce::StringArray("White", "Pink");
 const WAVEFORM NOISE_WAVEFORM_VALUES[2] = {WAVEFORM::White, WAVEFORM::Pink};
