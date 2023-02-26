@@ -19,24 +19,8 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
       timbreComponent{SectionComponent{
           "TIMBRE", HEADER_CHECK::Hidden, std::make_unique<KeyboardComponent>(p.allParams, p.keyboardState)}},
       harmonicHeadComponent{SectionComponent{"", HEADER_CHECK::Hidden, std::make_unique<HarmonicHeadComponent>()}},
-      harmonicBodyComponents{
-          SectionComponent{"1", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(0, p.allParams)},
-          SectionComponent{"2", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(1, p.allParams)},
-          SectionComponent{"3", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(2, p.allParams)},
-          SectionComponent{"4", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(3, p.allParams)},
-          SectionComponent{"5", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(4, p.allParams)},
-          SectionComponent{"6", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(5, p.allParams)},
-          SectionComponent{"7", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(6, p.allParams)},
-          SectionComponent{"8", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(7, p.allParams)},
-          SectionComponent{"9", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(8, p.allParams)},
-          SectionComponent{"10", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(9, p.allParams)},
-          SectionComponent{"11", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(10, p.allParams)},
-          SectionComponent{"12", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(11, p.allParams)},
-          SectionComponent{"13", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(12, p.allParams)},
-          SectionComponent{"14", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(13, p.allParams)},
-          SectionComponent{"15", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(14, p.allParams)},
-          SectionComponent{"16..", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(15, p.allParams)},
-      },
+      harmonicBodyComponent{
+          SectionComponent{"HARMONICS", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(p.allParams)}},
       noiseComponents{
           SectionComponent{"NOISE 1", HEADER_CHECK::Hidden, std::make_unique<NoiseComponent>(0, p.allParams)},
           SectionComponent{"NOISE 2", HEADER_CHECK::Hidden, std::make_unique<NoiseComponent>(1, p.allParams)}},
@@ -53,10 +37,7 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     addAndMakeVisible(timbreComponent);
 
     addAndMakeVisible(harmonicHeadComponent);
-    for (auto i = 0; i < NUM_OSC; i++) {
-        auto &component = harmonicBodyComponents[i];
-        addAndMakeVisible(component);
-    }
+    addAndMakeVisible(harmonicBodyComponent);
     for (auto i = 0; i < NUM_NOISE; i++) {
         auto &component = noiseComponents[i];
         addAndMakeVisible(component);
@@ -133,44 +114,12 @@ void BerryAudioProcessorEditor::resized() {
     {
         auto lowerArea = bounds.reduced(AREA_PADDING_X, AREA_PADDING_Y);
 
-        auto leftWidth = (width - PANEL_MARGIN_X * 2) * 0.5;
+        auto leftWidth = (width - PANEL_MARGIN_X * 2) * 0.57;
         {
             auto area = lowerArea.removeFromLeft(leftWidth);
             harmonicHeadComponent.setBounds(area.removeFromTop(LABEL_HEIGHT));
             area.removeFromTop(PANEL_MARGIN_Y);
-
-            auto harmonicPanelHeight = (area.getHeight() - PANEL_MARGIN_Y * (NUM_OSC - 1)) / NUM_OSC;
-            harmonicBodyComponents[0].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[1].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[2].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[3].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[4].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[5].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[6].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[7].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[8].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[9].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[10].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[11].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[12].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[13].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[14].setBounds(area.removeFromTop(harmonicPanelHeight));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponents[15].setBounds(area);
+            harmonicBodyComponent.setBounds(area);
         }
         {
             auto &area = lowerArea;

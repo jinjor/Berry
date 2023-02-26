@@ -510,6 +510,9 @@ void KeyboardComponent::timerCallback() {
 
 //==============================================================================
 HarmonicHeadComponent::HarmonicHeadComponent() {
+    initLabel(nameLabel, "No.", *this);
+    initLabel(soloLabel, "S", *this);
+    initLabel(muteLabel, "M", *this);
     initLabel(gainLabel, "Gain", *this);
     initLabel(attackCurveLabel, "A. Curve", *this);
     initLabel(attackLabel, "Attack", *this);
@@ -524,6 +527,9 @@ void HarmonicHeadComponent::paint(juce::Graphics& g) {}
 void HarmonicHeadComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
 
+    consumeLabel(bounds, 40, nameLabel);
+    consumeLabel(bounds, 25, soloLabel);
+    consumeLabel(bounds, 25, muteLabel);
     consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, gainLabel);
     bounds.removeFromLeft(20);
     consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, attackCurveLabel);
@@ -533,7 +539,7 @@ void HarmonicHeadComponent::resized() {
 }
 
 //==============================================================================
-HarmonicBodyComponent::HarmonicBodyComponent(int index, AllParams& allParams)
+HarmonicComponent::HarmonicComponent(int index, AllParams& allParams)
     : index(index),
       allParams(allParams),
       gainSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
@@ -545,6 +551,9 @@ HarmonicBodyComponent::HarmonicBodyComponent(int index, AllParams& allParams)
     auto& envParams = getSelectedEnvelopeParams();
 
     auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
+    initLabel(nameLabel, index == NUM_OSC - 1 ? "16..." : std::to_string(index + 1), *this);
+    // TODO: solo
+    // TODO: mute
     initSkewFromMid(gainSlider, params.Gain, 0.01f, nullptr, std::move(formatGain), this, *this);
     initLinear(attackCurveSlider, envParams.AttackCurve, 0.01, this, *this);
     initSkewFromMid(attackSlider, envParams.Attack, 0.001, " sec", nullptr, this, *this);
@@ -554,15 +563,18 @@ HarmonicBodyComponent::HarmonicBodyComponent(int index, AllParams& allParams)
     startTimerHz(60.0f);  // ドラッグを捕捉するため頻度高め
 }
 
-HarmonicBodyComponent::~HarmonicBodyComponent() {}
+HarmonicComponent::~HarmonicComponent() {}
 
-void HarmonicBodyComponent::paint(juce::Graphics& g) {}
+void HarmonicComponent::paint(juce::Graphics& g) {}
 
-void HarmonicBodyComponent::resized() {
+void HarmonicComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
 
     bounds = bounds.withSizeKeepingCentre(bounds.getWidth(), HORIZONTAL_SLIDER_HEIGHT);
 
+    consumeLabel(bounds, 40, nameLabel);
+    consumeToggle(bounds, 25, soloToggle);
+    consumeToggle(bounds, 25, muteToggle);
     consumeHorizontalSlider(bounds, gainSlider);
     bounds.removeFromLeft(20);
     consumeHorizontalSlider(bounds, attackCurveSlider);
@@ -570,7 +582,10 @@ void HarmonicBodyComponent::resized() {
     consumeHorizontalSlider(bounds, decaySlider);
     consumeHorizontalSlider(bounds, releaseSlider);
 }
-void HarmonicBodyComponent::sliderValueChanged(juce::Slider* slider) {
+void HarmonicComponent::buttonClicked(juce::Button* button) {
+    // TODO
+}
+void HarmonicComponent::sliderValueChanged(juce::Slider* slider) {
     auto& params = getSelectedOscParams();
     auto& envParams = getSelectedEnvelopeParams();
     if (slider == &gainSlider) {
@@ -585,7 +600,7 @@ void HarmonicBodyComponent::sliderValueChanged(juce::Slider* slider) {
         *envParams.Release = (float)releaseSlider.getValue();
     }
 }
-void HarmonicBodyComponent::timerCallback() {
+void HarmonicComponent::timerCallback() {
     auto& params = getSelectedOscParams();
     auto& envParams = getSelectedEnvelopeParams();
 
@@ -619,6 +634,48 @@ void HarmonicBodyComponent::timerCallback() {
     decaySlider.setValue(envParams.Decay->get(), juce::dontSendNotification);
     releaseSlider.setValue(envParams.Release->get(), juce::dontSendNotification);
 }
+
+//==============================================================================
+HarmonicBodyComponent::HarmonicBodyComponent(AllParams& allParams)
+    : harmonics{
+          HarmonicComponent(0, allParams),
+          HarmonicComponent(1, allParams),
+          HarmonicComponent(2, allParams),
+          HarmonicComponent(3, allParams),
+          HarmonicComponent(4, allParams),
+          HarmonicComponent(5, allParams),
+          HarmonicComponent(6, allParams),
+          HarmonicComponent(7, allParams),
+          HarmonicComponent(8, allParams),
+          HarmonicComponent(9, allParams),
+          HarmonicComponent(10, allParams),
+          HarmonicComponent(11, allParams),
+          HarmonicComponent(12, allParams),
+          HarmonicComponent(13, allParams),
+          HarmonicComponent(14, allParams),
+          HarmonicComponent(15, allParams),
+      } {
+    for (auto& harmonic : harmonics) {
+        addAndMakeVisible(harmonic);
+    }
+}
+
+HarmonicBodyComponent::~HarmonicBodyComponent() {}
+
+void HarmonicBodyComponent::paint(juce::Graphics& g) {}
+
+void HarmonicBodyComponent::resized() {
+    auto bounds = getLocalBounds();
+    auto margin = PANEL_MARGIN_Y;
+    auto harmonicHeight = (bounds.getHeight() - margin * (NUM_OSC - 1)) / NUM_OSC;
+    for (int i = 0; i < NUM_OSC; i++) {
+        if (i > 0) {
+            bounds.removeFromTop(margin);
+        }
+        harmonics[i].setBounds(bounds.removeFromTop(harmonicHeight));
+    }
+}
+void HarmonicBodyComponent::timerCallback() {}
 
 //==============================================================================
 FilterComponent::FilterComponent(int noiseIndex, int filterIndex, AllParams& allParams)

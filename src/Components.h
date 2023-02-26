@@ -560,6 +560,9 @@ public:
     virtual void resized() override;
 
 private:
+    juce::Label nameLabel;
+    juce::Label soloLabel;
+    juce::Label muteLabel;
     juce::Label gainLabel;
     juce::Label attackCurveLabel;
     juce::Label attackLabel;
@@ -568,22 +571,30 @@ private:
 };
 
 //==============================================================================
-class HarmonicBodyComponent : public juce::Component, juce::Slider::Listener, private juce::Timer, ComponentHelper {
+class HarmonicComponent : public juce::Component,
+                          juce::ToggleButton::Listener,
+                          juce::Slider::Listener,
+                          private juce::Timer,
+                          ComponentHelper {
 public:
-    HarmonicBodyComponent(int index, AllParams& allParams);
-    virtual ~HarmonicBodyComponent();
-    HarmonicBodyComponent(const HarmonicBodyComponent&) = delete;
+    HarmonicComponent(int index, AllParams& allParams);
+    virtual ~HarmonicComponent();
+    HarmonicComponent(const HarmonicComponent&) = delete;
 
     virtual void paint(juce::Graphics& g) override;
     virtual void resized() override;
 
 private:
+    virtual void buttonClicked(juce::Button* button) override;
     virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
     int index;
 
     AllParams& allParams;
 
+    juce::Label nameLabel;
+    juce::ToggleButton soloToggle;
+    juce::ToggleButton muteToggle;
     juce::Slider gainSlider;
     juce::Slider attackCurveSlider;
     juce::Slider attackSlider;
@@ -595,6 +606,22 @@ private:
         // sync 先を表示した方がいいかもしれない
         return allParams.getCurrentMainParams().envelopeParams[index];
     }
+};
+
+//==============================================================================
+class HarmonicBodyComponent : public juce::Component, private juce::Timer, ComponentHelper {
+public:
+    HarmonicBodyComponent(AllParams& allParams);
+    virtual ~HarmonicBodyComponent();
+    HarmonicBodyComponent(const HarmonicBodyComponent&) = delete;
+
+    virtual void paint(juce::Graphics& g) override;
+    virtual void resized() override;
+
+private:
+    virtual void timerCallback() override;
+
+    std::array<HarmonicComponent, NUM_OSC> harmonics;
 };
 
 //==============================================================================
