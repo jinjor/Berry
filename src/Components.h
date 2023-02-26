@@ -387,11 +387,7 @@ private:
 };
 
 //==============================================================================
-class VoiceComponent : public juce::Component,
-                       IncDecButton::Listener,
-                       juce::ComboBox::Listener,
-                       private juce::Timer,
-                       ComponentHelper {
+class VoiceComponent : public juce::Component, IncDecButton::Listener, private juce::Timer, ComponentHelper {
 public:
     VoiceComponent(AllParams& allParams);
     virtual ~VoiceComponent();
@@ -402,16 +398,13 @@ public:
 
 private:
     virtual void incDecValueChanged(IncDecButton* button) override;
-    virtual void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
     virtual void timerCallback() override;
 
     AllParams& allParams;
 
     IncDecButton pitchBendRangeButton;
-    juce::ComboBox timbreSelector;
 
     juce::Label pitchBendRangeLabel;
-    juce::Label timbreLabel;
 };
 
 //==============================================================================
@@ -527,6 +520,20 @@ private:
     bool isOn = false;
 };
 
+class TimbreNote : public juce::Component {
+public:
+    TimbreNote(int index, AllParams& allParams);
+    virtual ~TimbreNote();
+    TimbreNote(const TimbreNote&) = delete;
+
+    virtual void paint(juce::Graphics& g) override;
+    virtual void resized() override;
+
+private:
+    int index;
+    AllParams& allParams;
+};
+
 //==============================================================================
 class KeyboardComponent : public juce::Component, private juce::Slider::Listener, juce::Timer, ComponentHelper {
 public:
@@ -546,7 +553,11 @@ private:
 
     std::array<juce::Label, NUM_TIMBRES> timbreLabels;
     std::array<juce::Slider, NUM_TIMBRES> timbreNoteNumberSliders;
+    std::array<TimbreNote, NUM_TIMBRES> timbreNotes;
     std::array<KeyComponent, NUM_KEYS> keys;
+
+    virtual void mouseDown(const juce::MouseEvent& e) override;
+    virtual void mouseDrag(const juce::MouseEvent& e) override;
 };
 
 //==============================================================================

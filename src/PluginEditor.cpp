@@ -64,7 +64,7 @@ void BerryAudioProcessorEditor::paint(juce::Graphics &g) {
     auto bounds = getLocalBounds();
     auto height = bounds.getHeight();
     auto upperArea = bounds.removeFromTop(height * 0.12);
-    auto middleArea = bounds.removeFromTop(bounds.getHeight() * 1 / 5);
+    auto middleArea = bounds.removeFromTop(bounds.getHeight() * 1 / 6);
 
     g.fillAll(colour::BACKGROUND);
 
@@ -92,7 +92,7 @@ void BerryAudioProcessorEditor::resized() {
     auto height = bounds.getHeight();
 
     auto upperHeight = height * 0.12;
-    auto middleHeight = (height - upperHeight) * 1 / 5;
+    auto middleHeight = (height - upperHeight) * 1 / 6;
     {
         auto upperArea = bounds.removeFromTop(upperHeight).reduced(AREA_PADDING_X, AREA_PADDING_Y);
         auto sideWidth = width * 0.36;
