@@ -68,7 +68,8 @@ void BerryVoice::startNote(int midiNoteNumber,
 
         auto fixedSampleRate = sampleRate * CONTROL_RATE;  // for control
         auto calculatedParams = CalculatedParams{};
-        calculateParamsBeforeLoop(calculatedParams);
+        auto calculatedNoiseParams = CalculatedParams{};
+        calculateParamsBeforeLoop(calculatedParams, calculatedNoiseParams);
 
         for (int i = 0; i < NUM_OSC; ++i) {
             if (!stolen) {
@@ -85,13 +86,13 @@ void BerryVoice::startNote(int midiNoteNumber,
         }
         for (int i = 0; i < NUM_NOISE; ++i) {
             noises[i].setSampleRate(sampleRate);
-            noises[i].setWaveform(allParams.noiseUnitParams[i].noiseParams.waveform, true);
-            noiseAdsr[i].setParams(allParams.noiseUnitParams[i].envelopeParams.attackCurve,
-                                   allParams.noiseUnitParams[i].envelopeParams.attack,
+            noises[i].setWaveform(allParams.noiseUnitParams[i].waveform, true);
+            noiseAdsr[i].setParams(calculatedNoiseParams.attackCurve[i],
+                                   calculatedNoiseParams.attack[i],
                                    0.0,
-                                   allParams.noiseUnitParams[i].envelopeParams.decay,
+                                   calculatedNoiseParams.decay[i],
                                    0.0,
-                                   allParams.noiseUnitParams[i].envelopeParams.release);
+                                   calculatedNoiseParams.release[i]);
             noiseAdsr[i].doAttack(fixedSampleRate);
             for (int j = 0; j < NUM_NOISE_FILTER; ++j) {
                 noiseFilters[i][j].initializePastData();
@@ -144,14 +145,15 @@ void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int sta
         auto sampleRate = getSampleRate();
 
         auto calculatedParams = CalculatedParams{};
-        calculateParamsBeforeLoop(calculatedParams);
-        applyParamsBeforeLoop(sampleRate, calculatedParams);
+        auto calculatedNoiseParams = CalculatedParams{};
+        calculateParamsBeforeLoop(calculatedParams, calculatedNoiseParams);
+        applyParamsBeforeLoop(sampleRate, calculatedParams, calculatedNoiseParams);
 
         int numChannels = outputBuffer.getNumChannels();
         jassert(numChannels <= 2);
         while (--numSamples >= 0) {
             double out[2]{0, 0};
-            auto active = step(out, sampleRate, numChannels, calculatedParams);
+            auto active = step(out, sampleRate, numChannels, calculatedParams, calculatedNoiseParams);
             for (auto ch = 0; ch < numChannels; ++ch) {
                 buffer.addSample(ch, startSample, out[ch]);
             }
@@ -163,23 +165,19 @@ void BerryVoice::renderNextBlock(juce::AudioBuffer<float> &outputBuffer, int sta
         }
     }
 }
-void BerryVoice::applyParamsBeforeLoop(double sampleRate, CalculatedParams &params) {
+void BerryVoice::applyParamsBeforeLoop(double sampleRate, CalculatedParams &params, CalculatedParams &noiseParams) {
     for (int i = 0; i < NUM_OSC; ++i) {
         oscs[i].setSampleRate(sampleRate);
         adsr[i].setParams(params.attackCurve[i], params.attack[i], 0.0, params.decay[i], 0.0, params.release[i]);
     }
     for (int i = 0; i < NUM_NOISE; ++i) {
         noises[i].setSampleRate(sampleRate);
-        noises[i].setWaveform(allParams.noiseUnitParams[i].noiseParams.waveform, true);
-        noiseAdsr[i].setParams(allParams.noiseUnitParams[i].envelopeParams.attackCurve,
-                               allParams.noiseUnitParams[i].envelopeParams.attack,
-                               0.0,
-                               allParams.noiseUnitParams[i].envelopeParams.decay,
-                               0.0,
-                               allParams.noiseUnitParams[i].envelopeParams.release);
+        noises[i].setWaveform(allParams.noiseUnitParams[i].waveform, true);
+        noiseAdsr[i].setParams(
+            noiseParams.attackCurve[i], noiseParams.attack[i], 0.0, noiseParams.decay[i], 0.0, noiseParams.release[i]);
     }
 }
-void BerryVoice::calculateParamsBeforeLoop(CalculatedParams &params) {
+void BerryVoice::calculateParamsBeforeLoop(CalculatedParams &params, CalculatedParams &noiseParams) {
     auto leftIndex = 0;
     auto rightIndex = NUM_TIMBRES - 1;
     auto leftNote = 0;
@@ -201,9 +199,9 @@ void BerryVoice::calculateParamsBeforeLoop(CalculatedParams &params) {
     jassert(rightNote - leftNote > 0);
     auto leftRatio = (double)(rightNote - noteNumberAtStart) / (double)(rightNote - leftNote);
     auto rightRatio = 1.0 - leftRatio;
+    auto &leftParams = allParams.mainParams[leftIndex];
+    auto &rightParams = allParams.mainParams[rightIndex];
     for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
-        auto &leftParams = allParams.mainParams[leftIndex];
-        auto &rightParams = allParams.mainParams[rightIndex];
         auto &leftOsc = leftParams.oscParams[oscIndex];
         auto &rightOsc = rightParams.oscParams[oscIndex];
         auto &leftEnv = leftParams.envelopeParams[oscIndex];
@@ -214,8 +212,20 @@ void BerryVoice::calculateParamsBeforeLoop(CalculatedParams &params) {
         params.decay[oscIndex] = leftEnv.decay * leftRatio + rightEnv.decay * rightRatio;
         params.release[oscIndex] = leftEnv.release * leftRatio + rightEnv.release * rightRatio;
     }
+    for (int noiseIndex = 0; noiseIndex < NUM_NOISE; ++noiseIndex) {
+        auto &leftOsc = leftParams.noiseParams[noiseIndex];
+        auto &rightOsc = rightParams.noiseParams[noiseIndex];
+        auto &leftEnv = leftParams.noiseEnvelopeParams[noiseIndex];
+        auto &rightEnv = rightParams.noiseEnvelopeParams[noiseIndex];
+        noiseParams.gain[noiseIndex] = leftOsc.gain * leftRatio + rightOsc.gain * rightRatio;
+        noiseParams.attackCurve[noiseIndex] = leftEnv.attackCurve * leftRatio + rightEnv.attackCurve * rightRatio;
+        noiseParams.attack[noiseIndex] = leftEnv.attack * leftRatio + rightEnv.attack * rightRatio;
+        noiseParams.decay[noiseIndex] = leftEnv.decay * leftRatio + rightEnv.decay * rightRatio;
+        noiseParams.release[noiseIndex] = leftEnv.release * leftRatio + rightEnv.release * rightRatio;
+    }
 }
-bool BerryVoice::step(double *out, double sampleRate, int numChannels, CalculatedParams &params) {
+bool BerryVoice::step(
+    double *out, double sampleRate, int numChannels, CalculatedParams &params, CalculatedParams &noiseParams) {
     smoothNote.step();
     smoothVelocity.step();
 
@@ -270,7 +280,7 @@ bool BerryVoice::step(double *out, double sampleRate, int numChannels, Calculate
         active = true;
         auto &noiseUnitParams = allParams.noiseUnitParams[noiseIndex];
 
-        auto gain = noiseAdsr[noiseIndex].getValue() * noiseUnitParams.noiseParams.gain;
+        auto gain = noiseAdsr[noiseIndex].getValue() * noiseParams.gain[noiseIndex];
         auto value = noises[noiseIndex].step(440, 0.0) * gain;
         double o[2]{value, value};
 

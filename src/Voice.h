@@ -80,9 +80,9 @@ public:
     virtual void pitchWheelMoved(int) override{};
     virtual void controllerMoved(int, int) override{};
     void renderNextBlock(juce::AudioSampleBuffer &outputBuffer, int startSample, int numSamples) override;
-    void calculateParamsBeforeLoop(CalculatedParams &params);
-    void applyParamsBeforeLoop(double sampleRate, CalculatedParams &params);
-    bool step(double *out, double sampleRate, int numChannels, CalculatedParams &params);
+    void calculateParamsBeforeLoop(CalculatedParams &params, CalculatedParams &noiseParams);
+    void applyParamsBeforeLoop(double sampleRate, CalculatedParams &params, CalculatedParams &noiseParams);
+    bool step(double *out, double sampleRate, int numChannels, CalculatedParams &params, CalculatedParams &noiseParams);
     int noteNumberAtStart = -1;
 
 private:

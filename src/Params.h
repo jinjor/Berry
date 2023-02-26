@@ -115,9 +115,8 @@ private:
 class NoiseParams : public SynthParametersBase {
 public:
     juce::AudioParameterFloat* Gain;
-    juce::AudioParameterChoice* Waveform;
 
-    NoiseParams(int index);
+    NoiseParams(int timbreIndex, int index);
     NoiseParams(const NoiseParams&) = delete;
     NoiseParams(NoiseParams&&) noexcept = default;
 
@@ -125,15 +124,9 @@ public:
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
 
-    WAVEFORM getWaveForm() { return NOISE_WAVEFORM_VALUES[Waveform->getIndex()]; }
-
     float gain;
-    WAVEFORM waveform;
 
-    void freeze() {
-        gain = Gain->get();
-        waveform = getWaveForm();
-    }
+    void freeze() { gain = Gain->get(); }
 
 private:
     NoiseParams(){};
@@ -274,6 +267,9 @@ public:
     juce::AudioParameterInt* NoteNumber;
     std::array<OscParams, NUM_OSC> oscParams;
     std::array<EnvelopeParams, NUM_OSC> envelopeParams;
+    juce::AudioParameterFloat* NoiseGain;
+    std::array<NoiseParams, NUM_NOISE> noiseParams;
+    std::array<EnvelopeParams, NUM_NOISE> noiseEnvelopeParams;
 
     MainParams(int index);
     MainParams(const MainParams&) = delete;
@@ -291,14 +287,17 @@ public:
             oscParams[i].freeze();
             envelopeParams[i].freeze();
         }
+        for (int i = 0; i < NUM_NOISE; ++i) {
+            noiseParams[i].freeze();
+            noiseEnvelopeParams[i].freeze();
+        }
     }
 };
 
 //==============================================================================
 class NoiseUnitParams : public SynthParametersBase {
 public:
-    NoiseParams noiseParams;
-    EnvelopeParams envelopeParams;
+    juce::AudioParameterChoice* Waveform;
     std::array<FilterParams, NUM_NOISE_FILTER> filterParams;
 
     NoiseUnitParams(int index);
@@ -309,10 +308,13 @@ public:
     virtual void saveParameters(juce::XmlElement& xml) override;
     virtual void loadParameters(juce::XmlElement& xml) override;
 
+    WAVEFORM getWaveForm() { return NOISE_WAVEFORM_VALUES[Waveform->getIndex()]; }
+
     int index;
+    WAVEFORM waveform;
+
     void freeze() {
-        noiseParams.freeze();
-        envelopeParams.freeze();
+        waveform = getWaveForm();
         for (auto& params : filterParams) {
             params.freeze();
         }

@@ -78,27 +78,16 @@ void OscParams::saveParameters(juce::XmlElement& xml) { xml.setAttribute(Gain->p
 void OscParams::loadParameters(juce::XmlElement& xml) { *Gain = (float)xml.getDoubleAttribute(Gain->paramID, 0); }
 
 //==============================================================================
-NoiseParams::NoiseParams(int index) {
-    auto idPrefix = "NOISE" + std::to_string(index) + "_";
-    auto namePrefix = "Noise" + std::to_string(index) + " ";
+NoiseParams::NoiseParams(int timbreIndex, int index) {
+    auto idPrefix = "T" + std::to_string(timbreIndex) + "_NOISE" + std::to_string(index) + "_";
+    auto namePrefix = "T" + std::to_string(timbreIndex) + " Noise" + std::to_string(index) + " ";
     Gain = new juce::AudioParameterFloat(
         idPrefix + "GAIN", namePrefix + "Gain", rangeWithSkewForCentre(0.0f, 4.0f, 1.0f), 1.0f);
-    Waveform = new juce::AudioParameterChoice(
-        idPrefix + "WAVEFORM", namePrefix + "Waveform", NOISE_WAVEFORM_NAMES, NOISE_WAVEFORM_NAMES.indexOf("White"));
     freeze();
 }
-void NoiseParams::addAllParameters(juce::AudioProcessor& processor) {
-    processor.addParameter(Gain);
-    processor.addParameter(Waveform);
-}
-void NoiseParams::saveParameters(juce::XmlElement& xml) {
-    xml.setAttribute(Gain->paramID, (double)Gain->get());
-    xml.setAttribute(Waveform->paramID, Waveform->getIndex());
-}
-void NoiseParams::loadParameters(juce::XmlElement& xml) {
-    *Gain = (float)xml.getDoubleAttribute(Gain->paramID, 0);
-    *Waveform = xml.getIntAttribute(Waveform->paramID, NOISE_WAVEFORM_NAMES.indexOf("White"));
-}
+void NoiseParams::addAllParameters(juce::AudioProcessor& processor) { processor.addParameter(Gain); }
+void NoiseParams::saveParameters(juce::XmlElement& xml) { xml.setAttribute(Gain->paramID, (double)Gain->get()); }
+void NoiseParams::loadParameters(juce::XmlElement& xml) { *Gain = (float)xml.getDoubleAttribute(Gain->paramID, 0); }
 
 //==============================================================================
 EnvelopeParams::EnvelopeParams(int timbreIndex, int index) {
@@ -265,7 +254,9 @@ MainParams::MainParams(int index)
                      EnvelopeParams{index, 12},
                      EnvelopeParams{index, 13},
                      EnvelopeParams{index, 14},
-                     EnvelopeParams{index, 15}} {
+                     EnvelopeParams{index, 15}},
+      noiseParams{NoiseParams{index, 0}, NoiseParams{index, 1}},
+      noiseEnvelopeParams{EnvelopeParams{index, NUM_OSC + 0}, EnvelopeParams{index, NUM_OSC + 1}} {  // TODO
     auto idPrefix = "T" + std::to_string(index) + "_";
     auto namePrefix = "T" + std::to_string(index) + " ";
     switch (index) {
@@ -282,55 +273,72 @@ MainParams::MainParams(int index)
 }
 void MainParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(NoteNumber);
+    for (auto& params : oscParams) {
+        params.addAllParameters(processor);
+    }
     for (auto& params : envelopeParams) {
         params.addAllParameters(processor);
     }
-    for (auto& params : oscParams) {
+    for (auto& params : noiseParams) {
+        params.addAllParameters(processor);
+    }
+    for (auto& params : noiseEnvelopeParams) {
         params.addAllParameters(processor);
     }
 }
 void MainParams::saveParameters(juce::XmlElement& xml) {
     xml.setAttribute(NoteNumber->paramID, NoteNumber->get());
+    for (auto& param : oscParams) {
+        param.saveParameters(xml);
+    }
     for (auto& param : envelopeParams) {
         param.saveParameters(xml);
     }
-    for (auto& param : oscParams) {
+    for (auto& param : noiseParams) {
+        param.saveParameters(xml);
+    }
+    for (auto& param : noiseEnvelopeParams) {
         param.saveParameters(xml);
     }
 }
 void MainParams::loadParameters(juce::XmlElement& xml) {
     *NoteNumber = xml.getIntAttribute(NoteNumber->paramID, 30 * (index + 1));
+    for (auto& param : oscParams) {
+        param.loadParameters(xml);
+    }
     for (auto& param : envelopeParams) {
         param.loadParameters(xml);
     }
-    for (auto& param : oscParams) {
+    for (auto& param : noiseParams) {
+        param.loadParameters(xml);
+    }
+    for (auto& param : noiseEnvelopeParams) {
         param.loadParameters(xml);
     }
 }
 
 //==============================================================================
 NoiseUnitParams::NoiseUnitParams(int index)
-    : index(index),
-      noiseParams{index},
-      envelopeParams{NUM_TIMBRES, index},  // TODO
-      filterParams{FilterParams{index, 0}, FilterParams{index, 1}} {}
+    : index(index), filterParams{FilterParams{index, 0}, FilterParams{index, 1}} {
+    auto idPrefix = "NOISE" + std::to_string(index) + "_";
+    auto namePrefix = "Noise" + std::to_string(index) + " ";
+    Waveform = new juce::AudioParameterChoice(
+        idPrefix + "WAVEFORM", namePrefix + "Waveform", NOISE_WAVEFORM_NAMES, NOISE_WAVEFORM_NAMES.indexOf("White"));
+}
 void NoiseUnitParams::addAllParameters(juce::AudioProcessor& processor) {
-    noiseParams.addAllParameters(processor);
-    envelopeParams.addAllParameters(processor);
+    processor.addParameter(Waveform);
     for (auto& param : filterParams) {
         param.addAllParameters(processor);
     }
 }
 void NoiseUnitParams::saveParameters(juce::XmlElement& xml) {
-    noiseParams.saveParameters(xml);
-    envelopeParams.saveParameters(xml);
+    xml.setAttribute(Waveform->paramID, Waveform->getIndex());
     for (auto& param : filterParams) {
         param.saveParameters(xml);
     }
 }
 void NoiseUnitParams::loadParameters(juce::XmlElement& xml) {
-    noiseParams.loadParameters(xml);
-    envelopeParams.loadParameters(xml);
+    *Waveform = xml.getIntAttribute(Waveform->paramID, NOISE_WAVEFORM_NAMES.indexOf("White"));
     for (auto& param : filterParams) {
         param.loadParameters(xml);
     }

@@ -577,7 +577,7 @@ class HarmonicComponent : public juce::Component,
                           private juce::Timer,
                           ComponentHelper {
 public:
-    HarmonicComponent(int index, AllParams& allParams);
+    HarmonicComponent(bool isNoise, int index, AllParams& allParams);
     virtual ~HarmonicComponent();
     HarmonicComponent(const HarmonicComponent&) = delete;
 
@@ -588,6 +588,7 @@ private:
     virtual void buttonClicked(juce::Button* button) override;
     virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
+    bool isNoise;
     int index;
 
     AllParams& allParams;
@@ -601,15 +602,30 @@ private:
     juce::Slider decaySlider;
     juce::Slider releaseSlider;
 
-    OscParams& getSelectedOscParams() { return allParams.getCurrentMainParams().oscParams[index]; }
-    EnvelopeParams& getSelectedEnvelopeParams() {
-        // sync 先を表示した方がいいかもしれない
-        return allParams.getCurrentMainParams().envelopeParams[index];
+    AudioParameterFloat* getSelectedGainParam() {
+        return isNoise ? allParams.getCurrentMainParams().noiseParams[index].Gain
+                       : allParams.getCurrentMainParams().oscParams[index].Gain;
+    }
+    AudioParameterFloat* getSelectedAttackCurveParam() {
+        return isNoise ? allParams.getCurrentMainParams().noiseEnvelopeParams[index].AttackCurve
+                       : allParams.getCurrentMainParams().envelopeParams[index].AttackCurve;
+    }
+    AudioParameterFloat* getSelectedAttackParam() {
+        return isNoise ? allParams.getCurrentMainParams().noiseEnvelopeParams[index].Attack
+                       : allParams.getCurrentMainParams().envelopeParams[index].Attack;
+    }
+    AudioParameterFloat* getSelectedDecayParam() {
+        return isNoise ? allParams.getCurrentMainParams().noiseEnvelopeParams[index].Decay
+                       : allParams.getCurrentMainParams().envelopeParams[index].Decay;
+    }
+    AudioParameterFloat* getSelectedReleaseParam() {
+        return isNoise ? allParams.getCurrentMainParams().noiseEnvelopeParams[index].Release
+                       : allParams.getCurrentMainParams().envelopeParams[index].Release;
     }
 };
 
 //==============================================================================
-class HarmonicsComponent : public juce::Component, private juce::Timer, ComponentHelper {
+class HarmonicsComponent : public juce::Component, private ComponentHelper {
 public:
     HarmonicsComponent(AllParams& allParams);
     virtual ~HarmonicsComponent();
@@ -619,10 +635,23 @@ public:
     virtual void resized() override;
 
 private:
-    virtual void timerCallback() override;
-
     HarmonicHeadComponent head;
     std::array<HarmonicComponent, NUM_OSC> harmonics;
+};
+
+//==============================================================================
+class NoisesComponent : public juce::Component, private ComponentHelper {
+public:
+    NoisesComponent(AllParams& allParams);
+    virtual ~NoisesComponent();
+    NoisesComponent(const NoisesComponent&) = delete;
+
+    virtual void paint(juce::Graphics& g) override;
+    virtual void resized() override;
+
+private:
+    HarmonicHeadComponent head;
+    std::array<HarmonicComponent, NUM_NOISE> noises;
 };
 
 //==============================================================================
@@ -669,11 +698,7 @@ private:
 };
 
 //==============================================================================
-class NoiseComponent : public juce::Component,
-                       juce::Slider::Listener,
-                       juce::ComboBox::Listener,
-                       private juce::Timer,
-                       ComponentHelper {
+class NoiseComponent : public juce::Component, juce::ComboBox::Listener, private juce::Timer, ComponentHelper {
 public:
     NoiseComponent(int index, AllParams& allParams);
     virtual ~NoiseComponent();
@@ -684,30 +709,18 @@ public:
 
 private:
     virtual void comboBoxChanged(juce::ComboBox* comboBox) override;
-    virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
     int index;
 
     AllParams& allParams;
 
-    juce::Slider gainSlider;
     juce::ComboBox typeSelector;
-    juce::Slider attackCurveSlider;
-    juce::Slider attackSlider;
-    juce::Slider decaySlider;
-    juce::Slider releaseSlider;
 
-    juce::Label gainLabel;
     juce::Label typeLabel;
-    juce::Label attackCurveLabel;
-    juce::Label attackLabel;
-    juce::Label decayLabel;
-    juce::Label releaseLabel;
 
     std::array<FilterComponent, NUM_NOISE_FILTER> filters;
 
-    NoiseParams& getNoiseParams() { return allParams.noiseUnitParams[index].noiseParams; }
-    EnvelopeParams& getEnvelopeParams() { return allParams.noiseUnitParams[index].envelopeParams; }
+    NoiseUnitParams& getNoiseUnitParams() { return allParams.noiseUnitParams[index]; }
 };
 
 //==============================================================================
