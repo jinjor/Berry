@@ -609,11 +609,11 @@ private:
 };
 
 //==============================================================================
-class HarmonicBodyComponent : public juce::Component, private juce::Timer, ComponentHelper {
+class HarmonicsComponent : public juce::Component, private juce::Timer, ComponentHelper {
 public:
-    HarmonicBodyComponent(AllParams& allParams);
-    virtual ~HarmonicBodyComponent();
-    HarmonicBodyComponent(const HarmonicBodyComponent&) = delete;
+    HarmonicsComponent(AllParams& allParams);
+    virtual ~HarmonicsComponent();
+    HarmonicsComponent(const HarmonicsComponent&) = delete;
 
     virtual void paint(juce::Graphics& g) override;
     virtual void resized() override;
@@ -621,6 +621,7 @@ public:
 private:
     virtual void timerCallback() override;
 
+    HarmonicHeadComponent head;
     std::array<HarmonicComponent, NUM_OSC> harmonics;
 };
 

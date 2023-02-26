@@ -18,9 +18,8 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
       utilComponent{SectionComponent{"UTILITY", HEADER_CHECK::Hidden, std::make_unique<UtilComponent>(p)}},
       timbreComponent{SectionComponent{
           "TIMBRE", HEADER_CHECK::Hidden, std::make_unique<KeyboardComponent>(p.allParams, p.keyboardState)}},
-      harmonicHeadComponent{SectionComponent{"", HEADER_CHECK::Hidden, std::make_unique<HarmonicHeadComponent>()}},
-      harmonicBodyComponent{
-          SectionComponent{"HARMONICS", HEADER_CHECK::Hidden, std::make_unique<HarmonicBodyComponent>(p.allParams)}},
+      harmonicsComponent{
+          SectionComponent{"HARMONICS", HEADER_CHECK::Hidden, std::make_unique<HarmonicsComponent>(p.allParams)}},
       noiseComponents{
           SectionComponent{"NOISE 1", HEADER_CHECK::Hidden, std::make_unique<NoiseComponent>(0, p.allParams)},
           SectionComponent{"NOISE 2", HEADER_CHECK::Hidden, std::make_unique<NoiseComponent>(1, p.allParams)}},
@@ -36,8 +35,7 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     addAndMakeVisible(utilComponent);
     addAndMakeVisible(timbreComponent);
 
-    addAndMakeVisible(harmonicHeadComponent);
-    addAndMakeVisible(harmonicBodyComponent);
+    addAndMakeVisible(harmonicsComponent);
     for (auto i = 0; i < NUM_NOISE; i++) {
         auto &component = noiseComponents[i];
         addAndMakeVisible(component);
@@ -117,9 +115,7 @@ void BerryAudioProcessorEditor::resized() {
         auto leftWidth = (width - PANEL_MARGIN_X * 2) * 0.57;
         {
             auto area = lowerArea.removeFromLeft(leftWidth);
-            harmonicHeadComponent.setBounds(area.removeFromTop(LABEL_HEIGHT));
-            area.removeFromTop(PANEL_MARGIN_Y);
-            harmonicBodyComponent.setBounds(area);
+            harmonicsComponent.setBounds(area);
         }
         {
             auto &area = lowerArea;

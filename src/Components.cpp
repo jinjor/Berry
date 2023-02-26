@@ -636,7 +636,7 @@ void HarmonicComponent::timerCallback() {
 }
 
 //==============================================================================
-HarmonicBodyComponent::HarmonicBodyComponent(AllParams& allParams)
+HarmonicsComponent::HarmonicsComponent(AllParams& allParams)
     : harmonics{
           HarmonicComponent(0, allParams),
           HarmonicComponent(1, allParams),
@@ -655,27 +655,29 @@ HarmonicBodyComponent::HarmonicBodyComponent(AllParams& allParams)
           HarmonicComponent(14, allParams),
           HarmonicComponent(15, allParams),
       } {
+    addAndMakeVisible(head);
     for (auto& harmonic : harmonics) {
         addAndMakeVisible(harmonic);
     }
 }
 
-HarmonicBodyComponent::~HarmonicBodyComponent() {}
+HarmonicsComponent::~HarmonicsComponent() {}
 
-void HarmonicBodyComponent::paint(juce::Graphics& g) {}
+void HarmonicsComponent::paint(juce::Graphics& g) {}
 
-void HarmonicBodyComponent::resized() {
+void HarmonicsComponent::resized() {
     auto bounds = getLocalBounds();
     auto margin = PANEL_MARGIN_Y;
-    auto harmonicHeight = (bounds.getHeight() - margin * (NUM_OSC - 1)) / NUM_OSC;
+    auto rowHeight = (bounds.getHeight() - margin * NUM_OSC) / (NUM_OSC + 1);
+
+    head.setBounds(bounds.removeFromTop(rowHeight));
+
     for (int i = 0; i < NUM_OSC; i++) {
-        if (i > 0) {
-            bounds.removeFromTop(margin);
-        }
-        harmonics[i].setBounds(bounds.removeFromTop(harmonicHeight));
+        bounds.removeFromTop(margin);
+        harmonics[i].setBounds(bounds.removeFromTop(rowHeight));
     }
 }
-void HarmonicBodyComponent::timerCallback() {}
+void HarmonicsComponent::timerCallback() {}
 
 //==============================================================================
 FilterComponent::FilterComponent(int noiseIndex, int filterIndex, AllParams& allParams)

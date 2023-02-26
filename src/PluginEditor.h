@@ -26,8 +26,7 @@ private:
     StatusComponent statusComponent;
     SectionComponent utilComponent;
     SectionComponent timbreComponent;
-    SectionComponent harmonicHeadComponent;
-    SectionComponent harmonicBodyComponent;
+    SectionComponent harmonicsComponent;
     SectionComponent noiseComponents[NUM_NOISE];
     SectionComponent delayComponent;
     SectionComponent masterComponent;
