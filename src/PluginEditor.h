@@ -26,6 +26,7 @@ private:
     StatusComponent statusComponent;
     SectionComponent utilComponent;
     SectionComponent timbreComponent;
+    TimbreHeadComponent timbreHeadComponent;
     SectionComponent harmonicsComponent;
     SectionComponent noisesComponent;
     SectionComponent noiseComponents[NUM_NOISE];

@@ -561,7 +561,23 @@ private:
 };
 
 //==============================================================================
-class HarmonicHeadComponent : public juce::Component, ComponentHelper {
+class TimbreHeadComponent : public juce::Component, private juce::Timer, ComponentHelper {
+public:
+    TimbreHeadComponent(AllParams& allParams);
+    virtual ~TimbreHeadComponent();
+    TimbreHeadComponent(const TimbreHeadComponent&) = delete;
+
+    virtual void paint(juce::Graphics& g) override;
+    virtual void resized() override;
+
+private:
+    AllParams& allParams;
+    juce::Label nameLabel;
+    virtual void timerCallback() override;
+};
+
+//==============================================================================
+class HarmonicHeadComponent : public juce::Component, private ComponentHelper {
 public:
     HarmonicHeadComponent();
     virtual ~HarmonicHeadComponent();

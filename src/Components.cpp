@@ -538,6 +538,41 @@ void KeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
 }
 
 //==============================================================================
+TimbreHeadComponent::TimbreHeadComponent(AllParams& allParams) : allParams(allParams) {
+    initLabel(nameLabel, "Timbre " + std::to_string(allParams.editingTimbreIndex + 1), *this);
+
+    startTimerHz(30.0f);
+}
+
+TimbreHeadComponent::~TimbreHeadComponent() {}
+
+void TimbreHeadComponent::paint(juce::Graphics& g) {
+    juce::Rectangle<int> bounds = getLocalBounds();
+    auto x1 = PANEL_NAME_HEIGHT + PARAM_MARGIN_LEFT + 40 + PARAM_MARGIN_LEFT + 20 + PARAM_MARGIN_LEFT + 20 + 20 +
+              PARAM_MARGIN_LEFT;
+    auto x2 = x1 + HORIZONTAL_SLIDER_WIDTH + 20 + (PARAM_MARGIN_LEFT + HORIZONTAL_SLIDER_WIDTH) * 4;
+    auto y = bounds.getHeight() - 15;
+    g.setColour(colour::BORDER);
+    g.drawLine(x1, y, x2, y);
+    g.drawLine(x1, y, x1, y + 8);
+    g.drawLine(x2, y, x2, y + 8);
+}
+
+void TimbreHeadComponent::resized() {
+    juce::Rectangle<int> bounds = getLocalBounds();
+    auto x1 = PANEL_NAME_HEIGHT + PARAM_MARGIN_LEFT + 40 + PARAM_MARGIN_LEFT + 20 + PARAM_MARGIN_LEFT + 20 + 20 +
+              PARAM_MARGIN_LEFT;
+    auto x2 = x1 + HORIZONTAL_SLIDER_WIDTH + 20 + (PARAM_MARGIN_LEFT + HORIZONTAL_SLIDER_WIDTH) * 4;
+    auto y = bounds.getHeight() - 15;
+    auto rectSize = 20;
+    auto labelRect = Rectangle<int>{(int)x1, y - rectSize, (int)(x2 - x1), rectSize};
+    nameLabel.setBounds(labelRect);
+}
+void TimbreHeadComponent::timerCallback() {
+    nameLabel.setText("Timbre " + std::to_string(allParams.editingTimbreIndex + 1), juce::dontSendNotification);
+}
+
+//==============================================================================
 HarmonicHeadComponent::HarmonicHeadComponent() {
     initLabel(nameLabel, "No.", *this);
     initLabel(soloLabel, "S", *this);
@@ -557,8 +592,9 @@ void HarmonicHeadComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
 
     consumeLabel(bounds, 40, nameLabel);
-    consumeLabel(bounds, 25, soloLabel);
-    consumeLabel(bounds, 25, muteLabel);
+    consumeLabel(bounds, 20, soloLabel);
+    consumeLabel(bounds, 20, muteLabel);
+    bounds.removeFromLeft(20);
     consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, gainLabel);
     bounds.removeFromLeft(20);
     consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, attackCurveLabel);
@@ -606,8 +642,9 @@ void HarmonicComponent::resized() {
     bounds = bounds.withSizeKeepingCentre(bounds.getWidth(), HORIZONTAL_SLIDER_HEIGHT);
 
     consumeLabel(bounds, 40, nameLabel);
-    consumeToggle(bounds, 25, soloToggle);
-    consumeToggle(bounds, 25, muteToggle);
+    consumeToggle(bounds, 20, soloToggle);
+    consumeToggle(bounds, 20, muteToggle);
+    bounds.removeFromLeft(20);
     consumeHorizontalSlider(bounds, gainSlider);
     bounds.removeFromLeft(20);
     consumeHorizontalSlider(bounds, attackCurveSlider);

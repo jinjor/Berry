@@ -18,6 +18,7 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
       utilComponent{SectionComponent{"UTILITY", HEADER_CHECK::Hidden, std::make_unique<UtilComponent>(p)}},
       timbreComponent{SectionComponent{
           "TIMBRE", HEADER_CHECK::Hidden, std::make_unique<KeyboardComponent>(p.allParams, p.keyboardState)}},
+      timbreHeadComponent(TimbreHeadComponent{p.allParams}),
       harmonicsComponent{
           SectionComponent{"HARMONICS", HEADER_CHECK::Hidden, std::make_unique<HarmonicsComponent>(p.allParams)}},
       noisesComponent{SectionComponent{"NOISES", HEADER_CHECK::Hidden, std::make_unique<NoisesComponent>(p.allParams)}},
@@ -36,6 +37,7 @@ BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     addAndMakeVisible(utilComponent);
     addAndMakeVisible(timbreComponent);
 
+    addAndMakeVisible(timbreHeadComponent);
     addAndMakeVisible(harmonicsComponent);
     addAndMakeVisible(noisesComponent);
 
@@ -64,7 +66,7 @@ void BerryAudioProcessorEditor::paint(juce::Graphics &g) {
     auto bounds = getLocalBounds();
     auto height = bounds.getHeight();
     auto upperArea = bounds.removeFromTop(height * 0.12);
-    auto middleArea = bounds.removeFromTop(bounds.getHeight() * 1 / 6);
+    auto middleArea = bounds.removeFromTop(bounds.getHeight() * 1 / 7);
 
     g.fillAll(colour::BACKGROUND);
 
@@ -92,7 +94,7 @@ void BerryAudioProcessorEditor::resized() {
     auto height = bounds.getHeight();
 
     auto upperHeight = height * 0.12;
-    auto middleHeight = (height - upperHeight) * 1 / 6;
+    auto middleHeight = (height - upperHeight) * 1 / 7;
     {
         auto upperArea = bounds.removeFromTop(upperHeight).reduced(AREA_PADDING_X, AREA_PADDING_Y);
         auto sideWidth = width * 0.36;
@@ -118,6 +120,9 @@ void BerryAudioProcessorEditor::resized() {
         auto leftWidth = (width - PANEL_MARGIN_X * 2) * 0.6;
         {
             auto area = lowerArea.removeFromLeft(leftWidth);
+            auto headArea = area.removeFromTop(50);
+            timbreHeadComponent.setBounds(headArea);
+
             auto harmonicsPanelHeight =
                 (area.getHeight() - PANEL_MARGIN_Y) * ((float)(NUM_OSC + 1) / (NUM_NOISE + NUM_OSC + 2));
             harmonicsComponent.setBounds(area.removeFromTop(harmonicsPanelHeight));
