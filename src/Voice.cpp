@@ -256,6 +256,9 @@ bool BerryVoice::step(
 
     // ---------------- OSC with Envelope and Filter ----------------
     for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
+        if (allParams.soloMuteParams.harmonicMute[oscIndex]) {
+            continue;
+        }
         if (!adsr[oscIndex].isActive()) {
             continue;
         }
@@ -274,6 +277,9 @@ bool BerryVoice::step(
         out[1] += o[1];
     }
     for (int noiseIndex = 0; noiseIndex < NUM_NOISE; ++noiseIndex) {
+        if (allParams.soloMuteParams.noiseMute[noiseIndex]) {
+            continue;
+        }
         if (!noiseAdsr[noiseIndex].isActive()) {
             continue;
         }

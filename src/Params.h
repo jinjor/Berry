@@ -354,6 +354,17 @@ public:
         isMute(isNoise, index) ? turnOffMute(isNoise, index) : turnOnMute(isNoise, index);
     }
 
+    bool harmonicMute[NUM_OSC]{};
+    bool noiseMute[NUM_NOISE]{};
+    void freeze() {
+        for (int i = 0; i < NUM_OSC; i++) {
+            harmonicMute[i] = isMute(false, i);
+        }
+        for (int i = 0; i < NUM_NOISE; i++) {
+            noiseMute[i] = isMute(true, i);
+        }
+    }
+
 private:
     std::array<bool, NUM_OSC> harmonicSolos{};
     std::array<bool, NUM_OSC> harmonicMutes{};
@@ -404,6 +415,7 @@ public:
         }
         delayParams.freeze();
         masterParams.freeze();
+        soloMuteParams.freeze();
     }
     MainParams& getCurrentMainParams() { return mainParams[editingTimbreIndex]; }
 
