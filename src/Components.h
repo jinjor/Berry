@@ -588,8 +588,8 @@ public:
 
 private:
     juce::Label nameLabel;
-    juce::Label soloLabel;
     juce::Label muteLabel;
+    juce::Label soloLabel;
     juce::Label gainLabel;
     juce::Label attackCurveLabel;
     juce::Label attackLabel;
@@ -598,11 +598,7 @@ private:
 };
 
 //==============================================================================
-class HarmonicComponent : public juce::Component,
-                          juce::ToggleButton::Listener,
-                          juce::Slider::Listener,
-                          private juce::Timer,
-                          ComponentHelper {
+class HarmonicComponent : public juce::Component, juce::Slider::Listener, private juce::Timer, ComponentHelper {
 public:
     HarmonicComponent(bool isNoise, int index, AllParams& allParams);
     virtual ~HarmonicComponent();
@@ -612,7 +608,6 @@ public:
     virtual void resized() override;
 
 private:
-    virtual void buttonClicked(juce::Button* button) override;
     virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
     bool isNoise;
@@ -621,8 +616,8 @@ private:
     AllParams& allParams;
 
     juce::Label nameLabel;
-    juce::ToggleButton soloToggle;
-    juce::ToggleButton muteToggle;
+    juce::Label soloToggle;
+    juce::Label muteToggle;
     juce::Slider gainSlider;
     juce::Slider attackCurveSlider;
     juce::Slider attackSlider;
@@ -649,6 +644,7 @@ private:
         return isNoise ? allParams.getCurrentMainParams().noiseEnvelopeParams[index].Release
                        : allParams.getCurrentMainParams().envelopeParams[index].Release;
     }
+    virtual void mouseDown(const juce::MouseEvent& e) override;
 };
 
 //==============================================================================

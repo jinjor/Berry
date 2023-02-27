@@ -322,6 +322,59 @@ public:
 };
 
 //==============================================================================
+class SoloMuteParams {
+public:
+    SoloMuteParams() {}
+    SoloMuteParams(const SoloMuteParams&) = delete;
+    SoloMuteParams(SoloMuteParams&&) noexcept = default;
+
+    bool isSolo(bool isNoise, int index) { return isNoise ? noiseSolos[index] : harmonicSolos[index]; }
+    bool isMute(bool isNoise, int index) {
+        if (soloExists()) {
+            return !isSolo(isNoise, index);
+        }
+        return isNoise ? noiseMutes[index] : harmonicMutes[index];
+    }
+    void turnOnSolo(bool isNoise, int index) { (isNoise ? noiseSolos[index] : harmonicSolos[index]) = true; }
+    void turnOffSolo(bool isNoise, int index) { (isNoise ? noiseSolos[index] : harmonicSolos[index]) = false; }
+    void turnOnMute(bool isNoise, int index) {
+        (isNoise ? noiseSolos[index] : harmonicSolos[index]) = false;
+        (isNoise ? noiseMutes[index] : harmonicMutes[index]) = true;
+    }
+    void turnOffMute(bool isNoise, int index) {
+        if (soloExists()) {
+            (isNoise ? noiseSolos[index] : harmonicSolos[index]) = true;
+        }
+        (isNoise ? noiseMutes[index] : harmonicMutes[index]) = false;
+    }
+    void toggleSolo(bool isNoise, int index) {
+        isSolo(isNoise, index) ? turnOffSolo(isNoise, index) : turnOnSolo(isNoise, index);
+    }
+    void toggleMute(bool isNoise, int index) {
+        isMute(isNoise, index) ? turnOffMute(isNoise, index) : turnOnMute(isNoise, index);
+    }
+
+private:
+    std::array<bool, NUM_OSC> harmonicSolos{};
+    std::array<bool, NUM_OSC> harmonicMutes{};
+    std::array<bool, NUM_NOISE> noiseSolos{};
+    std::array<bool, NUM_NOISE> noiseMutes{};
+    bool soloExists() {
+        for (auto solo : harmonicSolos) {
+            if (solo) {
+                return true;
+            }
+        }
+        for (auto solo : noiseSolos) {
+            if (solo) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+//==============================================================================
 class AllParams : public SynthParametersBase {
 public:
     GlobalParams globalParams;
@@ -330,6 +383,7 @@ public:
     std::array<NoiseUnitParams, NUM_NOISE> noiseUnitParams;
     DelayParams delayParams;
     MasterParams masterParams;
+    SoloMuteParams soloMuteParams;
     // UI の状態
     int editingTimbreIndex = 0;
 

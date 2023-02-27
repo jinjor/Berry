@@ -351,7 +351,8 @@ AllParams::AllParams()
       mainParams{MainParams{0}, MainParams{1}, MainParams{2}},
       noiseUnitParams{NoiseUnitParams{0}, NoiseUnitParams{1}},
       delayParams{},
-      masterParams{} {}
+      masterParams{},
+      soloMuteParams{} {}
 void AllParams::addAllParameters(juce::AudioProcessor& processor) {
     globalParams.addAllParameters(processor);
     voiceParams.addAllParameters(processor);

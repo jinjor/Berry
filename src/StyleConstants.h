@@ -6,7 +6,7 @@ namespace styles {
 namespace colour {
 // text
 const juce::Colour TEXT = juce::Colour(40, 40, 40);
-const juce::Colour TEXT_INVERT = juce::Colour(210, 210, 210);
+const juce::Colour TEXT_INVERT = juce::Colour(240, 240, 240);
 const juce::Colour WARNING = juce::Colour(80, 80, 40);
 const juce::Colour ERROR = juce::Colour(100, 40, 60);
 const juce::Colour POPUP_SELECTED_TEXT = juce::Colour(40, 40, 40);

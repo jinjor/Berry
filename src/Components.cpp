@@ -575,8 +575,8 @@ void TimbreHeadComponent::timerCallback() {
 //==============================================================================
 HarmonicHeadComponent::HarmonicHeadComponent() {
     initLabel(nameLabel, "No.", *this);
-    initLabel(soloLabel, "S", *this);
     initLabel(muteLabel, "M", *this);
+    initLabel(soloLabel, "S", *this);
     initLabel(gainLabel, "Gain", *this);
     initLabel(attackCurveLabel, "A. Curve", *this);
     initLabel(attackLabel, "Attack", *this);
@@ -592,8 +592,8 @@ void HarmonicHeadComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
 
     consumeLabel(bounds, 40, nameLabel);
-    consumeLabel(bounds, 20, soloLabel);
     consumeLabel(bounds, 20, muteLabel);
+    consumeLabel(bounds, 20, soloLabel);
     bounds.removeFromLeft(20);
     consumeLabel(bounds, HORIZONTAL_SLIDER_WIDTH, gainLabel);
     bounds.removeFromLeft(20);
@@ -621,7 +621,27 @@ HarmonicComponent::HarmonicComponent(bool isNoise, int index, AllParams& allPara
 
     auto formatGain = [](double gain) { return juce::String(juce::Decibels::gainToDecibels(gain), 2) + " dB"; };
     initLabel(nameLabel, index == NUM_OSC - 1 ? "16..." : std::to_string(index + 1), *this);
-    // TODO: solo
+    {
+        auto font = juce::Font(11, juce::Font::bold).withTypefaceStyle("Regular");
+        muteToggle.setColour(juce::Label::textColourId, Colour{200, 200, 200});
+        muteToggle.setFont(paramLabelFont);
+        muteToggle.setText("M", juce::dontSendNotification);
+        muteToggle.setJustificationType(juce::Justification::centred);
+        muteToggle.setEditable(false, false, false);
+        muteToggle.addMouseListener(this, false);
+        addAndMakeVisible(muteToggle);
+    }
+    {
+        auto font = juce::Font(11, juce::Font::bold).withTypefaceStyle("Regular");
+        soloToggle.setColour(juce::Label::textColourId, Colour{200, 200, 200});
+        soloToggle.setFont(paramLabelFont);
+        soloToggle.setText("S", juce::dontSendNotification);
+        soloToggle.setJustificationType(juce::Justification::centred);
+        soloToggle.setEditable(false, false, false);
+        soloToggle.addMouseListener(this, false);
+        addAndMakeVisible(soloToggle);
+    }
+
     // TODO: mute
     initSkewFromMid(gainSlider, gainParam, 0.01f, nullptr, std::move(formatGain), this, *this);
     initLinear(attackCurveSlider, attackCurveParam, 0.01, this, *this);
@@ -642,8 +662,17 @@ void HarmonicComponent::resized() {
     bounds = bounds.withSizeKeepingCentre(bounds.getWidth(), HORIZONTAL_SLIDER_HEIGHT);
 
     consumeLabel(bounds, 40, nameLabel);
-    consumeToggle(bounds, 20, soloToggle);
-    consumeToggle(bounds, 20, muteToggle);
+    auto toggleSize = 17;
+    {
+        bounds.removeFromLeft(PARAM_MARGIN_LEFT);
+        auto area = bounds.removeFromLeft(20).withSizeKeepingCentre(toggleSize, toggleSize);
+        muteToggle.setBounds(area);
+    }
+    {
+        bounds.removeFromLeft(PARAM_MARGIN_LEFT);
+        auto area = bounds.removeFromLeft(20).withSizeKeepingCentre(toggleSize, toggleSize);
+        soloToggle.setBounds(area);
+    }
     bounds.removeFromLeft(20);
     consumeHorizontalSlider(bounds, gainSlider);
     bounds.removeFromLeft(20);
@@ -651,9 +680,6 @@ void HarmonicComponent::resized() {
     consumeHorizontalSlider(bounds, attackSlider);
     consumeHorizontalSlider(bounds, decaySlider);
     consumeHorizontalSlider(bounds, releaseSlider);
-}
-void HarmonicComponent::buttonClicked(juce::Button* button) {
-    // TODO
 }
 void HarmonicComponent::sliderValueChanged(juce::Slider* slider) {
     auto gainParam = getSelectedGainParam();
@@ -675,6 +701,14 @@ void HarmonicComponent::sliderValueChanged(juce::Slider* slider) {
     }
 }
 void HarmonicComponent::timerCallback() {
+    auto isMute = allParams.soloMuteParams.isMute(isNoise, index);
+    muteToggle.setColour(juce::Label::textColourId, isMute ? colour::TEXT_INVERT : Colour{200, 200, 200});
+    muteToggle.setColour(juce::Label::backgroundColourId, isMute ? Colour{160, 160, 160} : colour::BACKGROUND);
+
+    auto isSolo = allParams.soloMuteParams.isSolo(isNoise, index);
+    soloToggle.setColour(juce::Label::textColourId, isSolo ? colour::TEXT_INVERT : Colour{200, 200, 200});
+    soloToggle.setColour(juce::Label::backgroundColourId, isSolo ? colour::SELECT : colour::BACKGROUND);
+
     auto gainParam = getSelectedGainParam();
     auto attackCurveParam = getSelectedAttackCurveParam();
     auto attackParam = getSelectedAttackParam();
@@ -711,6 +745,13 @@ void HarmonicComponent::timerCallback() {
     decaySlider.setValue(decayParam->get(), juce::dontSendNotification);
     releaseSlider.setValue(releaseParam->get(), juce::dontSendNotification);
 }
+void HarmonicComponent::mouseDown(const juce::MouseEvent& event) {
+    if (event.eventComponent == &muteToggle) {
+        allParams.soloMuteParams.toggleMute(isNoise, index);
+    } else if (event.eventComponent == &soloToggle) {
+        allParams.soloMuteParams.toggleSolo(isNoise, index);
+    }
+}
 
 //==============================================================================
 HarmonicsComponent::HarmonicsComponent(AllParams& allParams)
@@ -745,7 +786,7 @@ void HarmonicsComponent::paint(juce::Graphics& g) {}
 void HarmonicsComponent::resized() {
     auto bounds = getLocalBounds();
     auto margin = PANEL_MARGIN_Y;
-    auto rowHeight = (bounds.getHeight() - margin * NUM_OSC) / (NUM_OSC + 1);
+    auto rowHeight = (bounds.getHeight() - margin * (NUM_OSC + 1)) / (NUM_OSC + 1);
 
     head.setBounds(bounds.removeFromTop(rowHeight));
     for (int i = 0; i < NUM_OSC; i++) {
@@ -770,7 +811,7 @@ void NoisesComponent::paint(juce::Graphics& g) {}
 void NoisesComponent::resized() {
     auto bounds = getLocalBounds();
     auto margin = PANEL_MARGIN_Y;
-    auto rowHeight = (bounds.getHeight() - margin * NUM_NOISE) / (NUM_NOISE + 1);
+    auto rowHeight = (bounds.getHeight() - margin * (NUM_NOISE + 1)) / (NUM_NOISE + 1);
 
     head.setBounds(bounds.removeFromTop(rowHeight));
     for (int i = 0; i < NUM_NOISE; i++) {
