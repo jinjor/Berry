@@ -407,34 +407,22 @@ void TimbreNote::resized() {}
 KeyboardComponent::KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState)
     : allParams(allParams),
       keyboardState(keyboardState),
-      timbreNoteNumberSliders{juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                                           juce::Slider::TextEntryBoxPosition::NoTextBox},
-                              juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                                           juce::Slider::TextEntryBoxPosition::NoTextBox},
-                              juce::Slider{juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                                           juce::Slider::TextEntryBoxPosition::NoTextBox}},
       timbreNotes{TimbreNote{0, allParams}, TimbreNote{1, allParams}, TimbreNote{2, allParams}},
       keys{} {
-    for (int i = 0; i < NUM_TIMBRES; i++) {
-        auto& slider = timbreNoteNumberSliders[i];
-        auto& label = timbreLabels[i];
-        initLinear(slider, allParams.mainParams[i].NoteNumber, this, *this);
-        initLabel(label, std::to_string(i + 1), *this);
-    }
     for (int i = 0; i < NUM_TIMBRES; i++) {
         auto& timbreNote = timbreNotes[i];
         timbreNote.addMouseListener(this, false);
         addAndMakeVisible(timbreNote);
     }
-    for (int n = MIN_NOTE; n <= MAX_NOTE; n++) {
+    for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
         if (KEY_POSITIONS[n % 12] >= 0) {
-            int index = n - MIN_NOTE;
+            int index = n - MIN_OF_88_NOTES;
             addAndMakeVisible(keys[index]);
         }
     }
-    for (int n = MIN_NOTE; n <= MAX_NOTE; n++) {
+    for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
         if (KEY_POSITIONS[n % 12] < 0) {
-            int index = n - MIN_NOTE;
+            int index = n - MIN_OF_88_NOTES;
             addAndMakeVisible(keys[index]);
         }
     }
@@ -474,7 +462,7 @@ void KeyboardComponent::resized() {
 
     float keyHeight = (float)lowerArea.getHeight();
 
-    for (int n = MIN_NOTE; n <= MAX_NOTE; n++) {
+    for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
         auto pos = KEY_POSITIONS[n % 12];
         auto isBlack = pos < 0;
         float p = isBlack ? -pos : pos;
@@ -485,24 +473,15 @@ void KeyboardComponent::resized() {
         int width =
             isBlack ? octaveWidth * B : octaveWidth * (normalizedX + W) - x - 1;  // 白鍵の場合は隣との差分を幅とする
         int height = keyHeight * (isBlack ? 0.65 : 1);
-        int index = n - MIN_NOTE;
+        int index = n - MIN_OF_88_NOTES;
         keys[index].setBounds(x, y, width, height);
     }
 }
-void KeyboardComponent::sliderValueChanged(juce::Slider* slider) {
-    for (int i = 0; i < NUM_TIMBRES; i++) {
-        auto& timbreNoteNumberSlider = timbreNoteNumberSliders[i];
-        if (slider == &timbreNoteNumberSlider) {
-            *allParams.mainParams[i].NoteNumber = timbreNoteNumberSlider.getValue();
-        }
-    }
-    repaint();
-}
 void KeyboardComponent::timerCallback() {
-    for (int n = MIN_NOTE; n <= MAX_NOTE; n++) {
+    for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
         auto pos = KEY_POSITIONS[n % 12];
         auto isBlack = pos < 0;
-        int index = n - MIN_NOTE;
+        int index = n - MIN_OF_88_NOTES;
 
         int midiChannel = 1;  // TODO
         bool isOn = keyboardState.isNoteOn(midiChannel, n);
@@ -514,8 +493,10 @@ void KeyboardComponent::mouseDown(const juce::MouseEvent& e) {
         auto& timbreNote = timbreNotes[i];
         if (e.eventComponent == &timbreNote) {
             allParams.editingTimbreIndex = i;
+            for (auto& t : timbreNotes) {
+                t.repaint();
+            }
         }
-        timbreNote.repaint();
     }
 }
 void KeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
@@ -531,7 +512,25 @@ void KeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
 
             auto pos = getMouseXYRelative();
             auto note = leftNote + (int)(((float)pos.x + offset) / (octaveWidth * B));
-            *allParams.mainParams[i].NoteNumber = note;
+            auto& mainParams = allParams.mainParams;
+            if (note < MIN_OF_88_NOTES + i || note >= MAX_OF_88_NOTES - (NUM_TIMBRES - i)) {
+                continue;
+            }
+            *mainParams[i].NoteNumber = note;
+            // 右に進みながら、順番が狂った場合は修正する
+            for (int j = i + 1; j < NUM_TIMBRES; j++) {
+                int min = mainParams[j - 1].NoteNumber->get() + 1;
+                if (mainParams[j].NoteNumber->get() < min) {
+                    *mainParams[j].NoteNumber = min;
+                }
+            }
+            // 今度は左側に進みながら修正
+            for (int j = i - 1; j >= 0; j--) {
+                int max = mainParams[j + 1].NoteNumber->get() - 1;
+                if (mainParams[j].NoteNumber->get() > max) {
+                    *mainParams[j].NoteNumber = max;
+                }
+            }
             resized();
         }
     }

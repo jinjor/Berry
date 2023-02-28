@@ -487,9 +487,7 @@ private:
 
 //==============================================================================
 namespace {
-constexpr int MIN_NOTE = 21;   // A0
-constexpr int MAX_NOTE = 108;  // C8
-constexpr int NUM_KEYS = MAX_NOTE - MIN_NOTE + 1;
+constexpr int NUM_KEYS = MAX_OF_88_NOTES - MIN_OF_88_NOTES + 1;
 constexpr float KEY_POSITIONS[12] = {0,
                                      -1.0f / 12,
                                      1.0f / 7,
@@ -535,7 +533,7 @@ private:
 };
 
 //==============================================================================
-class KeyboardComponent : public juce::Component, private juce::Slider::Listener, juce::Timer, ComponentHelper {
+class KeyboardComponent : public juce::Component, private juce::Timer, ComponentHelper {
 public:
     KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState);
     virtual ~KeyboardComponent();
@@ -545,14 +543,12 @@ public:
     virtual void resized() override;
 
 private:
-    virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
 
     AllParams& allParams;
     juce::MidiKeyboardState& keyboardState;
 
     std::array<juce::Label, NUM_TIMBRES> timbreLabels;
-    std::array<juce::Slider, NUM_TIMBRES> timbreNoteNumberSliders;
     std::array<TimbreNote, NUM_TIMBRES> timbreNotes;
     std::array<KeyComponent, NUM_KEYS> keys;
 

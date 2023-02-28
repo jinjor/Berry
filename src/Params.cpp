@@ -17,7 +17,6 @@ GlobalParams::GlobalParams() {
     Pan = new juce::AudioParameterFloat(idPrefix + "PAN", namePrefix + "Pan", -1.0f, 1.0f, 0.0f);
     Expression = new juce::AudioParameterFloat(idPrefix + "EXPRESSION", namePrefix + "Expression", 0.0f, 1.0f, 1.0f);
     MidiVolume = new juce::AudioParameterFloat(idPrefix + "MIDI_VOLUME", namePrefix + "Midi Volume", 0.0f, 1.0f, 1.0f);
-    freeze();
 }
 void GlobalParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Pitch);
@@ -34,7 +33,6 @@ MasterParams::MasterParams() {
     juce::String namePrefix = "Master ";
     Pan = new juce::AudioParameterFloat(idPrefix + "PAN", namePrefix + "Pan", -1.0f, 1.0f, 0.0f);
     MasterVolume = new juce::AudioParameterFloat(idPrefix + "VOLUME", namePrefix + "Volume", 0.0f, 1.0f, 1.0f);
-    freeze();
 }
 void MasterParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Pan);
@@ -55,7 +53,6 @@ VoiceParams::VoiceParams() {
     std::string namePrefix = "Voice ";
     PitchBendRange =
         new juce::AudioParameterInt(idPrefix + "PITCH_BEND_RANGE", namePrefix + "Pitch-Bend Range", 1, 12, 2);
-    freeze();
 }
 void VoiceParams::addAllParameters(juce::AudioProcessor& processor) { processor.addParameter(PitchBendRange); }
 void VoiceParams::saveParameters(juce::XmlElement& xml) {
@@ -71,7 +68,6 @@ OscParams::OscParams(int timbreIndex, int index) : index(index) {
     auto namePrefix = "T" + std::to_string(timbreIndex) + " OSC" + std::to_string(index) + " ";
     Gain = new juce::AudioParameterFloat(
         idPrefix + "GAIN", namePrefix + "Gain", rangeWithSkewForCentre(0.0f, 4.0f, 1.0f), 1.0f);
-    freeze();
 }
 void OscParams::addAllParameters(juce::AudioProcessor& processor) { processor.addParameter(Gain); }
 void OscParams::saveParameters(juce::XmlElement& xml) { xml.setAttribute(Gain->paramID, (double)Gain->get()); }
@@ -83,7 +79,6 @@ NoiseParams::NoiseParams(int timbreIndex, int index) {
     auto namePrefix = "T" + std::to_string(timbreIndex) + " Noise" + std::to_string(index) + " ";
     Gain = new juce::AudioParameterFloat(
         idPrefix + "GAIN", namePrefix + "Gain", rangeWithSkewForCentre(0.0f, 4.0f, 1.0f), 1.0f);
-    freeze();
 }
 void NoiseParams::addAllParameters(juce::AudioProcessor& processor) { processor.addParameter(Gain); }
 void NoiseParams::saveParameters(juce::XmlElement& xml) { xml.setAttribute(Gain->paramID, (double)Gain->get()); }
@@ -99,7 +94,6 @@ EnvelopeParams::EnvelopeParams(int timbreIndex, int index) {
     Decay = new juce::AudioParameterFloat(idPrefix + "DECAY", "Decay", rangeWithSkewForCentre(0.01f, 2.0f, 0.3f), 0.1f);
     Release =
         new juce::AudioParameterFloat(idPrefix + "RELEASE", "Release", rangeWithSkewForCentre(0.01f, 1.0f, 0.4f), 0.1f);
-    freeze();
 }
 void EnvelopeParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(AttackCurve);
@@ -139,7 +133,6 @@ FilterParams::FilterParams(int noiseIndex, int filterIndex) {
     Q = new juce::AudioParameterFloat(
         idPrefix + "Q", namePrefix + "Q", rangeWithSkewForCentre(0.01f, 100.0f, 1.0f), 1.0f);
     Gain = new juce::AudioParameterFloat(idPrefix + "GAIN", namePrefix + "Gain", -20.0f, 20.0f, 0.0f);
-    freeze();
 }
 void FilterParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Enabled);
@@ -187,7 +180,6 @@ DelayParams::DelayParams() {
         idPrefix + "HIGH_FREQ", namePrefix + "HighFreq", rangeWithSkewForCentre(10.0f, 20000.0f, 2000.0f), 20000.0f);
     Feedback = new juce::AudioParameterFloat(idPrefix + "FEEDBACK", namePrefix + "Feedback", 0.0f, 1.0f, 0.3f);
     Mix = new juce::AudioParameterFloat(idPrefix + "MIX", namePrefix + "Mix", 0.0f, 1.0f, 0.3f);
-    freeze();
 }
 void DelayParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(Enabled);
@@ -259,17 +251,11 @@ MainParams::MainParams(int index)
       noiseEnvelopeParams{EnvelopeParams{index, NUM_OSC + 0}, EnvelopeParams{index, NUM_OSC + 1}} {  // TODO
     auto idPrefix = "T" + std::to_string(index) + "_";
     auto namePrefix = "T" + std::to_string(index) + " ";
-    switch (index) {
-        case 0:
-            NoteNumber = new juce::AudioParameterInt(idPrefix + "NOTE_NUMBER", namePrefix + "Note Number", 0, 47, 30);
-            break;
-        case 1:
-            NoteNumber = new juce::AudioParameterInt(idPrefix + "NOTE_NUMBER", namePrefix + "Note Number", 48, 71, 60);
-            break;
-        case 2:
-            NoteNumber = new juce::AudioParameterInt(idPrefix + "NOTE_NUMBER", namePrefix + "Note Number", 72, 127, 90);
-            break;
-    }
+    NoteNumber = new juce::AudioParameterInt(idPrefix + "NOTE_NUMBER",
+                                             namePrefix + "Note Number",
+                                             MIN_OF_88_NOTES,
+                                             MAX_OF_88_NOTES,
+                                             DEFAULT_TIMBRE_NOTES[index]);
 }
 void MainParams::addAllParameters(juce::AudioProcessor& processor) {
     processor.addParameter(NoteNumber);
@@ -302,7 +288,7 @@ void MainParams::saveParameters(juce::XmlElement& xml) {
     }
 }
 void MainParams::loadParameters(juce::XmlElement& xml) {
-    *NoteNumber = xml.getIntAttribute(NoteNumber->paramID, 30 * (index + 1));
+    *NoteNumber = xml.getIntAttribute(NoteNumber->paramID, DEFAULT_TIMBRE_NOTES[index]);
     for (auto& param : oscParams) {
         param.loadParameters(xml);
     }
@@ -352,7 +338,9 @@ AllParams::AllParams()
       noiseUnitParams{NoiseUnitParams{0}, NoiseUnitParams{1}},
       delayParams{},
       masterParams{},
-      soloMuteParams{} {}
+      soloMuteParams{} {
+    freeze();
+}
 void AllParams::addAllParameters(juce::AudioProcessor& processor) {
     globalParams.addAllParameters(processor);
     voiceParams.addAllParameters(processor);
@@ -388,4 +376,15 @@ void AllParams::loadParameters(juce::XmlElement& xml) {
     }
     delayParams.loadParameters(xml);
     masterParams.loadParameters(xml);
+    // UI で防ぐようになっているが、互換性のない変更をした時のために修正できるようにしておく
+    for (int i = 0; i < NUM_TIMBRES; i++) {
+        int min = i == 0 ? MIN_OF_88_NOTES : (mainParams[i - 1].NoteNumber->get() + 1);
+        int max = MAX_OF_88_NOTES - (NUM_TIMBRES - i);
+        if (mainParams[i].NoteNumber->get() < min) {
+            *mainParams[i].NoteNumber = min;
+        } else if (mainParams[i].NoteNumber->get() > max) {
+            *mainParams[i].NoteNumber = max;
+        }
+    }
+    freeze();
 }
