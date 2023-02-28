@@ -94,9 +94,9 @@ EnvelopeParams::EnvelopeParams(int timbreIndex, int index) {
     auto idPrefix = "T" + std::to_string(timbreIndex) + "_ENV" + std::to_string(index) + "_";
     auto namePrefix = "T" + std::to_string(timbreIndex) + " Env" + std::to_string(index) + " ";
     AttackCurve = new juce::AudioParameterFloat(idPrefix + "ATTACK_CURVE", "Attack Curve", 0.01, 0.99, 0.5f);
-    Attack =
-        new juce::AudioParameterFloat(idPrefix + "ATTACK", "Attack", rangeWithSkewForCentre(0.001f, 0.2f, 0.1f), 0.05f);
-    Decay = new juce::AudioParameterFloat(idPrefix + "DECAY", "Decay", rangeWithSkewForCentre(0.01f, 1.0f, 0.4f), 0.1f);
+    Attack = new juce::AudioParameterFloat(
+        idPrefix + "ATTACK", "Attack", rangeWithSkewForCentre(0.001f, 0.2f, 0.05f), 0.05f);
+    Decay = new juce::AudioParameterFloat(idPrefix + "DECAY", "Decay", rangeWithSkewForCentre(0.01f, 2.0f, 0.3f), 0.1f);
     Release =
         new juce::AudioParameterFloat(idPrefix + "RELEASE", "Release", rangeWithSkewForCentre(0.01f, 1.0f, 0.4f), 0.1f);
     freeze();
