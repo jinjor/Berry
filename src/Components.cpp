@@ -407,7 +407,8 @@ void TimbreNote::resized() {}
 KeyboardComponent::KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState)
     : allParams(allParams),
       keyboardState(keyboardState),
-      timbreNotes{TimbreNote{0, allParams}, TimbreNote{1, allParams}, TimbreNote{2, allParams}},
+      timbreNotes{
+          TimbreNote{0, allParams}, TimbreNote{1, allParams}, TimbreNote{2, allParams}, TimbreNote{3, allParams}},
       keys{} {
     for (int i = 0; i < NUM_TIMBRES; i++) {
         auto& timbreNote = timbreNotes[i];

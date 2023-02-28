@@ -334,7 +334,7 @@ void NoiseUnitParams::loadParameters(juce::XmlElement& xml) {
 AllParams::AllParams()
     : globalParams{},
       voiceParams{},
-      mainParams{MainParams{0}, MainParams{1}, MainParams{2}},
+      mainParams{MainParams{0}, MainParams{1}, MainParams{2}, MainParams{3}},
       noiseUnitParams{NoiseUnitParams{0}, NoiseUnitParams{1}},
       delayParams{},
       masterParams{},
@@ -378,11 +378,14 @@ void AllParams::loadParameters(juce::XmlElement& xml) {
     masterParams.loadParameters(xml);
     // UI で防ぐようになっているが、互換性のない変更をした時のために修正できるようにしておく
     for (int i = 0; i < NUM_TIMBRES; i++) {
-        int min = i == 0 ? MIN_OF_88_NOTES : (mainParams[i - 1].NoteNumber->get() + 1);
-        int max = MAX_OF_88_NOTES - (NUM_TIMBRES - i);
+        int min = i == 0 ? MIN_OF_88_NOTES : mainParams[i - 1].NoteNumber->get() + 1;
         if (mainParams[i].NoteNumber->get() < min) {
             *mainParams[i].NoteNumber = min;
-        } else if (mainParams[i].NoteNumber->get() > max) {
+        }
+    }
+    for (int i = NUM_TIMBRES - 1; i >= 0; i--) {
+        int max = i == NUM_TIMBRES - 1 ? MAX_OF_88_NOTES : mainParams[i + 1].NoteNumber->get() - 1;
+        if (mainParams[i].NoteNumber->get() > max) {
             *mainParams[i].NoteNumber = max;
         }
     }
