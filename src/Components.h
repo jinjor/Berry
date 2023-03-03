@@ -502,6 +502,29 @@ constexpr float KEY_POSITIONS[12] = {0,
                                      6.0f / 7};
 }  // namespace
 
+class FocusedNote : private juce::Timer {
+public:
+    FocusedNote(MonoStack& monoStack);
+    virtual ~FocusedNote();
+    FocusedNote(const FocusedNote&) = delete;
+
+    class Listener {
+    public:
+        virtual ~Listener() = default;
+        virtual void focusedNoteChanged(FocusedNote*) = 0;
+    };
+    void addListener(Listener* newListener);
+    void removeListener(Listener* listener);
+
+    int getFocusedNote() { return focusedNote; }
+
+private:
+    ListenerList<Listener> listeners;
+    MonoStack& monoStack;
+    int focusedNote = 0;
+    virtual void timerCallback() override;
+};
+
 class KeyComponent : public juce::Component {
 public:
     KeyComponent();
@@ -509,6 +532,7 @@ public:
     KeyComponent(const KeyComponent&) = delete;
 
     void update(bool isBlack, bool isOn);
+    void setFocused(bool isFocused);
 
     virtual void paint(juce::Graphics& g) override;
     virtual void resized() override;
@@ -516,6 +540,7 @@ public:
 private:
     bool isBlack = false;
     bool isOn = false;
+    bool isFocused = false;
 };
 
 class TimbreNote : public juce::Component {
@@ -533,9 +558,9 @@ private:
 };
 
 //==============================================================================
-class KeyboardComponent : public juce::Component, private juce::Timer, ComponentHelper {
+class KeyboardComponent : public juce::Component, private FocusedNote::Listener, juce::Timer, ComponentHelper {
 public:
-    KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState);
+    KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState, FocusedNote& focusedNote);
     virtual ~KeyboardComponent();
     KeyboardComponent(const KeyboardComponent&) = delete;
 
@@ -543,10 +568,12 @@ public:
     virtual void resized() override;
 
 private:
+    virtual void focusedNoteChanged(FocusedNote* focusedNote) override;
     virtual void timerCallback() override;
 
     AllParams& allParams;
     juce::MidiKeyboardState& keyboardState;
+    FocusedNote& focusedNote;
 
     std::array<juce::Label, NUM_TIMBRES> timbreLabels;
     std::array<TimbreNote, NUM_TIMBRES> timbreNotes;
@@ -596,7 +623,7 @@ private:
 //==============================================================================
 class HarmonicComponent : public juce::Component, juce::Slider::Listener, private juce::Timer, ComponentHelper {
 public:
-    HarmonicComponent(bool isNoise, int index, AllParams& allParams);
+    HarmonicComponent(bool isNoise, int index, AllParams& allParams, FocusedNote& focusedNote);
     virtual ~HarmonicComponent();
     HarmonicComponent(const HarmonicComponent&) = delete;
 
@@ -604,6 +631,7 @@ public:
     virtual void resized() override;
 
 private:
+    FocusedNote& focusedNote;
     virtual void sliderValueChanged(juce::Slider* slider) override;
     virtual void timerCallback() override;
     bool isNoise;
@@ -646,7 +674,7 @@ private:
 //==============================================================================
 class HarmonicsComponent : public juce::Component, private ComponentHelper {
 public:
-    HarmonicsComponent(AllParams& allParams);
+    HarmonicsComponent(AllParams& allParams, FocusedNote& focusedNote);
     virtual ~HarmonicsComponent();
     HarmonicsComponent(const HarmonicsComponent&) = delete;
 
@@ -661,7 +689,7 @@ private:
 //==============================================================================
 class NoisesComponent : public juce::Component, private ComponentHelper {
 public:
-    NoisesComponent(AllParams& allParams);
+    NoisesComponent(AllParams& allParams, FocusedNote& focusedNote);
     virtual ~NoisesComponent();
     NoisesComponent(const NoisesComponent&) = delete;
 

@@ -20,6 +20,7 @@ private:
     BerryAudioProcessor &audioProcessor;
     ANALYSER_MODE analyserMode = ANALYSER_MODE::Spectrum;
 
+    FocusedNote focusedNote;
     SectionComponent voiceComponent;
     AnalyserToggle analyserToggle;
     AnalyserWindow analyserWindow;

@@ -365,13 +365,40 @@ void MasterComponent::timerCallback() {
 }
 
 //==============================================================================
+FocusedNote::FocusedNote(MonoStack& monoStack) : monoStack(monoStack) { startTimerHz(30); }
+FocusedNote::~FocusedNote() {}
+void FocusedNote::addListener(Listener* l) { listeners.add(l); }
+void FocusedNote::removeListener(Listener* l) { listeners.remove(l); }
+void FocusedNote::timerCallback() {
+    if (monoStack.latestNoteNumber == 0) {
+        // note off してもフォーカスは残す
+        return;
+    }
+    bool changed = focusedNote != monoStack.latestNoteNumber;
+    focusedNote = monoStack.latestNoteNumber;
+    if (changed) {
+        listeners.call([this](Listener& l) { l.focusedNoteChanged(this); });
+    }
+}
+
+//==============================================================================
 KeyComponent::KeyComponent() {}
 
 KeyComponent::~KeyComponent() {}
 void KeyComponent::update(bool isBlack, bool isOn) {
+    bool changed = this->isBlack != isBlack || this->isOn != isOn;
     this->isBlack = isBlack;
     this->isOn = isOn;
-    repaint();
+    if (changed) {
+        repaint();
+    }
+}
+void KeyComponent::setFocused(bool isFocused) {
+    bool changed = this->isFocused != isFocused;
+    this->isFocused = isFocused;
+    if (changed) {
+        repaint();
+    }
 }
 void KeyComponent::paint(juce::Graphics& g) {
     auto colour = isBlack ? isOn ? colour::KEY_BLACK_ON : colour::KEY_BLACK
@@ -379,6 +406,10 @@ void KeyComponent::paint(juce::Graphics& g) {
                           : colour::KEY_WHITE;
     g.setColour(colour);
     g.fillAll();
+    if (isFocused) {
+        g.setColour(colour::SELECT);
+        g.drawRect(getLocalBounds());
+    }
 }
 void KeyComponent::resized() {}
 
@@ -404,9 +435,12 @@ void TimbreNote::paint(juce::Graphics& g) {
 void TimbreNote::resized() {}
 
 //==============================================================================
-KeyboardComponent::KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState)
+KeyboardComponent::KeyboardComponent(AllParams& allParams,
+                                     juce::MidiKeyboardState& keyboardState,
+                                     FocusedNote& focusedNote)
     : allParams(allParams),
       keyboardState(keyboardState),
+      focusedNote(focusedNote),
       timbreNotes{
           TimbreNote{0, allParams}, TimbreNote{1, allParams}, TimbreNote{2, allParams}, TimbreNote{3, allParams}},
       keys{} {
@@ -427,6 +461,8 @@ KeyboardComponent::KeyboardComponent(AllParams& allParams, juce::MidiKeyboardSta
             addAndMakeVisible(keys[index]);
         }
     }
+    focusedNote.addListener(this);
+
     startTimerHz(30.0f);
 }
 
@@ -476,6 +512,12 @@ void KeyboardComponent::resized() {
         int height = keyHeight * (isBlack ? 0.65 : 1);
         int index = n - MIN_OF_88_NOTES;
         keys[index].setBounds(x, y, width, height);
+    }
+}
+void KeyboardComponent::focusedNoteChanged(FocusedNote* focusedNote) {
+    for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
+        int index = n - MIN_OF_88_NOTES;
+        keys[index].setFocused(n == focusedNote->getFocusedNote());
     }
 }
 void KeyboardComponent::timerCallback() {
@@ -604,8 +646,9 @@ void HarmonicHeadComponent::resized() {
 }
 
 //==============================================================================
-HarmonicComponent::HarmonicComponent(bool isNoise, int index, AllParams& allParams)
-    : isNoise(isNoise),
+HarmonicComponent::HarmonicComponent(bool isNoise, int index, AllParams& allParams, FocusedNote& focusedNote)
+    : focusedNote(focusedNote),
+      isNoise(isNoise),
       index(index),
       allParams(allParams),
       gainSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
@@ -754,24 +797,24 @@ void HarmonicComponent::mouseDown(const juce::MouseEvent& event) {
 }
 
 //==============================================================================
-HarmonicsComponent::HarmonicsComponent(AllParams& allParams)
+HarmonicsComponent::HarmonicsComponent(AllParams& allParams, FocusedNote& focusedNote)
     : harmonics{
-          HarmonicComponent(false, 0, allParams),
-          HarmonicComponent(false, 1, allParams),
-          HarmonicComponent(false, 2, allParams),
-          HarmonicComponent(false, 3, allParams),
-          HarmonicComponent(false, 4, allParams),
-          HarmonicComponent(false, 5, allParams),
-          HarmonicComponent(false, 6, allParams),
-          HarmonicComponent(false, 7, allParams),
-          HarmonicComponent(false, 8, allParams),
-          HarmonicComponent(false, 9, allParams),
-          HarmonicComponent(false, 10, allParams),
-          HarmonicComponent(false, 11, allParams),
-          HarmonicComponent(false, 12, allParams),
-          HarmonicComponent(false, 13, allParams),
-          HarmonicComponent(false, 14, allParams),
-          HarmonicComponent(false, 15, allParams),
+          HarmonicComponent(false, 0, allParams, focusedNote),
+          HarmonicComponent(false, 1, allParams, focusedNote),
+          HarmonicComponent(false, 2, allParams, focusedNote),
+          HarmonicComponent(false, 3, allParams, focusedNote),
+          HarmonicComponent(false, 4, allParams, focusedNote),
+          HarmonicComponent(false, 5, allParams, focusedNote),
+          HarmonicComponent(false, 6, allParams, focusedNote),
+          HarmonicComponent(false, 7, allParams, focusedNote),
+          HarmonicComponent(false, 8, allParams, focusedNote),
+          HarmonicComponent(false, 9, allParams, focusedNote),
+          HarmonicComponent(false, 10, allParams, focusedNote),
+          HarmonicComponent(false, 11, allParams, focusedNote),
+          HarmonicComponent(false, 12, allParams, focusedNote),
+          HarmonicComponent(false, 13, allParams, focusedNote),
+          HarmonicComponent(false, 14, allParams, focusedNote),
+          HarmonicComponent(false, 15, allParams, focusedNote),
       } {
     addAndMakeVisible(head);
     for (auto& harmonic : harmonics) {
@@ -796,8 +839,8 @@ void HarmonicsComponent::resized() {
 }
 
 //==============================================================================
-NoisesComponent::NoisesComponent(AllParams& allParams)
-    : noises{HarmonicComponent(true, 0, allParams), HarmonicComponent(true, 1, allParams)} {
+NoisesComponent::NoisesComponent(AllParams& allParams, FocusedNote& focusedNote)
+    : noises{HarmonicComponent(true, 0, allParams, focusedNote), HarmonicComponent(true, 1, allParams, focusedNote)} {
     addAndMakeVisible(head);
     for (auto& noise : noises) {
         addAndMakeVisible(noise);

@@ -11,17 +11,20 @@ using namespace styles;
 BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     : AudioProcessorEditor(&p),
       audioProcessor(p),
+      focusedNote(p.monoStack),
       voiceComponent{SectionComponent{"VOICE", HEADER_CHECK::Hidden, std::make_unique<VoiceComponent>(p.allParams)}},
       analyserToggle(&analyserMode),
       analyserWindow(&analyserMode, &p.latestDataProvider),
       statusComponent(&p.polyphony, &p.timeConsumptionState, &p.latestDataProvider),
       utilComponent{SectionComponent{"UTILITY", HEADER_CHECK::Hidden, std::make_unique<UtilComponent>(p)}},
-      timbreComponent{SectionComponent{
-          "TIMBRE", HEADER_CHECK::Hidden, std::make_unique<KeyboardComponent>(p.allParams, p.keyboardState)}},
+      timbreComponent{SectionComponent{"TIMBRE",
+                                       HEADER_CHECK::Hidden,
+                                       std::make_unique<KeyboardComponent>(p.allParams, p.keyboardState, focusedNote)}},
       timbreHeadComponent(TimbreHeadComponent{p.allParams}),
-      harmonicsComponent{
-          SectionComponent{"HARMONICS", HEADER_CHECK::Hidden, std::make_unique<HarmonicsComponent>(p.allParams)}},
-      noisesComponent{SectionComponent{"NOISES", HEADER_CHECK::Hidden, std::make_unique<NoisesComponent>(p.allParams)}},
+      harmonicsComponent{SectionComponent{
+          "HARMONICS", HEADER_CHECK::Hidden, std::make_unique<HarmonicsComponent>(p.allParams, focusedNote)}},
+      noisesComponent{SectionComponent{
+          "NOISES", HEADER_CHECK::Hidden, std::make_unique<NoisesComponent>(p.allParams, focusedNote)}},
       noiseComponents{
           SectionComponent{"NOISE 1", HEADER_CHECK::Hidden, std::make_unique<NoiseComponent>(0, p.allParams)},
           SectionComponent{"NOISE 2", HEADER_CHECK::Hidden, std::make_unique<NoiseComponent>(1, p.allParams)}},
