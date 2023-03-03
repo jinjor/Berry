@@ -105,15 +105,6 @@ private:
 };
 
 //==============================================================================
-struct CalculatedParams {
-    double gain[NUM_OSC]{};
-    double attackCurve[NUM_OSC]{};
-    double attack[NUM_OSC]{};
-    double decay[NUM_OSC]{};
-    double release[NUM_OSC]{};
-};
-
-//==============================================================================
 class BerryVoice : public juce::SynthesiserVoice {
 public:
     BerryVoice(juce::AudioBuffer<float> &buffer, AllParams &allParams);
@@ -127,7 +118,6 @@ public:
     virtual void pitchWheelMoved(int) override{};
     virtual void controllerMoved(int, int) override{};
     void renderNextBlock(juce::AudioSampleBuffer &outputBuffer, int startSample, int numSamples) override;
-    void calculateParamsBeforeLoop(CalculatedParams &params, CalculatedParams &noiseParams);
     void applyParamsBeforeLoop(double sampleRate, CalculatedParams &params, CalculatedParams &noiseParams);
     bool step(double *out, double sampleRate, int numChannels, CalculatedParams &params, CalculatedParams &noiseParams);
     int noteNumberAtStart = -1;

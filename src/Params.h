@@ -386,6 +386,15 @@ private:
 };
 
 //==============================================================================
+struct CalculatedParams {
+    double gain[NUM_OSC]{};
+    double attackCurve[NUM_OSC]{};
+    double attack[NUM_OSC]{};
+    double decay[NUM_OSC]{};
+    double release[NUM_OSC]{};
+};
+
+//==============================================================================
 class AllParams : public SynthParametersBase {
 public:
     GlobalParams globalParams;
@@ -418,6 +427,7 @@ public:
         soloMuteParams.freeze();
     }
     MainParams& getCurrentMainParams() { return mainParams[editingTimbreIndex]; }
+    void calculateIntermediateParams(CalculatedParams& params, CalculatedParams& noiseParams, int noteNumber);
 
 private:
 };

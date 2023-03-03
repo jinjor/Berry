@@ -15,13 +15,14 @@ static void doStepLoop(benchmark::State& state, AllParams& p) {
     BerrySound sound = BerrySound();
 
     p.freeze();
-    voice.startNote(60, 1.0, &sound, 8192);
+    int noteNumber = 60;
+    voice.startNote(noteNumber, 1.0, &sound, 8192);
     auto calculatedParams = CalculatedParams{};
-    auto noiseCalculatedParams = CalculatedParams{};
-    voice.calculateParamsBeforeLoop(calculatedParams, noiseCalculatedParams);
-    voice.applyParamsBeforeLoop(sampleRate, calculatedParams, noiseCalculatedParams);
+    auto calculatedNoiseParams = CalculatedParams{};
+    p.calculateIntermediateParams(calculatedParams, calculatedNoiseParams, noteNumber);
+    voice.applyParamsBeforeLoop(sampleRate, calculatedParams, calculatedNoiseParams);
     for (auto _ : state) {
-        voice.step(out, sampleRate, numChannels, calculatedParams, noiseCalculatedParams);
+        voice.step(out, sampleRate, numChannels, calculatedParams, calculatedNoiseParams);
     }
 }
 

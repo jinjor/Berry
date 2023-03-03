@@ -391,3 +391,50 @@ void AllParams::loadParameters(juce::XmlElement& xml) {
     }
     freeze();
 }
+void AllParams::calculateIntermediateParams(CalculatedParams& params, CalculatedParams& noiseParams, int noteNumber) {
+    auto leftIndex = 0;
+    auto rightIndex = NUM_TIMBRES - 1;
+    auto leftNote = 0;
+    auto rightNote = 127;
+    for (int i = 0; i < NUM_TIMBRES; i++) {
+        if (noteNumber <= mainParams[i].noteNumber) {
+            rightIndex = i;
+            rightNote = mainParams[i].noteNumber;
+            break;
+        }
+    }
+    for (int i = NUM_TIMBRES - 1; i >= 0; i--) {
+        if (mainParams[i].noteNumber < noteNumber) {
+            leftIndex = i;
+            leftNote = mainParams[i].noteNumber;
+            break;
+        }
+    }
+    jassert(rightNote - leftNote > 0);
+    auto leftRatio = (double)(rightNote - noteNumber) / (double)(rightNote - leftNote);
+    auto rightRatio = 1.0 - leftRatio;
+    auto& leftParams = mainParams[leftIndex];
+    auto& rightParams = mainParams[rightIndex];
+    for (int oscIndex = 0; oscIndex < NUM_OSC; ++oscIndex) {
+        auto& leftOsc = leftParams.oscParams[oscIndex];
+        auto& rightOsc = rightParams.oscParams[oscIndex];
+        auto& leftEnv = leftParams.envelopeParams[oscIndex];
+        auto& rightEnv = rightParams.envelopeParams[oscIndex];
+        params.gain[oscIndex] = leftOsc.gain * leftRatio + rightOsc.gain * rightRatio;
+        params.attackCurve[oscIndex] = leftEnv.attackCurve * leftRatio + rightEnv.attackCurve * rightRatio;
+        params.attack[oscIndex] = leftEnv.attack * leftRatio + rightEnv.attack * rightRatio;
+        params.decay[oscIndex] = leftEnv.decay * leftRatio + rightEnv.decay * rightRatio;
+        params.release[oscIndex] = leftEnv.release * leftRatio + rightEnv.release * rightRatio;
+    }
+    for (int noiseIndex = 0; noiseIndex < NUM_NOISE; ++noiseIndex) {
+        auto& leftOsc = leftParams.noiseParams[noiseIndex];
+        auto& rightOsc = rightParams.noiseParams[noiseIndex];
+        auto& leftEnv = leftParams.noiseEnvelopeParams[noiseIndex];
+        auto& rightEnv = rightParams.noiseEnvelopeParams[noiseIndex];
+        noiseParams.gain[noiseIndex] = leftOsc.gain * leftRatio + rightOsc.gain * rightRatio;
+        noiseParams.attackCurve[noiseIndex] = leftEnv.attackCurve * leftRatio + rightEnv.attackCurve * rightRatio;
+        noiseParams.attack[noiseIndex] = leftEnv.attack * leftRatio + rightEnv.attack * rightRatio;
+        noiseParams.decay[noiseIndex] = leftEnv.decay * leftRatio + rightEnv.decay * rightRatio;
+        noiseParams.release[noiseIndex] = leftEnv.release * leftRatio + rightEnv.release * rightRatio;
+    }
+}
