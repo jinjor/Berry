@@ -5,10 +5,9 @@
 #include "../src/Voice.h"
 
 static void doStepLoop(benchmark::State& state, AllParams& p) {
-    CurrentPositionInfo currentPositionInfo{};
     juce::AudioBuffer<float> buffer{2, 0};
 
-    BerryVoice voice{&currentPositionInfo, buffer, p};
+    BerryVoice voice{buffer, p};
     auto numChannels = 2;
     auto sampleRate = 48000;
     double out[2]{0, 0};

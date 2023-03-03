@@ -19,7 +19,7 @@ BerryAudioProcessor::BerryAudioProcessor()
       ,
       allParams{},
       buffer{2, 0},
-      synth(&currentPositionInfo, buffer, allParams) {
+      synth(buffer, allParams) {
     allParams.addAllParameters(*this);
 }
 
@@ -111,16 +111,12 @@ bool BerryAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) con
 void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
     auto busCount = getBusCount(false);
     buffer.clear();
-    if (auto* playHead = getPlayHead()) {
-        if (auto positionInfo = playHead->getPosition()) {
-            currentPositionInfo.bpm = *positionInfo->getBpm();
-        }
-    }
+
     int numVoices = 64;
     if (synth.getNumVoices() != numVoices) {
         synth.clearVoices();
         for (auto i = 0; i < numVoices; ++i) {
-            synth.addVoice(new BerryVoice(&currentPositionInfo, this->buffer, allParams));
+            synth.addVoice(new BerryVoice(this->buffer, allParams));
         }
     }
     auto numSamples = buffer.getNumSamples();

@@ -3,9 +3,8 @@
 #include "Params.h"
 
 //==============================================================================
-BerryVoice::BerryVoice(CurrentPositionInfo *currentPositionInfo, juce::AudioBuffer<float> &buffer, AllParams &allParams)
+BerryVoice::BerryVoice(juce::AudioBuffer<float> &buffer, AllParams &allParams)
     : perf(juce::PerformanceCounter("voice cycle", 100000)),
-      currentPositionInfo(currentPositionInfo),
       buffer(buffer),
       allParams(allParams),
       oscs{MultiOsc(false),

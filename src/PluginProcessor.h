@@ -143,7 +143,6 @@ public:
     LatestDataProvider latestDataProvider;
     int polyphony = 0;
     TimeConsumptionState timeConsumptionState;
-    CurrentPositionInfo currentPositionInfo;
 
     AllParams allParams;
 

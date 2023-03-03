@@ -50,14 +50,6 @@ public:
 };
 
 //==============================================================================
-class CurrentPositionInfo {
-public:
-    CurrentPositionInfo() {}
-    ~CurrentPositionInfo(){};
-    std::optional<double> bpm{};
-};
-
-//==============================================================================
 struct CalculatedParams {
     double gain[NUM_OSC]{};
     double attackCurve[NUM_OSC]{};
@@ -69,7 +61,7 @@ struct CalculatedParams {
 //==============================================================================
 class BerryVoice : public juce::SynthesiserVoice {
 public:
-    BerryVoice(CurrentPositionInfo *currentPositionInfo, juce::AudioBuffer<float> &buffer, AllParams &allParams);
+    BerryVoice(juce::AudioBuffer<float> &buffer, AllParams &allParams);
     ~BerryVoice();
     bool canPlaySound(juce::SynthesiserSound *sound) override;
     void startNote(int midiNoteNumber,
@@ -87,7 +79,6 @@ public:
 
 private:
     juce::PerformanceCounter perf;
-    CurrentPositionInfo *currentPositionInfo;
 
     AllParams &allParams;
     juce::AudioBuffer<float> &buffer;
@@ -114,8 +105,7 @@ private:
 //==============================================================================
 class BerrySynthesiser : public juce::Synthesiser {
 public:
-    BerrySynthesiser(CurrentPositionInfo *currentPositionInfo, juce::AudioBuffer<float> &buffer, AllParams &allParams)
-        : currentPositionInfo(currentPositionInfo), buffer(buffer), allParams(allParams) {
+    BerrySynthesiser(juce::AudioBuffer<float> &buffer, AllParams &allParams) : buffer(buffer), allParams(allParams) {
         addSound(new BerrySound());
     }
     ~BerrySynthesiser() {}
@@ -208,7 +198,6 @@ public:
     }
 
 private:
-    CurrentPositionInfo *currentPositionInfo;
     juce::AudioBuffer<float> &buffer;
     AllParams &allParams;
 
