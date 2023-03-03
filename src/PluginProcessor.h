@@ -147,6 +147,7 @@ public:
     AllParams allParams;
 
     juce::AudioBuffer<float> buffer;
+    MonoStack monoStack;
     BerrySynthesiser synth;
 
 private:

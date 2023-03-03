@@ -50,6 +50,61 @@ public:
 };
 
 //==============================================================================
+class MonoStack {
+public:
+    int latestNoteNumber = 0;
+    int firstNoteNumber = 0;
+    MonoStack(){};
+    ~MonoStack(){};
+    bool push(int noteNumber, float velocity) {
+        if (noteNumber == 0 || velocity == 0.0f) {
+            return false;
+        }
+        if (firstNoteNumber == 0) {
+            firstNoteNumber = noteNumber;
+        }
+        remove(noteNumber);
+        notes[noteNumber].velocity = velocity;
+        notes[noteNumber].next = latestNoteNumber;
+        latestNoteNumber = noteNumber;
+        return true;
+    }
+    bool remove(int noteNumber) {
+        if (latestNoteNumber == 0) {
+            return false;
+        }
+        auto next = notes[noteNumber].next;
+        notes[noteNumber].velocity = 0.0f;
+        notes[noteNumber].next = 0;
+        if (latestNoteNumber == noteNumber) {
+            latestNoteNumber = next;
+            if (latestNoteNumber == 0) {
+                firstNoteNumber = 0;
+            }
+            return true;
+        }
+        auto currentNoteNumber = latestNoteNumber;
+        while (notes[currentNoteNumber].next != 0) {
+            if (notes[currentNoteNumber].next == noteNumber) {
+                notes[currentNoteNumber].next = next;
+                return true;
+            }
+            currentNoteNumber = notes[currentNoteNumber].next;
+        }
+        return false;
+    }
+    float getVelocity(int noteNumber) { return notes[noteNumber].velocity; }
+    void reset() { std::fill_n(notes, 128, NoteInfo{}); }
+
+private:
+    struct NoteInfo {
+        float velocity = 0.0f;
+        int next = 0;
+    };
+    NoteInfo notes[128]{};
+};
+
+//==============================================================================
 struct CalculatedParams {
     double gain[NUM_OSC]{};
     double attackCurve[NUM_OSC]{};
@@ -105,7 +160,8 @@ private:
 //==============================================================================
 class BerrySynthesiser : public juce::Synthesiser {
 public:
-    BerrySynthesiser(juce::AudioBuffer<float> &buffer, AllParams &allParams) : buffer(buffer), allParams(allParams) {
+    BerrySynthesiser(MonoStack &monoStack, juce::AudioBuffer<float> &buffer, AllParams &allParams)
+        : monoStack(monoStack), buffer(buffer), allParams(allParams) {
         addSound(new BerrySound());
     }
     ~BerrySynthesiser() {}
@@ -119,7 +175,34 @@ public:
 
         juce::Synthesiser::renderNextBlock(outputAudio, inputMidi, startSample, numSamples);
     }
-    virtual void handleMidiEvent(const juce::MidiMessage &m) override { Synthesiser::handleMidiEvent(m); }
+    virtual void handleMidiEvent(const juce::MidiMessage &m) override {
+        const int channel = m.getChannel();
+        if (m.isNoteOn()) {
+            auto midiNoteNumber = m.getNoteNumber();
+            auto velocity = m.getFloatVelocity();
+            for (auto *sound : sounds) {
+                if (sound->appliesToNote(midiNoteNumber) && sound->appliesToChannel(channel)) {
+                    if (BerryVoice *voice = dynamic_cast<BerryVoice *>(voices[0])) {
+                        monoStack.push(midiNoteNumber, velocity);
+                    }
+                }
+            }
+        } else if (m.isNoteOff()) {
+            auto midiNoteNumber = m.getNoteNumber();
+            for (auto *sound : sounds) {
+                if (sound->appliesToNote(midiNoteNumber) && sound->appliesToChannel(channel)) {
+                    if (BerryVoice *voice = dynamic_cast<BerryVoice *>(voices[0])) {
+                        monoStack.remove(midiNoteNumber);
+                    }
+                }
+            }
+        } else if (m.isAllNotesOff()) {
+            monoStack.reset();
+        } else if (m.isAllSoundOff()) {
+            monoStack.reset();
+        }
+        Synthesiser::handleMidiEvent(m);
+    }
     void handleController(const int midiChannel, const int controllerNumber, const int controllerValue) override {
         DBG("handleController: " << midiChannel << ", " << controllerNumber << ", " << controllerValue);
         juce::Synthesiser::handleController(midiChannel, controllerNumber, controllerValue);
@@ -198,6 +281,7 @@ public:
     }
 
 private:
+    MonoStack &monoStack;
     juce::AudioBuffer<float> &buffer;
     AllParams &allParams;
 

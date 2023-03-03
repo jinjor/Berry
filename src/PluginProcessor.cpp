@@ -19,7 +19,7 @@ BerryAudioProcessor::BerryAudioProcessor()
       ,
       allParams{},
       buffer{2, 0},
-      synth(buffer, allParams) {
+      synth(monoStack, buffer, allParams) {
     allParams.addAllParameters(*this);
 }
 
