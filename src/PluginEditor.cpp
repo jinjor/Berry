@@ -11,15 +11,17 @@ using namespace styles;
 BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     : AudioProcessorEditor(&p),
       audioProcessor(p),
+      midiSender{p.midiCollector, p.startTime},
       focusedNote(p.allParams, p.monoStack),
       voiceComponent{SectionComponent{"VOICE", HEADER_CHECK::Hidden, std::make_unique<VoiceComponent>(p.allParams)}},
       analyserToggle(&analyserMode),
       analyserWindow(&analyserMode, &p.latestDataProvider),
       statusComponent(&p.polyphony, &p.timeConsumptionState, &p.latestDataProvider),
       utilComponent{SectionComponent{"UTILITY", HEADER_CHECK::Hidden, std::make_unique<UtilComponent>(p)}},
-      timbreComponent{SectionComponent{"TIMBRE",
-                                       HEADER_CHECK::Hidden,
-                                       std::make_unique<KeyboardComponent>(p.allParams, p.keyboardState, focusedNote)}},
+      timbreComponent{
+          SectionComponent{"TIMBRE",
+                           HEADER_CHECK::Hidden,
+                           std::make_unique<KeyboardComponent>(p.allParams, p.keyboardState, midiSender, focusedNote)}},
       timbreHeadComponent(TimbreHeadComponent{p.allParams}),
       harmonicsComponent{SectionComponent{
           "HARMONICS", HEADER_CHECK::Hidden, std::make_unique<HarmonicsComponent>(p.allParams, focusedNote)}},

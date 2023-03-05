@@ -144,10 +144,12 @@ public:
     int polyphony = 0;
     TimeConsumptionState timeConsumptionState;
 
+    double startTime;
     AllParams allParams;
 
     juce::AudioBuffer<float> buffer;
     MonoStack monoStack;
+    MidiMessageCollector midiCollector;
     BerrySynthesiser synth;
 
 private:

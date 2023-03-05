@@ -17,6 +17,7 @@ BerryAudioProcessor::BerryAudioProcessor()
                          )
 #endif
       ,
+      startTime(juce::Time::getMillisecondCounterHiRes() * 0.001),
       allParams{},
       buffer{2, 0},
       synth(monoStack, buffer, allParams) {
@@ -80,6 +81,7 @@ void BerryAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) 
     std::cout << "totalNumInputChannels: " << getTotalNumInputChannels() << std::endl;
     std::cout << "totalNumOutputChannels: " << getTotalNumOutputChannels() << std::endl;
     synth.setCurrentPlaybackSampleRate(sampleRate);
+    midiCollector.reset(sampleRate);
 }
 
 void BerryAudioProcessor::releaseResources() { std::cout << "releaseResources" << std::endl; }
@@ -120,6 +122,10 @@ void BerryAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         }
     }
     auto numSamples = buffer.getNumSamples();
+
+    MidiBuffer incomingMidi;
+    midiCollector.removeNextBlockOfMessages(incomingMidi, numSamples);
+    midiMessages.addEvents(incomingMidi, 0, -1, 0);
 
     keyboardState.processNextMidiBuffer(midiMessages, 0, numSamples, true);
     double startMillis = juce::Time::getMillisecondCounterHiRes();

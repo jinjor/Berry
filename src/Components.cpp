@@ -16,6 +16,22 @@ float calcCurrentLevel(int numSamples, float* data) {
 }
 
 //==============================================================================
+MidiSender::MidiSender(MidiMessageCollector& collector, double startTime)
+    : collector(collector), startTime(startTime) {}
+void MidiSender::noteOn(int noteNumber) {
+    // TODO: ここで有効な noteNumber に絞ってもいいかも？
+    auto noteOn = juce::MidiMessage::noteOn(1, noteNumber, (juce::uint8)velocity);
+    noteOn.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001 - startTime);
+    collector.addMessageToQueue(noteOn);
+}
+void MidiSender::noteOff(int noteNumber) {
+    // TODO: ここで有効な noteNumber に絞ってもいいかも？
+    auto noteOff = juce::MidiMessage::noteOff(1, noteNumber);
+    noteOff.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001 - startTime);
+    collector.addMessageToQueue(noteOff);
+}
+
+//==============================================================================
 HeaderComponent::HeaderComponent(std::string name, HEADER_CHECK check)
     : enabledButton("Enabled"), name(std::move(name)), check(check) {
     if (check != HEADER_CHECK::Hidden) {
@@ -449,9 +465,11 @@ void TimbreNote::resized() {}
 //==============================================================================
 KeyboardComponent::KeyboardComponent(AllParams& allParams,
                                      juce::MidiKeyboardState& keyboardState,
+                                     MidiSender& midiSender,
                                      FocusedNote& focusedNote)
     : allParams(allParams),
       keyboardState(keyboardState),
+      midiSender(midiSender),
       focusedNote(focusedNote),
       timbreNotes{
           TimbreNote{0, allParams}, TimbreNote{1, allParams}, TimbreNote{2, allParams}, TimbreNote{3, allParams}},
@@ -464,12 +482,14 @@ KeyboardComponent::KeyboardComponent(AllParams& allParams,
     for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
         if (KEY_POSITIONS[n % 12] >= 0) {
             int index = n - MIN_OF_88_NOTES;
+            keys[index].addMouseListener(this, false);
             addAndMakeVisible(keys[index]);
         }
     }
     for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
         if (KEY_POSITIONS[n % 12] < 0) {
             int index = n - MIN_OF_88_NOTES;
+            keys[index].addMouseListener(this, false);
             addAndMakeVisible(keys[index]);
         }
     }
@@ -544,6 +564,29 @@ void KeyboardComponent::timerCallback() {
     }
 }
 void KeyboardComponent::mouseDown(const juce::MouseEvent& e) {
+    auto pos = getMouseXYRelative();
+
+    for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
+        if (KEY_POSITIONS[n % 12] < 0) {
+            int index = n - MIN_OF_88_NOTES;
+            if (keys[index].getBounds().contains(pos)) {
+                midiSender.noteOn(n);
+                pressingNote = n;
+                return;
+            }
+        }
+    }
+    for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
+        if (KEY_POSITIONS[n % 12] >= 0) {
+            int index = n - MIN_OF_88_NOTES;
+            if (keys[index].getBounds().contains(pos)) {
+                midiSender.noteOn(n);
+                pressingNote = n;
+                return;
+            }
+        }
+    }
+
     for (int i = 0; i < NUM_TIMBRES; i++) {
         auto& timbreNote = timbreNotes[i];
         if (e.eventComponent == &timbreNote) {
@@ -554,7 +597,51 @@ void KeyboardComponent::mouseDown(const juce::MouseEvent& e) {
         }
     }
 }
+void KeyboardComponent::mouseUp(const juce::MouseEvent& e) {
+    if (pressingNote >= 0) {
+        midiSender.noteOff(pressingNote);
+        pressingNote = -1;
+    }
+}
 void KeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
+    auto pos = getMouseXYRelative();
+
+    for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
+        if (KEY_POSITIONS[n % 12] < 0) {
+            int index = n - MIN_OF_88_NOTES;
+            if (keys[index].getBounds().contains(pos)) {
+                if (n != pressingNote) {
+                    if (pressingNote >= 0) {
+                        midiSender.noteOff(pressingNote);
+                    }
+                    midiSender.noteOn(n);
+                    pressingNote = n;
+                }
+                return;
+            }
+        }
+    }
+    for (int n = MIN_OF_88_NOTES; n <= MAX_OF_88_NOTES; n++) {
+        if (KEY_POSITIONS[n % 12] >= 0) {
+            int index = n - MIN_OF_88_NOTES;
+            if (keys[index].getBounds().contains(pos)) {
+                if (n != pressingNote) {
+                    if (pressingNote >= 0) {
+                        midiSender.noteOff(pressingNote);
+                    }
+                    midiSender.noteOn(n);
+                    pressingNote = n;
+                }
+                return;
+            }
+        }
+    }
+    if (pressingNote >= 0) {
+        midiSender.noteOff(pressingNote);
+        pressingNote = -1;
+    }
+
+    DBG("mouseDrag");
     for (int i = 0; i < NUM_TIMBRES; i++) {
         auto& timbreNote = timbreNotes[i];
         if (e.eventComponent == &timbreNote) {
@@ -565,7 +652,6 @@ void KeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
             float octaveWidth = (float)bounds.getWidth() / (7.0f + W * 3);  // 7 オクターブと左の AB と右の C
             float offset = octaveWidth * (5.0f / 7);
 
-            auto pos = getMouseXYRelative();
             auto note = leftNote + (int)(((float)pos.x + offset) / (octaveWidth * B));
             auto& mainParams = allParams.mainParams;
             if (note < MIN_OF_88_NOTES + i || note >= MAX_OF_88_NOTES - (NUM_TIMBRES - i)) {

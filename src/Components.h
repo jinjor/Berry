@@ -13,6 +13,22 @@ enum class ANALYSER_MODE { Spectrum };
 
 //==============================================================================
 
+class MidiSender {
+public:
+    MidiSender(juce::MidiMessageCollector& collector, double startTime);
+    ~MidiSender() = default;
+    void noteOn(int noteNumber);
+    void noteOff(int noteNumber);
+
+private:
+    juce::MidiMessageCollector& collector;
+    double startTime;
+    int velocity = 100;
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiSender)
+};
+
+//==============================================================================
+
 class ArrowButton2 : public Button {
 public:
     ArrowButton2(const String& buttonName, float arrowDirection, Colour arrowColour);
@@ -562,7 +578,10 @@ private:
 //==============================================================================
 class KeyboardComponent : public juce::Component, private FocusedNote::Listener, juce::Timer, ComponentHelper {
 public:
-    KeyboardComponent(AllParams& allParams, juce::MidiKeyboardState& keyboardState, FocusedNote& focusedNote);
+    KeyboardComponent(AllParams& allParams,
+                      juce::MidiKeyboardState& keyboardState,
+                      MidiSender& midiSender,
+                      FocusedNote& focusedNote);
     virtual ~KeyboardComponent();
     KeyboardComponent(const KeyboardComponent&) = delete;
 
@@ -575,13 +594,16 @@ private:
 
     AllParams& allParams;
     juce::MidiKeyboardState& keyboardState;
+    MidiSender& midiSender;
     FocusedNote& focusedNote;
+    int pressingNote = -1;
 
     std::array<juce::Label, NUM_TIMBRES> timbreLabels;
     std::array<TimbreNote, NUM_TIMBRES> timbreNotes;
     std::array<KeyComponent, NUM_KEYS> keys;
 
     virtual void mouseDown(const juce::MouseEvent& e) override;
+    virtual void mouseUp(const juce::MouseEvent& e) override;
     virtual void mouseDrag(const juce::MouseEvent& e) override;
 };
 
