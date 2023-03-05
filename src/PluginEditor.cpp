@@ -11,7 +11,7 @@ using namespace styles;
 BerryAudioProcessorEditor::BerryAudioProcessorEditor(BerryAudioProcessor &p)
     : AudioProcessorEditor(&p),
       audioProcessor(p),
-      focusedNote(p.monoStack),
+      focusedNote(p.allParams, p.monoStack),
       voiceComponent{SectionComponent{"VOICE", HEADER_CHECK::Hidden, std::make_unique<VoiceComponent>(p.allParams)}},
       analyserToggle(&analyserMode),
       analyserWindow(&analyserMode, &p.latestDataProvider),

@@ -365,17 +365,24 @@ void MasterComponent::timerCallback() {
 }
 
 //==============================================================================
-FocusedNote::FocusedNote(MonoStack& monoStack) : monoStack(monoStack) { startTimerHz(30); }
+FocusedNote::FocusedNote(AllParams& allParams, MonoStack& monoStack) : allParams(allParams), monoStack(monoStack) {
+    startTimerHz(30);
+}
 FocusedNote::~FocusedNote() {}
 void FocusedNote::addListener(Listener* l) { listeners.add(l); }
 void FocusedNote::removeListener(Listener* l) { listeners.remove(l); }
 void FocusedNote::timerCallback() {
-    if (monoStack.latestNoteNumber == 0) {
-        // note off してもフォーカスは残す
-        return;
+    int nextFocusedNote =
+        monoStack.latestNoteNumber == 0 ? focusedNote : monoStack.latestNoteNumber;  // note off してもフォーカスは残す
+    bool changed = focusedNote != nextFocusedNote;
+    focusedNote = nextFocusedNote;
+    for (int i = 0; i < NUM_TIMBRES; i++) {
+        auto n = allParams.mainParams[i].NoteNumber->get();
+        if (timbreNoteNumbers[i] != n) {
+            changed = true;
+        }
+        timbreNoteNumbers[i] = n;
     }
-    bool changed = focusedNote != monoStack.latestNoteNumber;
-    focusedNote = monoStack.latestNoteNumber;
     if (changed) {
         listeners.call([this](Listener& l) { l.focusedNoteChanged(this); });
     }
@@ -407,8 +414,13 @@ void KeyComponent::paint(juce::Graphics& g) {
     g.setColour(colour);
     g.fillAll();
     if (isFocused) {
-        g.setColour(colour::SELECT);
-        g.drawRect(getLocalBounds());
+        float R = 2.5;
+        auto bounds = getLocalBounds();
+        float width = bounds.getWidth();
+        float cx = bounds.getCentreX();
+        float cy = bounds.getBottom() - R * 2.5;
+        g.setColour(isBlack ? colour::TEXT_INVERT : colour::FOCUSED_NOTE);
+        g.fillEllipse(cx - R, cy - R, R * 2, R * 2);
     }
 }
 void KeyComponent::resized() {}
@@ -655,7 +667,8 @@ HarmonicComponent::HarmonicComponent(bool isNoise, int index, AllParams& allPara
       attackCurveSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
       attackSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
       decaySlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
-      releaseSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox) {
+      releaseSlider(juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox),
+      focusedParams(nullptr) {
     auto gainParam = getSelectedGainParam();
     auto attackCurveParam = getSelectedAttackCurveParam();
     auto attackParam = getSelectedAttackParam();
@@ -697,7 +710,26 @@ HarmonicComponent::HarmonicComponent(bool isNoise, int index, AllParams& allPara
 
 HarmonicComponent::~HarmonicComponent() {}
 
-void HarmonicComponent::paint(juce::Graphics& g) {}
+void HarmonicComponent::paint(juce::Graphics& g) {
+    if (focusedParams == nullptr) {
+        return;
+    }
+    paintFocusedParam(g, gainSlider, focusedParams->gain[index]);
+    paintFocusedParam(g, attackCurveSlider, focusedParams->attackCurve[index]);
+    paintFocusedParam(g, attackSlider, focusedParams->attack[index]);
+    paintFocusedParam(g, decaySlider, focusedParams->decay[index]);
+    paintFocusedParam(g, releaseSlider, focusedParams->release[index]);
+}
+void HarmonicComponent::paintFocusedParam(juce::Graphics& g, juce::Slider& bar, double value) {
+    float R = 2;
+    auto bounds = bar.getBounds();
+    float width = bounds.getWidth();
+    float left = bounds.getX();
+    float cx = left + width * bar.valueToProportionOfLength(value);
+    float cy = bounds.getBottom() + R;
+    g.setColour(colour::FOCUSED_NOTE);
+    g.fillEllipse(cx - R, cy - R, R * 2, R * 2);
+}
 
 void HarmonicComponent::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
@@ -795,10 +827,15 @@ void HarmonicComponent::mouseDown(const juce::MouseEvent& event) {
         allParams.soloMuteParams.toggleSolo(isNoise, index);
     }
 }
+void HarmonicComponent::setFocusedParams(std::shared_ptr<CalculatedParams> params) {
+    focusedParams = std::move(params);
+    repaint();
+}
 
 //==============================================================================
 HarmonicsComponent::HarmonicsComponent(AllParams& allParams, FocusedNote& focusedNote)
-    : harmonics{
+    : allParams(allParams),
+      harmonics{
           HarmonicComponent(false, 0, allParams, focusedNote),
           HarmonicComponent(false, 1, allParams, focusedNote),
           HarmonicComponent(false, 2, allParams, focusedNote),
@@ -820,6 +857,7 @@ HarmonicsComponent::HarmonicsComponent(AllParams& allParams, FocusedNote& focuse
     for (auto& harmonic : harmonics) {
         addAndMakeVisible(harmonic);
     }
+    focusedNote.addListener(this);
 }
 
 HarmonicsComponent::~HarmonicsComponent() {}
@@ -837,14 +875,29 @@ void HarmonicsComponent::resized() {
         harmonics[i].setBounds(bounds.removeFromTop(rowHeight));
     }
 }
+void HarmonicsComponent::focusedNoteChanged(FocusedNote* focusedNote) {
+    int n = focusedNote->getFocusedNote();
+    std::shared_ptr<CalculatedParams> ptr = nullptr;
+    if (n >= 0) {
+        CalculatedParams params{};
+        CalculatedParams noiseParams{};  // TODO: 無駄な計算
+        allParams.calculateIntermediateParams(params, noiseParams, n);
+        ptr = std::make_shared<CalculatedParams>(params);
+    }
+    for (auto& harmonic : harmonics) {
+        harmonic.setFocusedParams(ptr);
+    }
+}
 
 //==============================================================================
 NoisesComponent::NoisesComponent(AllParams& allParams, FocusedNote& focusedNote)
-    : noises{HarmonicComponent(true, 0, allParams, focusedNote), HarmonicComponent(true, 1, allParams, focusedNote)} {
+    : allParams(allParams),
+      noises{HarmonicComponent(true, 0, allParams, focusedNote), HarmonicComponent(true, 1, allParams, focusedNote)} {
     addAndMakeVisible(head);
     for (auto& noise : noises) {
         addAndMakeVisible(noise);
     }
+    focusedNote.addListener(this);
 }
 
 NoisesComponent::~NoisesComponent() {}
@@ -860,6 +913,19 @@ void NoisesComponent::resized() {
     for (int i = 0; i < NUM_NOISE; i++) {
         bounds.removeFromTop(margin);
         noises[i].setBounds(bounds.removeFromTop(rowHeight));
+    }
+}
+void NoisesComponent::focusedNoteChanged(FocusedNote* focusedNote) {
+    int n = focusedNote->getFocusedNote();
+    std::shared_ptr<CalculatedParams> ptr = nullptr;
+    if (n >= 0) {
+        CalculatedParams params{};  // TODO: 無駄な計算
+        CalculatedParams noiseParams{};
+        allParams.calculateIntermediateParams(params, noiseParams, n);
+        ptr = std::make_shared<CalculatedParams>(noiseParams);
+    }
+    for (auto& noise : noises) {
+        noise.setFocusedParams(ptr);
     }
 }
 

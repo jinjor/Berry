@@ -504,7 +504,7 @@ constexpr float KEY_POSITIONS[12] = {0,
 
 class FocusedNote : private juce::Timer {
 public:
-    FocusedNote(MonoStack& monoStack);
+    FocusedNote(AllParams& allParams, MonoStack& monoStack);
     virtual ~FocusedNote();
     FocusedNote(const FocusedNote&) = delete;
 
@@ -520,7 +520,9 @@ public:
 
 private:
     ListenerList<Listener> listeners;
+    AllParams& allParams;
     MonoStack& monoStack;
+    std::array<int, NUM_TIMBRES> timbreNoteNumbers{};
     int focusedNote = 0;
     virtual void timerCallback() override;
 };
@@ -629,6 +631,7 @@ public:
 
     virtual void paint(juce::Graphics& g) override;
     virtual void resized() override;
+    void setFocusedParams(std::shared_ptr<CalculatedParams> params);
 
 private:
     FocusedNote& focusedNote;
@@ -636,6 +639,7 @@ private:
     virtual void timerCallback() override;
     bool isNoise;
     int index;
+    std::shared_ptr<CalculatedParams> focusedParams;
 
     AllParams& allParams;
 
@@ -669,10 +673,11 @@ private:
                        : allParams.getCurrentMainParams().envelopeParams[index].Release;
     }
     virtual void mouseDown(const juce::MouseEvent& e) override;
+    void paintFocusedParam(juce::Graphics& g, juce::Slider& bar, double value);
 };
 
 //==============================================================================
-class HarmonicsComponent : public juce::Component, private ComponentHelper {
+class HarmonicsComponent : public juce::Component, private ComponentHelper, FocusedNote::Listener {
 public:
     HarmonicsComponent(AllParams& allParams, FocusedNote& focusedNote);
     virtual ~HarmonicsComponent();
@@ -682,12 +687,14 @@ public:
     virtual void resized() override;
 
 private:
+    AllParams& allParams;
     HarmonicHeadComponent head;
     std::array<HarmonicComponent, NUM_OSC> harmonics;
+    virtual void focusedNoteChanged(FocusedNote* focusedNote) override;
 };
 
 //==============================================================================
-class NoisesComponent : public juce::Component, private ComponentHelper {
+class NoisesComponent : public juce::Component, private ComponentHelper, FocusedNote::Listener {
 public:
     NoisesComponent(AllParams& allParams, FocusedNote& focusedNote);
     virtual ~NoisesComponent();
@@ -697,8 +704,10 @@ public:
     virtual void resized() override;
 
 private:
+    AllParams& allParams;
     HarmonicHeadComponent head;
     std::array<HarmonicComponent, NUM_NOISE> noises;
+    virtual void focusedNoteChanged(FocusedNote* focusedNote) override;
 };
 
 //==============================================================================
